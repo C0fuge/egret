@@ -1,0 +1,176 @@
+[
+ {
+  "variant": "aa-control",
+  "flags": "",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "threads1",
+  "flags": "-DduckDbThreads=1",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "threads4",
+  "flags": "-DduckDbThreads=4",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "threads8",
+  "flags": "-DduckDbThreads=8",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "mem1g",
+  "flags": "-DduckDbMemoryLimit=1GB",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "mem2g",
+  "flags": "-DduckDbMemoryLimit=2GB -Xmx2g",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "mem4g",
+  "flags": "-DduckDbMemoryLimit=4GB -Xmx2g",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "io2",
+  "flags": "-DioParallelism=2",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "io4",
+  "flags": "-DioParallelism=4",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "io8",
+  "flags": "-DioParallelism=8",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "io16",
+  "flags": "-DioParallelism=16",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "bp4m",
+  "flags": "-DflightBackpressureThresholdBytes=4194304",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "bp16m",
+  "flags": "-DflightBackpressureThresholdBytes=16777216",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "bp64m",
+  "flags": "-DflightBackpressureThresholdBytes=67108864",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "nostream",
+  "flags": "-DduckDbStreamResults=false",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "sbs64m",
+  "flags": "-DduckDbStreamingBufferSize=64MiB",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "pio-false",
+  "flags": "-DduckDbPreserveInsertionOrder=false",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "pio-false+sbs64m",
+  "flags": "-DduckDbPreserveInsertionOrder=false -DduckDbStreamingBufferSize=64MiB",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "zgc",
+  "flags": "-XX:+UseZGC -XX:+ZGenerational",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "parallelgc",
+  "flags": "-XX:+UseParallelGC",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "stmtcache0",
+  "flags": "-DduckDbStatementCacheSize=0",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "stmtcache256",
+  "flags": "-DduckDbStatementCacheSize=256",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "warm0",
+  "flags": "-DduckDbWarmConnections=0",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "warm32",
+  "flags": "-DduckDbWarmConnections=32",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "resultmode-partial",
+  "flags": "-DresultMode=partial",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "unsafe-off",
+  "flags": "-Darrow.enable_unsafe_memory_access=false",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "batch16k",
+  "flags": "-DbatchSize=16384",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "batch256k",
+  "flags": "-DbatchSize=262144",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "stand-profile",
+  "flags": "-DioParallelism=4 -DduckDbMemoryLimit=1GB -DduckDbThreads=2 -DflightBackpressureThresholdBytes=16777216 -Xmx2g",
+  "layout": "default",
+  "storage": "local"
+ }
+]

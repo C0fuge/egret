@@ -1,0 +1,116 @@
+[
+ {
+  "variant": "aa-control",
+  "flags": "",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "threads4",
+  "flags": "-DduckDbThreads=4",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "threads8",
+  "flags": "-DduckDbThreads=8",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "io8",
+  "flags": "-DioParallelism=8",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "io16",
+  "flags": "-DioParallelism=16",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "efc-on",
+  "flags": "-DduckDbExternalFileCache=true",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "s3meta-off",
+  "flags": "-DduckDbS3MetadataCache=false",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "sbs64m",
+  "flags": "-DduckDbStreamingBufferSize=64MiB",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "pio-false",
+  "flags": "-DduckDbPreserveInsertionOrder=false",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "mem1g",
+  "flags": "-DduckDbMemoryLimit=1GB",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "stand-profile",
+  "flags": "-DioParallelism=4 -DduckDbMemoryLimit=1GB -DduckDbThreads=4 -DflightBackpressureThresholdBytes=16777216 -Xmx2g",
+  "layout": "default",
+  "storage": "s3"
+ },
+ {
+  "variant": "layout-rg1m",
+  "flags": "",
+  "layout": "rg1m",
+  "storage": "local"
+ },
+ {
+  "variant": "layout-rg1m",
+  "flags": "",
+  "layout": "rg1m",
+  "storage": "s3"
+ },
+ {
+  "variant": "layout-rg32k",
+  "flags": "",
+  "layout": "rg32k",
+  "storage": "local"
+ },
+ {
+  "variant": "layout-rg32k",
+  "flags": "",
+  "layout": "rg32k",
+  "storage": "s3"
+ },
+ {
+  "variant": "layout-files64m",
+  "flags": "",
+  "layout": "files64m",
+  "storage": "local"
+ },
+ {
+  "variant": "layout-files64m",
+  "flags": "",
+  "layout": "files64m",
+  "storage": "s3"
+ },
+ {
+  "variant": "layout-onefile",
+  "flags": "",
+  "layout": "onefile",
+  "storage": "local"
+ },
+ {
+  "variant": "layout-onefile",
+  "flags": "",
+  "layout": "onefile",
+  "storage": "s3"
+ }
+]

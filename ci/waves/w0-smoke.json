@@ -1,0 +1,14 @@
+[
+ {
+  "variant": "aa-control",
+  "flags": "",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "threads4",
+  "flags": "-DduckDbThreads=4",
+  "layout": "default",
+  "storage": "local"
+ }
+]
