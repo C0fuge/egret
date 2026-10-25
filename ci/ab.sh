@@ -14,13 +14,12 @@ ROUNDS=${ROUNDS:-3}; WORKLOADS=${WORKLOADS:-small sf1 sf10 scan}; NET=egret
 JDBC=$ASSETS/flight-sql-jdbc-driver-18.0.0.jar; SRV=$ASSETS/server
 S3_KEY="ci$(openssl rand -hex 8)"; S3_SECRET="$(openssl rand -hex 24)"
 mkdir -p "$OUT"; log() { echo "== $(date -u +%T) $*" | tee -a "$OUT/job.log"; }
-docker network inspect $NET >/dev/null 2>&1 || docker network create $NET >/dev/null
 
 if [ "$STORAGE" = s3 ]; then
   # rclone serves DATA over the S3 API: directory DATA/<layout> = bucket <layout>
   docker rm -f s3 >/dev/null 2>&1
-  docker run -d --name s3 --network $NET -p 127.0.0.1:9000:9000 -v "$DATA":/data:ro rclone/rclone:1.68.2 \
-    serve s3 /data --addr :9000 --auth-key "$S3_KEY,$S3_SECRET" >/dev/null
+  docker run -d --name s3 --network host -v "$DATA":/data:ro rclone/rclone:1.68.2 \
+    serve s3 /data --addr 127.0.0.1:9000 --auth-key "$S3_KEY,$S3_SECRET" >/dev/null
   sleep 3
 fi
 
@@ -31,14 +30,14 @@ data_dir() {  # data_dir <layout> <sf1|sf10>
 start_server() {  # start_server <dataDir> <flags...>
   local dd=$1; shift
   docker rm -f flight >/dev/null 2>&1
-  docker run -d --name flight --network $NET -p 127.0.0.1:32010:32010 --memory 8g --memory-swap 8g \
+  docker run -d --name flight --network host --memory 8g --memory-swap 8g \
     -e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET" \
     -v "$SRV":/app:ro -v "$ASSETS/duckdb":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp eclipse-temurin:21-jdk \
     java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
       -Darrow.enable_unsafe_memory_access=true -DmetricsEnabled=false -Dhazelcast.phone.home.enabled=false \
       -Darrowflight.plugins.dir=/app/plugins -Darrowflight.duckdb.extensionDir=/ext/duckdb-home/extensions \
       -DduckDbHttpfsExtension=/ext/duckdb-home/extensions/v1.4.5/linux_amd64/httpfs.duckdb_extension \
-      -Ds3Endpoint=http://s3:9000 -Ds3UrlStyle=path -Ds3Region=us-east-1 \
+      -Ds3Endpoint=http://127.0.0.1:9000 -Ds3UrlStyle=path -Ds3Region=us-east-1 \
       -DnumServers=1 -Xmx3g -XX:MaxDirectMemorySize=2g -DdataDir="$dd" "$@" \
       -cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer \
       --port 32010 --localhost localhost --hosts 127.0.0.1 >/dev/null

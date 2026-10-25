@@ -62,7 +62,7 @@ def side_round(d):
     for n in ("jdbc10", "jdbc1"):
         m = re.search(rf"^{n}: ok=(\d+) cold_sum=([\d.]+) median_sum=([\d.]+) md5=(\w+)", txt, re.M)
         if m:
-            r[n] = {"ok": int(m.group(1)), "cold": float(m.group(2)), "med": float(m.group(3)), "md5": m.group(4)}
+            r["tpch_" + n] = {"ok": int(m.group(1)), "cold": float(m.group(2)), "med": float(m.group(3)), "md5": m.group(4)}
             if m.group(4) != REF[n]:
                 r["fails"].append(f"{n} md5 {m.group(4)} ({m.group(1)}/22 ok)")
     for m in re.finditer(r"^scan conc=(\d+) .*?rows=(\d+) mb=\d+ rows_per_s=\d+ mb_per_s=([\d.]+).*?errors=(\d+)", txt, re.M):
@@ -83,13 +83,13 @@ def side_round(d):
 def side(job, s):
     rs = [side_round(d) for d in sorted(glob.glob(os.path.join(job, s, "r*")))]
     out = {"n": len(rs), "fails": sorted({f for r in rs for f in r["fails"]}),
-           "sig": {r["jdbc1"]["sig"] for r in rs if r.get("jdbc1")}}
+           "sig": {r["jdbc1"]["sig"] + "|" + (r["adbc1"] or {}).get("sig", "") for r in rs if r.get("jdbc1")}}
     for c in (1, 8, 32):
         for cl in ("jdbc", "adbc"):
             out[f"{cl}{c}_p50"] = med([r[f"{cl}{c}"]["p50"] for r in rs if r.get(f"{cl}{c}")])
             out[f"{cl}{c}_p95"] = med([r[f"{cl}{c}"]["p95"] for r in rs if r.get(f"{cl}{c}")])
     for n in ("jdbc10", "jdbc1"):
-        out[n] = med([r[n]["med"] for r in rs if r.get(n)])
+        out[n] = med([r["tpch_" + n]["med"] for r in rs if r.get("tpch_" + n)])
     for k in ("scan1", "scan4", "heavy4"):
         out[k] = med([r.get(k) for r in rs])
     out["rss"] = max([r["rss"] for r in rs if r["rss"]], default=None)
