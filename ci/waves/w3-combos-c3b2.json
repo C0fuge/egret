@@ -1,0 +1,44 @@
+[
+ {
+  "variant": "aa-control",
+  "flags": "",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "threads4",
+  "flags": "-DduckDbThreads=4",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "threads8",
+  "flags": "-DduckDbThreads=8",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "t4-mem1g",
+  "flags": "-DduckDbThreads=4 -DduckDbMemoryLimit=1GB",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "t8-mem2g",
+  "flags": "-DduckDbThreads=8 -DduckDbMemoryLimit=2GB",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "eps2-bp16m",
+  "flags": "-DendpointsPerServer=2 -DflightBackpressureThresholdBytes=16777216",
+  "layout": "default",
+  "storage": "local"
+ },
+ {
+  "variant": "eps4-default-bp",
+  "flags": "-DendpointsPerServer=4",
+  "layout": "default",
+  "storage": "local"
+ }
+]
