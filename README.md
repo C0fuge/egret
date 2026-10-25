@@ -23,3 +23,4 @@ Run: Actions → screen → wave (file in `ci/waves/`), rounds, workloads. The `
 
 ## Results
 
+- [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
