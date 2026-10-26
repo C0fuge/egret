@@ -1,0 +1,59 @@
+name: build-upstream
+
+# Builds reference server jars from the upstream project (read-only checkout) for speed comparisons.
+on:
+  workflow_dispatch:
+    inputs:
+      refs:
+        description: 'Space-separated upstream refs (branches or SHAs)'
+        default: 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      refs: ${{ steps.m.outputs.refs }}
+    steps:
+      - id: m
+        run: echo "refs=$(printf '%s\n' ${{ inputs.refs }} | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+  build:
+    needs: matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        ref: ${{ fromJson(needs.matrix.outputs.refs) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: VadimSurpin/arrow-flight-server
+          ref: ${{ matrix.ref }}
+          path: up
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: up/**/pom.xml
+      - name: Build server jar (tests skipped)
+        working-directory: up
+        run: |
+          chmod +x mvnw
+          if [ -d flight-server ]; then MOD="-pl flight-server -am"; else MOD=""; fi
+          ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip -Dspotbugs.skip -Djacoco.skip -Denforcer.skip $MOD package
+      - name: Collect
+        id: c
+        run: |
+          sha=$(git -C up rev-parse --short=12 HEAD); name=$(echo "${{ matrix.ref }}" | tr '/' '-')
+          mkdir out; for j in $(ls up/flight-server/target/*.jar up/target/*.jar 2>/dev/null | grep -vE 'original-|sources|javadoc|tests'); do cp "$j" out/; done
+          (cd out && sha256sum *.jar > SHA256SUMS; echo "$name $sha" > REF.txt; ls -la)
+          echo "name=upstream-$name-$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.c.outputs.name }}
+          path: out
+          retention-days: 14
