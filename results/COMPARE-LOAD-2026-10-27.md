@@ -23,7 +23,8 @@ identically limited container (2 CPUs on cpus 0,1, 6 GB); load generators run in
   correct, upstream 0/22 (same reasons as Report 1).
 - **TLS + bearer token** (ours-new, same runner, 3 rounds): small-query latency unchanged (B/A 0.95-1.09 on p50/p95, c1-c32,
   JDBC and ADBC), SF10 TPC-H ADBC 1.01x, full `lineitem` export 481 -> 427 MB/s (-11 %), peak RSS +4 %. Probes on every
-  secured round: a plain `grpc://` connection is refused and a wrong token gets `UNAUTHENTICATED`.
+  secured round: a plain `grpc://` connection is refused and a wrong token gets `UNAUTHENTICATED`. Closed-loop load 1-128 clients:
+  equal QPS and saturation (1 client) with TLS on and off, 0 errors (per-side table below).
 
 
 ## Setup
@@ -175,5 +176,18 @@ probes yet, another runner) gave the same picture: small-query QPS within 5 %, S
 
 Closed-loop load steps (1-128 clients, TLS on vs off): job `new-plain-vs-tls-load` of run
 [40550942695](c7-load-tls-40550942695/load.md) finished with 0 errors at every step on both sides and equal peak RSS (4666 vs
-4699 MB, 1.01x); `load_report.py` pools both sides of that job under "ours-new" (same server id), so the per-side QPS / p95
-split is still to be extracted (next session).
+4699 MB, 1.01x); per side (re-reported from the run's artifacts by the `rereport` workflow, run 40569304541; full tables in
+[c7-load-tls-40550942695/load.md](c7-load-tls-40550942695/load.md)), QPS / p95 ms / server CPU % / server mem MiB, medians over 3 rounds:
+
+| clients | JDBC plain (A) | JDBC TLS + token (B) | ADBC plain (A) | ADBC TLS + token (B) |
+|---|---|---|---|---|
+| 1 | 38 / 44.6 / 173 / 436 | 38 / 45.0 / 168 / 483 | 40 / 39.7 / 164 / 435 | 40 / 39.7 / 164 / 478 |
+| 8 | 44 / 282.1 / 188 / 860 | 44 / 279.7 / 199 / 839 | 43 / 283.0 / 191 / 868 | 44 / 276.9 / 199 / 845 |
+| 32 | 41 / 1333.4 / 186 / 1943 | 41 / 1295.9 / 196 / 1830 | 40 / 1367.1 / 191 / 2153 | 41 / 1300.4 / 203 / 1924 |
+| 64 | 39 / 2975.7 / 194 / 3000 | 39 / 2921.5 / 187 / 2891 | 37 / 3098.5 / 188 / 3483 | 38 / 3071.8 / 199 / 3411 |
+| 128 | 34 / 7023.2 / 200 / 4723 | 36 / 6826.1 / 185 / 4802 | 34 / 6929.0 / 192 / 5528 | 34 / 6742.3 / 200 / 5471 |
+| saturation (p95 < 100 ms, 0 errors) | 1 | 1 | 1 | 1 |
+
+0 errors at every step on both sides. TLS + token costs no measurable throughput or latency under closed-loop load
+(QPS equal within 1-2 per step, p95 within -5 % to +1 %); the server is CPU-bound on its 2 cores in both cases. (The
+earlier pooled table of this run showed side B only: both sides had the same server id.)

@@ -12,7 +12,7 @@
   server saturates at 1 client (p95 < 100 ms); throughput at saturation for point / count queries: up-native ~84 QPS, ours-new
   ~50, ours-27f5 ~45, up-main ~48 over ADBC (up-main fails every JDBC query). Only ours runs the heavy parts (mixed, 4 heavy at
   once: 0 failures, peak RSS 4.3 GB). Slow link (10 ms RTT, 1 Gbit/s): up-native with ZSTD exports `lineitem` at 264 MB/s vs
-  104 MB/s plain (ours has no Flight compression). TLS + token on ours: latency unchanged, SF10 TPC-H 1.01x, export -11 %.
+  104 MB/s plain (ours has no Flight compression). TLS + token on ours: latency and closed-loop QPS unchanged (1-128 clients), SF10 TPC-H 1.01x, export -11 %.
 
 - **Report 3 ROBUSTNESS** - [results/COMPARE-ROBUSTNESS-2026-10-27.md](results/COMPARE-ROBUSTNESS-2026-10-27.md): 30-min
   soak without deaths or errors for ours (RSS settles ~2 GB); ours stops work at once on cancel, upstream keeps computing
@@ -28,17 +28,16 @@
   container on cpus 2,3.
   - Report 1 SPEED: **published** `results/COMPARE-SPEED-2026-10-27.md` (run 40537011671 merged with the ours pairs of
     40490378159; fix list items 1-4 at its top, bisect 40537018532: no build regresses).
-  - Report 2 LOAD: **published** `results/COMPARE-LOAD-2026-10-27.md`; TLS load split still to add (Next (1)).
+  - Report 2 LOAD: **published** `results/COMPARE-LOAD-2026-10-27.md` (TLS closed-loop load split per side added, re-report run
+    40569304541 of 40550942695 via the new `rereport` workflow).
   - Report 3 ROBUSTNESS: **published** `results/COMPARE-ROBUSTNESS-2026-10-27.md` (soak 40550552130, cold start + cancel
     40551848571, threads 40550556746, Trino 40551575311, cluster on S3 40553385813; the local-disk cluster attempt 40551320307
     showed that a cluster refuses complete answers without shared storage).
-  - Next: (1) TLS closed-loop load (run 40550942695, committed in results/c7-load-tls-40550942695): load_report.py pools
-    A (plain) and B (TLS) because both are ours-new; split them by side (FLAGS_B = TLS) and add the per-side table to Report 2; (2) then the final run
-    of the task's "Later addition": newer kestrel pre-releases (`84fec772ec50` and later) as `ours-cache` in an S3-only pair
-    vs `ours-new` (SF1/SF10 and repeated small queries, cache on vs off). Not started. Hints: the cache size key is
-    `CACHE_MEGABYTES_KEY` of `flight-plugin-s3/.../S3ReadCache.java` in C0fuge/kestrel (MiB, 0 = off; find how the
-    plugin's config keys map to `-D` flags); newer pre-releases also change the `duckDbThreads` default to size-aware
-    (cores / 4 between 2 and 8, item 19), so pin `-DduckDbThreads=4` on both sides of the cache pair.
-    When (1) and (2) are done: write `ALL DONE <date>` at the top of this section.
+  - Next: final run of the task's "Later addition": compare run **40569584228** (wave `c10-cache`, dispatched 2026-10-27
+    19:40 UTC, S3 only, `-DduckDbThreads=4` on both sides): `ours-cache` = newest pre-release `4e77c6bda59a` with
+    `-Darrowflight.s3.cacheMegabytes=1024` (key `arrowflight.s3.cacheMegabytes`, MiB, 0 = off, at most half the heap) vs the
+    same build with the cache off, both vs `ours-new`, and `84fec772ec50` vs `ours-new`; workloads TPC-H SF1/SF10 ADBC +
+    small queries. When it finishes: check for failures, write a short `results/COMPARE-CACHE-2026-10-27.md` (cache on/off
+    ratios, new builds vs ours-new), link it here, then write `ALL DONE <date>` at the top of this section.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
