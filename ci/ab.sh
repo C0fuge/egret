@@ -143,10 +143,11 @@ cluster_node() {  # cluster_node <i> <dataDir> <flags...>: kestrel node i of a 3
   local i=$1 dd=$2 n=flight; shift 2; [ "$i" = 1 ] || n=flight$i
   docker rm -f $n > /dev/null 2>&1
   docker run -d --name $n --network host --cpus=2 --cpuset-cpus=0,1 --memory=4g --memory-swap=4g \
-    -e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true \
+    -e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET" \
     -v "$ASSETS/srv/$SERVER":/app:ro -v "$ASSETS/duckdb156":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp $SRV_IMAGE \
     java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
       -Darrowflight.plugins.dir=/app/plugins -Darrowflight.duckdb.extensionDir=/ext/duckdb-home/extensions -DduckDbAllowUnsignedExtensions=true \
+      -Ds3Endpoint=http://127.0.0.1:9000 -Ds3UrlStyle=path -Ds3Region=us-east-1 \
       -Darrow.enable_unsafe_memory_access=true -DmetricsEnabled=false -Dhazelcast.phone.home.enabled=false \
       -DnumServers=3 -Xmx2g -XX:MaxDirectMemorySize=1g -DdataDir="$dd" "$@" \
       -cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer \
@@ -378,7 +379,8 @@ side() {  # side <A|B> <round>
       done
       touch "$O/.soak-stop"; wait $jp $hp; rm -f "$O/.soak-stop"; docker rm -f jsamp > /dev/null 2>&1
       step soak end; mem soak ;;
-    cluster)  # Report 3, ours only: 3-node cluster on this runner (SF10): node stopped (graceful) before a query, node killed
+    cluster)  # Report 3, ours only: 3-node cluster on this runner (SF10 on S3: a complete answer
+              # needs storage every node reads; on local disks the server refuses it): node stopped (graceful) before a query, node killed
               # (SIGKILL) during q18/q21, time until node 1 answers correctly again, time for a node to rejoin; answers vs reference
       case $SERVER in up-*|upstream) echo "cluster: n/a (upstream: no tested multi-node mode, ours only)" >> "$O/result.txt"; continue;; esac
       step cluster begin

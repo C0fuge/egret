@@ -1,7 +1,7 @@
 [
  {
   "variant": "new-vs-27f5-cluster",
-  "storage": "local",
+  "storage": "s3",
   "a_server": "ours-new",
   "a_flags": "",
   "b_server": "ours-27f5",
