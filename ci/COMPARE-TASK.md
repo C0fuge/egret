@@ -17,6 +17,21 @@ branch -> use only workloads it answers correctly, mark the rest `n/a` with the 
 for that workload, never ranked. Every A/B pair runs on the SAME runner, alternating rounds, 3 rounds, 1 warm-up.
 Settings per server: its defaults AND its best thread count (ours 4 and 8; upstream its default and 8); keep both.
 
+
+## Containers - identical limits for every server (maintainer, 2026-10-27; applies to ALL reports)
+Production runs the server in containers with resource limits, so the comparison must too:
+- every server runs in a Docker container from the SAME image (`eclipse-temurin:21-jre`), started the same way, with the
+  SAME limits: `--cpus=2 --cpuset-cpus=0,1 --memory=6g --memory-swap=6g`, JVM `-Xmx3g -XX:MaxDirectMemorySize=2g`
+  (`MALLOC_ARENA_MAX=4`), only the server's own required flags differ (upstream: its add-modules/add-opens);
+- clients (JDBC/ADBC runners, load generators, Trino) run in their own container(s) pinned to the other cores
+  (`--cpuset-cpus=2,3`), never inside the server container;
+- data (local Parquet) mounted read-only into the server container; S3 = the MinIO container, also pinned off the server
+  cores;
+- record `docker stats` samples (CPU %, memory) of the server container for every run, and the container OOM-kill state;
+- if a server is OOM-killed inside its limit, that is a result (record it), not a reason to raise its limit.
+If you already dispatched runs without containers, keep them only as "no-container reference" and redo the reported
+numbers with containers.
+
 ## Report 1 - SPEED (run first, publish as soon as done: `results/COMPARE-SPEED-2026-10-27.md` + README summary, own commit)
 Format like the upstream README benchmark section: an "Experiment setup" table (runner type/vCPU/RAM, scale factor, data
 layout, repetitions, batch size, versions incl. DuckDB per server, JVM flags) and per-query tables:
