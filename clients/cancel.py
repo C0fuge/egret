@@ -6,12 +6,13 @@ import sys
 import threading
 import time
 
+import flightconn
 import adbc_driver_flightsql as a
 import adbc_driver_flightsql.dbapi as d
 
 uri, qf, after = sys.argv[1], sys.argv[2], float(sys.argv[3])
 sql = open(qf).read().strip().rstrip(";")
-con = d.connect(uri, db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"})
+con = d.connect(uri, db_kwargs=flightconn.db_kwargs())
 cur = con.cursor()
 res = {}
 

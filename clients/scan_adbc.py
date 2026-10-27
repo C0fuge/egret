@@ -3,6 +3,7 @@ Prints: adbcscan wall=<s> rows=<n> batches=<n> mb=<Arrow buffer MB> rows_per_s=<
 import sys
 import time
 
+import flightconn
 import adbc_driver_flightsql as a
 import adbc_driver_flightsql.dbapi as d
 
@@ -10,7 +11,7 @@ uri, sql = sys.argv[1], sys.argv[2]
 rows = batches = nbytes = err = 0
 t0 = time.perf_counter()
 try:
-    con = d.connect(uri, db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"})
+    con = d.connect(uri, db_kwargs=flightconn.db_kwargs())
     with con.cursor() as cur:
         cur.execute(sql)
         for b in cur.fetch_record_batch():

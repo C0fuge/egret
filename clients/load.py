@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 
+import flightconn
 import adbc_driver_flightsql as a
 import adbc_driver_flightsql.dbapi as d
 
@@ -16,7 +17,7 @@ from lat import one_round  # noqa: E402
 
 def client(uri, conc, tid, t0, warm, dur, out):
     try:
-        conn = d.connect(uri, db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"})
+        conn = d.connect(uri, db_kwargs=flightconn.db_kwargs())
         cur, pcur = conn.cursor(), conn.cursor()
     except Exception as e:
         print(f"connect t{tid}: {type(e).__name__}: {str(e)[:200]}", file=sys.stderr)

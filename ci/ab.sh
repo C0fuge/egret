@@ -41,7 +41,15 @@ DOCKERFILE
 docker rm -f client > /dev/null 2>&1
 docker run -d --name client --network host --cpuset-cpus=$CPU_CL --memory=6g --memory-swap=6g --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
   -v "$HERE":"$HERE":ro -v "$ASSETS":"$ASSETS":ro -v "$DATA":"$DATA":ro -v "$OUT":"$OUT" egret-client sleep infinity > /dev/null || exit 1
-cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" client "$@"; }
+cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" -e FLIGHT_TOKEN="${CL_TOKEN:-}" -e FLIGHT_CA="${CL_CA:-}" client "$@"; }
+# secured connection (Report 2, ours only): the word TLS in a side's flags starts the server with a self-signed TLS
+# certificate and a bearer token (FLIGHT_TLS_CERT / FLIGHT_TLS_KEY / FLIGHT_BEARER_TOKEN, no FLIGHT_ALLOW_INSECURE);
+# every client of that side then connects with grpc+tls:// and the token (JDBC: useEncryption=true, token, tlsRootCerts)
+mkdir -p "$OUT/tls"; TOKEN="t$(openssl rand -hex 16)"
+openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj /CN=localhost -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+  -keyout "$OUT/tls/key.pem" -out "$OUT/tls/cert.pem" > "$OUT/tls/openssl.log" 2>&1
+chmod 644 "$OUT/tls/key.pem"
+ADBC_URI=grpc://localhost:32010; JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false"; SECURE=
 docker version --format 'docker {{.Server.Version}}' > "$OUT/containers.txt"
 { echo "server image: $SRV_IMAGE limits: ${LIMITS[*]}"; echo "client cpuset: $CPU_CL"; docker image inspect -f '{{.Id}}' $SRV_IMAGE 2>/dev/null; } >> "$OUT/containers.txt"
 
@@ -64,6 +72,8 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
   docker rm -f flight >/dev/null 2>&1
   local t0=$(( $(date +%s%N) / 1000000 ))
   local env=(-e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET")
+  [ -n "$SECURE" ] && env=(-e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET"
+    -e FLIGHT_TLS_CERT=/tls/cert.pem -e FLIGHT_TLS_KEY=/tls/key.pem -e FLIGHT_BEARER_TOKEN="$TOKEN" -v "$OUT/tls":/tls:ro)
   local common=(-Darrow.enable_unsafe_memory_access=true -DmetricsEnabled=false -Dhazelcast.phone.home.enabled=false
     -DnumServers=1 -Xmx3g -XX:MaxDirectMemorySize=2g -DdataDir="$dd")
   local args=(-cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer
@@ -117,13 +127,13 @@ mem() {  # RSS / peak RSS / threads / CPU ticks of the server process; JVM heap,
   docker inspect -f "$1 oom={{.State.OOMKilled}} running={{.State.Running}}" flight >> "$O/container.txt" 2>/dev/null
 }
 firstq() {  # first query after start (ADBC connect + SELECT version()), DuckDB version
-  cl $PY -W ignore -c 'import sys, time, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
-t0 = time.perf_counter(); c = d.connect(sys.argv[1], db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"}); cur = c.cursor()
+  cl env PYTHONPATH="$HERE/clients" $PY -W ignore -c 'import sys, time, flightconn, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
+t0 = time.perf_counter(); c = d.connect(sys.argv[1], db_kwargs=flightconn.db_kwargs()); cur = c.cursor()
 try:
     cur.execute("SELECT version()"); v = cur.fetchall()[0][0]
 except Exception as e:
     v = "error: " + str(e)[:100]
-print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grpc://localhost:32010 >> "$O/start-times.txt" 2>&1
+print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' "$ADBC_URI" >> "$O/start-times.txt" 2>&1
 }
 cpuloop() {  # cpuloop <file> <stopfile>: server process CPU ticks (utime stime, 100/s) every ~0.25 s
   while [ ! -e "$2" ]; do echo "$(date +%s.%N) $(docker exec flight cut -d' ' -f14,15 /proc/1/stat 2>/dev/null)" >> "$1"; sleep 0.25; done
@@ -132,12 +142,12 @@ step() { echo -e "$1\t$2\t$(date +%s)\t$(cut -d' ' -f1 /proc/loadavg)" >> "$O/st
 tpch() {  # tpch <name> <sf> <reps>
   local d=$O/$1; mkdir -p "$d"
   cl timeout 1500 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
-    "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" "$QUERIES" "$3" "$d" > "$d/runner.txt" 2>&1
+    "$JDBC_URI" "$QUERIES" "$3" "$d" > "$d/runner.txt" 2>&1
   tpch_result "$1"
 }
 tpch_adbc() {  # tpch_adbc <name> <reps>
   local d=$O/$1; mkdir -p "$d"
-  cl timeout 1500 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$QUERIES" "$2" "$d" > "$d/runner.txt" 2>&1
+  cl timeout 1500 $PY -W ignore "$HERE/clients/tpch_adbc.py" "$ADBC_URI" "$QUERIES" "$2" "$d" > "$d/runner.txt" 2>&1
   tpch_result "$1"
 }
 tpch_result() {
@@ -159,6 +169,11 @@ alive() { [ "$(docker inspect -f '{{.State.Running}}' flight 2>/dev/null)" = tru
 side() {  # side <A|B> <round>
   local s=$1 r=$2 flags layout
   if [ "$s" = A ]; then flags=$FLAGS_A; layout=default; SERVER=$SERVER_A; else flags=$FLAGS_B; layout=$LAYOUT_B; SERVER=$SERVER_B; fi
+  SECURE=; ADBC_URI=grpc://localhost:32010; JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false"; CL_TOKEN=; CL_CA=
+  case " $flags " in *" TLS "*)
+    flags=$(echo " $flags " | sed 's/ TLS / /'); SECURE=1; ADBC_URI=grpc+tls://localhost:32010; CL_TOKEN=$TOKEN; CL_CA=$OUT/tls/cert.pem
+    JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=true&token=$TOKEN&tlsRootCerts=$OUT/tls/cert.pem";;
+  esac
   O=$OUT/$s/r$r; rm -rf "$O"; mkdir -p "$O"
   log "round $r side $s server=${SERVER:-default} layout=$layout flags=[$flags]"
   step start begin
@@ -182,8 +197,8 @@ side() {  # side <A|B> <round>
       step small begin
       for c in "1 20" "8 10" "32 5"; do set -- $c
         cl timeout 600 java -Xmx1g -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/Lat.java" \
-          "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" $1 $2 "$O/small-jdbc-c$1.csv" 2>"$O/small-jdbc-c$1.err" | grep '^jdbc' >> "$O/result.txt"
-        cl timeout 600 $PY -W ignore "$HERE/clients/lat.py" grpc://localhost:32010 $1 $2 "$O/small-adbc-c$1.csv" \
+          "$JDBC_URI" $1 $2 "$O/small-jdbc-c$1.csv" 2>"$O/small-jdbc-c$1.err" | grep '^jdbc' >> "$O/result.txt"
+        cl timeout 600 $PY -W ignore "$HERE/clients/lat.py" "$ADBC_URI" $1 $2 "$O/small-adbc-c$1.csv" \
           2>"$O/small-adbc-c$1.err" | grep '^adbc' >> "$O/result.txt"
       done
       step small end; mem small ;;
@@ -198,7 +213,7 @@ side() {  # side <A|B> <round>
       step scan end; mem scan ;;
     adbcscan)
       step adbcscan begin
-      cl timeout 900 $PY -W ignore "$HERE/clients/scan_adbc.py" grpc://localhost:32010 "SELECT * FROM tpch.lineitem" \
+      cl timeout 900 $PY -W ignore "$HERE/clients/scan_adbc.py" "$ADBC_URI" "SELECT * FROM tpch.lineitem" \
         2>"$O/adbcscan.err" | grep '^adbcscan' >> "$O/result.txt"
       step adbcscan end; mem adbcscan ;;
     heavy4)
@@ -206,7 +221,7 @@ side() {  # side <A|B> <round>
       for q in q01 q09 q18 q21; do
         mkdir -p "$O/h-$q/q" "$O/heavy4-$q"; cp "$HERE/queries/tpch/$q.sql" "$O/h-$q/q/"
         cl timeout 1200 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
-          "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" "$O/h-$q/q" 1 "$O/heavy4-$q" > "$O/heavy4-$q/runner.txt" 2>&1 &
+          "$JDBC_URI" "$O/h-$q/q" 1 "$O/heavy4-$q" > "$O/heavy4-$q/runner.txt" 2>&1 &
         pids+=($!)
       done
       wait "${pids[@]}"; pids=()
@@ -216,27 +231,27 @@ side() {  # side <A|B> <round>
       for c in 1 8 32 64 128; do
         step load-jdbc-c$c begin
         cl env SMALL_CLASSES=$LOAD_CLASSES LOAD_WARMUP_S=10 LOAD_DURATION_S=60 timeout 300 java -Xmx2g -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED \
-          -cp "$JDBC" "$HERE/clients/Lat.java" "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" $c 0 "$O/load-jdbc-c$c.csv" \
+          -cp "$JDBC" "$HERE/clients/Lat.java" "$JDBC_URI" $c 0 "$O/load-jdbc-c$c.csv" \
           2>"$O/load-jdbc-c$c.err" | grep '^jdbc' | sed 's/^/load /' >> "$O/result.txt"
         step load-jdbc-c$c end; mem load-jdbc-c$c
         step load-adbc-c$c begin
-        cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 $c 10 60 "$O/load-adbc-c$c.csv" \
+        cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" "$ADBC_URI" $c 10 60 "$O/load-adbc-c$c.csv" \
           2>"$O/load-adbc-c$c.err" | grep '^adbc' | sed 's/^/load /' >> "$O/result.txt"
         step load-adbc-c$c end; mem load-adbc-c$c
       done ;;
     mixed)  # 32 ADBC small-query clients alone, then with 2 heavy SF10 streams (q01, q18 back to back over ADBC)
       step mixed-base begin
-      cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 32 10 60 "$O/mixed-base.csv" \
+      cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" "$ADBC_URI" 32 10 60 "$O/mixed-base.csv" \
         2>"$O/mixed-base.err" | grep '^adbc' | sed 's/^/mixed-base /' >> "$O/result.txt"
       step mixed-base end; mem mixed-base
       step mixed begin
-      cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 32 10 60 "$O/mixed-small.csv" \
+      cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" "$ADBC_URI" 32 10 60 "$O/mixed-small.csv" \
         2>"$O/mixed-small.err" | grep '^adbc' | sed 's/^/mixed-small /' >> "$O/result.txt" &
       pids=($!)
       for q in q01 q18; do
         ( mkdir -p "$O/mixq-$q"; cp "$QUERIES/$q.sql" "$O/mixq-$q/"; end=$(( $(date +%s) + 73 )); i=0
           while [ "$(date +%s)" -lt $end ]; do
-            cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/mixq-$q" 1 "$O/mixed-$q-$i" > /dev/null 2>&1
+            cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" "$ADBC_URI" "$O/mixq-$q" 1 "$O/mixed-$q-$i" > /dev/null 2>&1
             awk -F'\t' -v q=$q -v i=$i -v t="$(date +%s)" 'NR==2{print "mixed-heavy", q, i, $2, $5, $3, $4, t}' "$O/mixed-$q-$i/summary.tsv" >> "$O/mixed-heavy.txt"
             i=$((i + 1)); done ) &
         pids+=($!)
@@ -247,7 +262,7 @@ side() {  # side <A|B> <round>
       step heavy4a begin
       for q in q01 q09 q18 q21; do
         mkdir -p "$O/h4-$q"; cp "$QUERIES/$q.sql" "$O/h4-$q/"
-        cl timeout 1200 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/h4-$q" 1 "$O/heavy4a-$q" > /dev/null 2>&1 &
+        cl timeout 1200 $PY -W ignore "$HERE/clients/tpch_adbc.py" "$ADBC_URI" "$O/h4-$q" 1 "$O/heavy4a-$q" > /dev/null 2>&1 &
         pids+=($!)
       done
       wait "${pids[@]}"; pids=()
@@ -257,7 +272,7 @@ side() {  # side <A|B> <round>
       sudo tc qdisc add dev lo root netem delay 5ms rate 1gbit limit 100000 && tc qdisc show dev lo >> "$O/netem.txt"
       step netem10 begin; tpch_adbc netem10 2; step netem10 end; mem netem10
       step netemscan begin
-      cl timeout 900 $PY -W ignore "$HERE/clients/scan_adbc.py" grpc://localhost:32010 "SELECT * FROM tpch.lineitem" \
+      cl timeout 900 $PY -W ignore "$HERE/clients/scan_adbc.py" "$ADBC_URI" "SELECT * FROM tpch.lineitem" \
         2>"$O/netemscan.err" | grep '^adbcscan' | sed 's/^/netem /' >> "$O/result.txt"
       step netemscan end; mem netemscan
       sudo tc qdisc del dev lo root ;;
@@ -272,7 +287,7 @@ side() {  # side <A|B> <round>
         step cancel-$q begin
         rm -f "$O/.cpu-stop"; cpuloop "$O/cancel-$q-cpu.txt" "$O/.cpu-stop" & local cp=$!
         sleep 2
-        cl timeout 700 $PY -W ignore "$HERE/clients/cancel.py" grpc://localhost:32010 "$QUERIES/$q.sql" 3 2>"$O/cancel-$q.err" >> "$O/result.txt"
+        cl timeout 700 $PY -W ignore "$HERE/clients/cancel.py" "$ADBC_URI" "$QUERIES/$q.sql" 3 2>"$O/cancel-$q.err" >> "$O/result.txt"
         sleep 20; touch "$O/.cpu-stop"; wait $cp; rm -f "$O/.cpu-stop"
         step cancel-$q end; mem cancel-$q
       done ;;
@@ -288,11 +303,11 @@ side() {  # side <A|B> <round>
           } >> "$O/soak-jvm.txt"; sleep 10; done ) & local jp=$!
       ( q=q01; i=0; while [ ! -e "$O/.soak-stop" ]; do
           mkdir -p "$O/soakq-$q"; cp "$QUERIES/$q.sql" "$O/soakq-$q/"
-          cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/soakq-$q" 1 "$O/soak-$q-$i" > /dev/null 2>&1
+          cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" "$ADBC_URI" "$O/soakq-$q" 1 "$O/soak-$q-$i" > /dev/null 2>&1
           awk -F'\t' -v q=$q -v i=$i -v t="$(date +%s)" 'NR==2{print "soak-heavy", q, i, $2, $5, $3, $4, t}' "$O/soak-$q-$i/summary.tsv" >> "$O/soak-heavy.txt"
           i=$((i + 1)); [ $q = q01 ] && q=q18 || q=q01; done ) & local hp=$!
       for seg in 1 2 3 4 5 6; do
-        cl env SMALL_CLASSES=$LOAD_CLASSES timeout 600 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 32 $([ $seg = 1 ] && echo 10 || echo 0) 300 \
+        cl env SMALL_CLASSES=$LOAD_CLASSES timeout 600 $PY -W ignore "$HERE/clients/load.py" "$ADBC_URI" 32 $([ $seg = 1 ] && echo 10 || echo 0) 300 \
           "$O/soak-seg$seg.csv" 2>"$O/soak-seg$seg.err" | grep '^adbc' | sed "s/^/soak seg=$seg /" >> "$O/result.txt"
         alive soak-seg$seg || break
       done

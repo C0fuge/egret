@@ -1,0 +1,22 @@
+[
+ {
+  "variant": "new-plain-vs-tls-lat",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-new",
+  "b_flags": "TLS",
+  "workloads": "small adbcscan adbc10",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-plain-vs-tls-load",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-new",
+  "b_flags": "TLS",
+  "workloads": "load",
+  "small_classes": ""
+ }
+]

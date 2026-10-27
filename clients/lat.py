@@ -2,6 +2,7 @@
 Classes: meta_tables (adbc_get_objects depth=tables), meta_schemas (depth=db_schemas), point_orders, point_lineitem, limit10, limit10_ob (LIMIT 10 with ORDER BY),
 count_filter, prep_point (same parameterised text every time: the dbapi cursor keeps the prepared statement)."""
 import sys, time, datetime, multiprocessing as mp
+import flightconn
 import adbc_driver_flightsql.dbapi as d, adbc_driver_flightsql as a
 
 import os
@@ -48,7 +49,7 @@ def one_round(conn, cur, pcur, tid, r, conc, out):
 
 def worker(args):
     uri, conc, rounds, tid, barrier = args
-    conn = d.connect(uri, db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"})
+    conn = d.connect(uri, db_kwargs=flightconn.db_kwargs())
     cur = conn.cursor(); pcur = conn.cursor()
     one_round(conn, cur, pcur, tid, -1, conc, None)
     barrier.wait()

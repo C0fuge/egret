@@ -44,9 +44,10 @@ def connect(uri):
         for t in TABLES:
             con.execute(f"CREATE VIEW tpch.{t} AS SELECT * FROM read_parquet('{uri[7:]}/tpch/{t}/*.parquet')")
         return con, lambda sql: con.execute(sql).fetch_arrow_table()
+    import flightconn
     import adbc_driver_flightsql as a
     import adbc_driver_flightsql.dbapi as d
-    con = d.connect(uri, db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"})
+    con = d.connect(uri, db_kwargs=flightconn.db_kwargs())
 
     def run(sql):
         with con.cursor() as cur:
