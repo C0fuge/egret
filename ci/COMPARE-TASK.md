@@ -75,3 +75,19 @@ small queries, cache on vs off) after Report 1 is published; do not restart fini
 
 Update (maintainer, 2026-10-27): `ours-new` stays `7562a5bdb7b9` for Reports 1-3. Newer pre-releases (first one:
 `84fec772ec50`) are collected and tested only in a final run once Reports 1-3 are done (S3 cache pair included).
+
+## Fix list after the first speed run 40490378159 (maintainer, 2026-10-27 18:55) - do these BEFORE publishing Report 1
+1. **"wrong answer" on JDBC for q01/q05/q06/q07/q09/q15/q19 for BOTH our builds**: identical on both builds and these
+   are exactly the queries with DECIMAL/aggregate results, so it is almost certainly the harness (JDBC value formatting
+   or rounding vs the reference), not the servers. Compare numerically (decimal-aware, same rounding as the reference) or
+   build the JDBC reference from DuckDB through the same JDBC formatting. Report only real mismatches.
+2. **up-main: every ADBC TPC-H query "failed"**: find the actual error text (job log). ADBC uses plain
+   CommandStatementQuery, not prepared statements, so it should run; fix the harness side (table qualification, data dir,
+   startup) if that is the cause, else record the server's error text as the reason.
+3. **up-native "not run: not in this setting's jobs"**: add its jobs (def and t8) so it appears in every table.
+4. **ours-new (7562a5bdb7b9) is 30-45 % slower than ours-27f5 on TPC-H SF10 over ADBC on the same runner** (q01 2204 vs
+   1510 ms, q03 1208 vs 862 ...). The maintainer's local stand saw the same direction for the intermediate build
+   45fc0a9e6e02. Confirm with a dedicated same-runner job (5 rounds, ADBC SF10 + small queries) for 27f5 vs
+   `server-1.0.0-45fc0a9e6e02` vs `server-1.0.0-e46f28dfdf09` vs `server-1.0.0-6acc9cce0b26` vs 7562a5bdb7b9 (all
+   C0fuge/kestrel pre-releases) to find the first slow build, and put the result at the top of Report 1. Do not change
+   server code here; the coordinator forwards it to the server repo.
