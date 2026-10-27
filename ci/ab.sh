@@ -41,7 +41,7 @@ DOCKERFILE
 docker rm -f client > /dev/null 2>&1
 docker run -d --name client --network host --cpuset-cpus=$CPU_CL --memory=6g --memory-swap=6g --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
   -v "$HERE":"$HERE":ro -v "$ASSETS":"$ASSETS":ro -v "$DATA":"$DATA":ro -v "$OUT":"$OUT" egret-client sleep infinity > /dev/null || exit 1
-cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" -e FLIGHT_TOKEN="${CL_TOKEN:-}" -e FLIGHT_CA="${CL_CA:-}" client "$@"; }
+cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" -e FLIGHT_COMPRESSION="${CL_COMP:-}" -e FLIGHT_TOKEN="${CL_TOKEN:-}" -e FLIGHT_CA="${CL_CA:-}" client "$@"; }
 # secured connection (Report 2, ours only): the word TLS in a side's flags starts the server with a self-signed TLS
 # certificate and a bearer token (FLIGHT_TLS_CERT / FLIGHT_TLS_KEY / FLIGHT_BEARER_TOKEN, no FLIGHT_ALLOW_INSECURE);
 # every client of that side then connects with grpc+tls:// and the token (JDBC: useEncryption=true, token, tlsRootCerts)
@@ -237,8 +237,13 @@ side() {  # side <A|B> <round>
     flags=$(echo " $flags " | sed 's/ TLS / /'); SECURE=1; ADBC_URI=grpc+tls://localhost:32010; CL_TOKEN=$TOKEN; CL_CA=$OUT/tls/cert.pem
     JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=true&token=$TOKEN&tlsRootCerts=$OUT/tls/cert.pem";;
   esac
+  # CZSTD / CLZ4: every ADBC client of that side asks for compressed result streams (call header arrow-compression)
+  CL_COMP=
+  case " $flags " in *" CZSTD "*) CL_COMP=zstd;; *" CLZ4 "*) CL_COMP=lz4;; esac
+  flags=$(echo " $flags " | sed 's/ CZSTD / /; s/ CLZ4 / /; s/^ *//; s/ *$//')
   O=$OUT/$s/r$r; rm -rf "$O"; mkdir -p "$O"
-  log "round $r side $s server=${SERVER:-default} layout=$layout flags=[$flags]"
+  log "round $r side $s server=${SERVER:-default} layout=$layout flags=[$flags] client-compression=${CL_COMP:-none}"
+  [ -n "$CL_COMP" ] && echo "client_compression: $CL_COMP (ADBC call header arrow-compression)" >> "$O/result.txt"
   step start begin
   # shellcheck disable=SC2086
   if ! start_server "$(data_dir $layout sf10)" $flags > "$O/start.txt" 2>&1; then
