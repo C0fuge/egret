@@ -122,9 +122,10 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `small
 ## Results
 
 - [c7-load-tls-40553901245](results/c7-load-tls-40553901245/summary.md) (latest of its wave)
+- [c8-robust-cluster-40553385813](results/c8-robust-cluster-40553385813/summary.md) (latest of its wave)
 - [c4-robust-40551848571](results/c4-robust-40551848571/summary.md) (latest of its wave)
 - [c9-robust-trino-40551575311](results/c9-robust-trino-40551575311/summary.md) (latest of its wave)
-- [c8-robust-cluster-40551320307](results/c8-robust-cluster-40551320307/summary.md) (latest of its wave)
+- [c8-robust-cluster-40551320307](results/c8-robust-cluster-40551320307/summary.md)
 - [c5-threads-40550556746](results/c5-threads-40550556746/summary.md) (latest of its wave)
 - [c4-robust-40550552130](results/c4-robust-40550552130/summary.md)
 - [c3-load-40540885908](results/c3-load-40540885908/summary.md) (latest of its wave)
