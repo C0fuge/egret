@@ -1,0 +1,62 @@
+[
+ {
+  "variant": "new-vs-27f5-soak",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-27f5",
+  "b_flags": "",
+  "workloads": "soak",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-27f5-start-cancel",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-27f5",
+  "b_flags": "",
+  "workloads": "coldstart cancel",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-native-soak",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-native",
+  "b_flags": "",
+  "workloads": "soak",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-native-start-cancel",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-native",
+  "b_flags": "",
+  "workloads": "coldstart cancel",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-main-soak",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-main",
+  "b_flags": "",
+  "workloads": "soak",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-main-start-cancel",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-main",
+  "b_flags": "",
+  "workloads": "coldstart cancel",
+  "small_classes": ""
+ }
+]

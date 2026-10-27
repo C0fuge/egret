@@ -1,0 +1,32 @@
+[
+ {
+  "variant": "threads-4-vs-1",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-new",
+  "b_flags": "-DduckDbThreads=1",
+  "workloads": "adbc10 adbc1 small",
+  "small_classes": ""
+ },
+ {
+  "variant": "threads-4-vs-2",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-new",
+  "b_flags": "-DduckDbThreads=2",
+  "workloads": "adbc10 adbc1 small",
+  "small_classes": ""
+ },
+ {
+  "variant": "threads-4-vs-8",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-new",
+  "b_flags": "-DduckDbThreads=8",
+  "workloads": "adbc10 adbc1 small",
+  "small_classes": ""
+ }
+]

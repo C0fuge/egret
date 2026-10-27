@@ -92,12 +92,16 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
         -cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer \
         --port 32010 --localhost localhost --hosts 127.0.0.1 >/dev/null
   fi
-  for _ in $(seq 1 120); do
+  local port=
+  for _ in $(seq 1 600); do
+    if [ -z "$port" ] && (echo > /dev/tcp/127.0.0.1/32010) 2>/dev/null; then
+      port=1; echo "port_ms=$(( $(date +%s%N) / 1000000 - t0 ))" >> "$O/start-times.txt"
+    fi
     if docker logs flight 2>&1 | grep -q 'Server Arrow Flight SQL started'; then
       docker inspect -f '{{json .Config.Cmd}}' flight > "$O/jvm-cmd.json" 2>/dev/null
       echo "started_s=$(( $(date +%s%N) / 1000000 - t0 ))ms" >> "$O/start-times.txt"; return 0
     fi
-    [ "$(docker inspect -f '{{.State.Running}}' flight)" = true ] || break; sleep 1
+    [ "$(docker inspect -f '{{.State.Running}}' flight)" = true ] || break; sleep 0.2
   done
   docker logs flight 2>&1 | tail -30; return 1
 }
@@ -106,6 +110,18 @@ mem() {  # RSS / peak RSS / threads / CPU ticks of the server process; JVM heap,
   { echo "== $1"; docker run --rm --pid container:flight --cap-add SYS_PTRACE --cpuset-cpus=$CPU_CL eclipse-temurin:21-jdk sh -c \
       'jcmd 1 GC.heap_info; jcmd 1 PerfCounter.print | grep -E "sun.gc.collector.[0-9].(name|invocations|time)|java.threads.live=|sun.os.hrt.frequency"; jstat -gcutil 1' 2>&1 | head -40; } >> "$O/jvm.txt"
   docker inspect -f "$1 oom={{.State.OOMKilled}} running={{.State.Running}}" flight >> "$O/container.txt" 2>/dev/null
+}
+firstq() {  # first query after start (ADBC connect + SELECT version()), DuckDB version
+  cl $PY -W ignore -c 'import sys, time, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
+t0 = time.perf_counter(); c = d.connect(sys.argv[1], db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"}); cur = c.cursor()
+try:
+    cur.execute("SELECT version()"); v = cur.fetchall()[0][0]
+except Exception as e:
+    v = "error: " + str(e)[:100]
+print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grpc://localhost:32010 >> "$O/start-times.txt" 2>&1
+}
+cpuloop() {  # cpuloop <file> <stopfile>: server process CPU ticks (utime stime, 100/s) every ~0.25 s
+  while [ ! -e "$2" ]; do echo "$(date +%s.%N) $(docker exec flight cut -d' ' -f14,15 /proc/1/stat 2>/dev/null)" >> "$1"; sleep 0.25; done
 }
 step() { echo -e "$1\t$2\t$(date +%s)\t$(cut -d' ' -f1 /proc/loadavg)" >> "$O/steps.tsv"; }
 tpch() {  # tpch <name> <sf> <reps>
@@ -140,13 +156,7 @@ side() {  # side <A|B> <round>
       sleep 3; done ) &
   local statspid=$!
   mem idle
-  cl $PY -W ignore -c 'import sys, time, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
-t0 = time.perf_counter(); c = d.connect(sys.argv[1], db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"}); cur = c.cursor()
-try:
-    cur.execute("SELECT version()"); v = cur.fetchall()[0][0]
-except Exception as e:
-    v = "error: " + str(e)[:100]
-print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grpc://localhost:32010 >> "$O/start-times.txt" 2>&1
+  firstq
   # sf1 / adbc1 restart the server on SF1: always last
   local sf1started=
   for w in $(for x in $WORKLOADS; do case $x in sf1|adbc1) ;; *) echo $x;; esac; done) $(for x in $WORKLOADS; do case $x in sf1|adbc1) echo $x;; esac; done); do
@@ -234,6 +244,43 @@ print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grp
         2>"$O/netemscan.err" | grep '^adbcscan' | sed 's/^/netem /' >> "$O/result.txt"
       step netemscan end; mem netemscan
       sudo tc qdisc del dev lo root ;;
+    coldstart)  # Report 3: 5 cold starts on SF10: port answers, start log line, first query, idle RSS
+      for i in 1 2 3 4 5; do
+        echo "== cold $i" >> "$O/start-times.txt"
+        # shellcheck disable=SC2086
+        start_server "$(data_dir $layout sf10)" $flags > "$O/coldstart-$i.txt" 2>&1 && { firstq; sleep 5; mem cold$i; }
+      done ;;
+    cancel)  # Report 3: cancel a running SF10 q18 / q21 after 3 s; server CPU sampled to see when it stops working
+      for q in q18 q21; do
+        step cancel-$q begin
+        rm -f "$O/.cpu-stop"; cpuloop "$O/cancel-$q-cpu.txt" "$O/.cpu-stop" & local cp=$!
+        sleep 2
+        cl timeout 700 $PY -W ignore "$HERE/clients/cancel.py" grpc://localhost:32010 "$QUERIES/$q.sql" 3 2>"$O/cancel-$q.err" >> "$O/result.txt"
+        sleep 20; touch "$O/.cpu-stop"; wait $cp; rm -f "$O/.cpu-stop"
+        step cancel-$q end; mem cancel-$q
+      done ;;
+    soak)  # Report 3: 30 min of 32 ADBC small-query clients (6 x 5 min segments) + 1 heavy stream (q01 / q18 alternating);
+           # JVM heap / GC / threads and RSS every 10 s
+      step soak begin
+      docker rm -f jsamp > /dev/null 2>&1
+      docker run -d --name jsamp --pid container:flight --cap-add SYS_PTRACE --cpuset-cpus=$CPU_CL eclipse-temurin:21-jdk sleep infinity > /dev/null
+      rm -f "$O/.soak-stop"
+      ( while [ ! -e "$O/.soak-stop" ]; do
+          { echo "== $(date +%s) $(docker exec flight sh -c 'grep -E "VmRSS|Threads" /proc/1/status' | tr -s ' \t\n' ' ')"
+            docker exec jsamp sh -c 'jcmd 1 GC.heap_info | sed -n 2,4p; jcmd 1 PerfCounter.print | grep -E "sun.gc.collector.[0-9].(name|invocations|time)=|sun.os.hrt.frequency=|sun.rt.safepointTime="' 2>&1
+          } >> "$O/soak-jvm.txt"; sleep 10; done ) & local jp=$!
+      ( q=q01; i=0; while [ ! -e "$O/.soak-stop" ]; do
+          mkdir -p "$O/soakq-$q"; cp "$QUERIES/$q.sql" "$O/soakq-$q/"
+          cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/soakq-$q" 1 "$O/soak-$q-$i" > /dev/null 2>&1
+          awk -F'\t' -v q=$q -v i=$i -v t="$(date +%s)" 'NR==2{print "soak-heavy", q, i, $2, $5, $3, $4, t}' "$O/soak-$q-$i/summary.tsv" >> "$O/soak-heavy.txt"
+          i=$((i + 1)); [ $q = q01 ] && q=q18 || q=q01; done ) & local hp=$!
+      for seg in 1 2 3 4 5 6; do
+        cl env SMALL_CLASSES=$LOAD_CLASSES timeout 600 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 32 $([ $seg = 1 ] && echo 10 || echo 0) 300 \
+          "$O/soak-seg$seg.csv" 2>"$O/soak-seg$seg.err" | grep '^adbc' | sed "s/^/soak seg=$seg /" >> "$O/result.txt"
+        alive soak-seg$seg || break
+      done
+      touch "$O/.soak-stop"; wait $jp $hp; rm -f "$O/.soak-stop"; docker rm -f jsamp > /dev/null 2>&1
+      step soak end; mem soak ;;
     sf1|adbc1)
       step $w begin
       if [ -z "$sf1started" ]; then

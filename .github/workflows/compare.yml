@@ -240,6 +240,7 @@ jobs:
           python3 ci/compare.py "$RUNNER_TEMP/jobs" "$R" "Wave $WAVE (server comparison), run $GITHUB_RUN_ID" > /dev/null
           python3 ci/speed_report.py "$RUNNER_TEMP/jobs" "$R/speed.md" "$GITHUB_RUN_ID" || true
           case $WAVE in *load*) python3 ci/load_report.py "$RUNNER_TEMP/jobs" "$R/load.md" "$GITHUB_RUN_ID" || true;; esac
+          case $WAVE in *robust*|*threads*) python3 ci/robust_report.py "$RUNNER_TEMP/jobs" "$R/robust.md" "$GITHUB_RUN_ID" || true;; esac
           cat "$R/summary.md" >> "$GITHUB_STEP_SUMMARY"
           python3 ci/readme.py
           git config user.name C0fuge
