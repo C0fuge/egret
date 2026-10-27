@@ -144,8 +144,13 @@ tpch_result() {
   local d=$O/$1
   echo "$1: ok=$(awk -F'\t' 'NR>1 && $2=="ok"' "$d/summary.tsv" 2>/dev/null | wc -l) cold_sum=$(awk -F'\t' 'NR>1{s+=$5} END{printf "%.2f", s}' "$d/summary.tsv" 2>/dev/null) median_sum=$(awk -F'\t' 'NR>1{s+=$7} END{printf "%.2f", s}' "$d/summary.tsv" 2>/dev/null) md5=$(cut -f1-4 "$d/summary.tsv" 2>/dev/null | md5sum | cut -c1-12)" >> "$O/result.txt"
   # error text of the first failed queries (job log; artifacts are not readable from every environment)
-  grep -E '^q[0-9]+ +FAIL' "$d/runner.txt" 2>/dev/null | head -3 | cut -c1-300 | sed "s/^/  $1 /" >> "$O/result.txt"
-  grep -q 'FAIL' "$d/runner.txt" 2>/dev/null && docker logs flight 2>&1 | grep -E 'ERROR|WARN|Exception' | tail -3 | cut -c1-300 | sed "s/^/  $1 server: /" >> "$O/result.txt"
+  local failed; failed=$(awk '$2=="FAIL"{printf "%s ", $1}' "$d/runner.txt" 2>/dev/null)
+  if [ -n "$failed" ]; then
+    echo "  $1 failed: $failed" >> "$O/result.txt"
+    for e in "$d"/q*.error; do [ -e "$e" ] && echo "$(basename "$e" .error): $(head -c 400 "$e" | tr '\n' ' ')"; done \
+      | sort -t: -k2 -u | cut -c1-400 | sed "s/^/  $1 error /" >> "$O/result.txt"
+  fi
+  grep -q 'FAIL' "$d/runner.txt" 2>/dev/null && docker logs flight 2>&1 | grep -E 'Exception|Caused by' | grep -v '^\s*at ' | cut -c1-300 | sort | uniq -c | sort -rn | head -12 | sed "s/^/  $1 server: /" >> "$O/result.txt"
   return 0
 }
 alive() { [ "$(docker inspect -f '{{.State.Running}}' flight 2>/dev/null)" = true ] || { echo "SERVER DIED after $1: $(docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' flight)" >> "$O/result.txt"; docker logs flight > "$O/server-died-$1.log" 2>&1
