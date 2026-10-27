@@ -24,7 +24,7 @@ QUERIES=${QUERIES:-$HERE/queries/tpch}; UPDUCK=${UPDUCK:-$ASSETS/duckdb-upstream
 for x in $SERVER_A $SERVER_B; do case $x in upstream|up-*) continue;; esac; [ -f "$ASSETS/srv/$x/server.jar" ] && SRV=$ASSETS/srv/$x; done
 SRV_IMAGE=eclipse-temurin:21-jre; CPU_CL=2,3
 LIMITS=(--cpus=2 --cpuset-cpus=0,1 --memory=6g --memory-swap=6g)
-PY=/venv/bin/python
+PY=/venv/bin/python; LOAD_CLASSES=${LOAD_CLASSES:-point_orders,point_lineitem,count_filter}; pids=()
 S3_KEY="ci$(openssl rand -hex 8)"; S3_SECRET="$(openssl rand -hex 24)"
 mkdir -p "$OUT"; log() { echo "== $(date -u +%T) $*" | tee -a "$OUT/job.log"; }
 
@@ -180,10 +180,60 @@ print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grp
         mkdir -p "$O/h-$q/q" "$O/heavy4-$q"; cp "$HERE/queries/tpch/$q.sql" "$O/h-$q/q/"
         cl timeout 1200 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
           "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" "$O/h-$q/q" 1 "$O/heavy4-$q" > "$O/heavy4-$q/runner.txt" 2>&1 &
+        pids+=($!)
       done
-      wait
+      wait "${pids[@]}"; pids=()
       echo "heavy4: $(for q in q01 q09 q18 q21; do awk -F'\t' -v q=$q 'NR==2{printf "%s=%s/%s/%s ", q, $2, $5, $4}' "$O/heavy4-$q/summary.tsv" 2>/dev/null; done)" >> "$O/result.txt"
       step heavy4 end; mem heavy4 ;;
+    load)  # closed-loop small-query load steps (Report 2): 10 s warm-up + 60 s per step, JDBC and ADBC
+      for c in 1 8 32 64 128; do
+        step load-jdbc-c$c begin
+        cl env SMALL_CLASSES=$LOAD_CLASSES LOAD_WARMUP_S=10 LOAD_DURATION_S=60 timeout 300 java -Xmx2g -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED \
+          -cp "$JDBC" "$HERE/clients/Lat.java" "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" $c 0 "$O/load-jdbc-c$c.csv" \
+          2>"$O/load-jdbc-c$c.err" | grep '^jdbc' | sed 's/^/load /' >> "$O/result.txt"
+        step load-jdbc-c$c end; mem load-jdbc-c$c
+        step load-adbc-c$c begin
+        cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 $c 10 60 "$O/load-adbc-c$c.csv" \
+          2>"$O/load-adbc-c$c.err" | grep '^adbc' | sed 's/^/load /' >> "$O/result.txt"
+        step load-adbc-c$c end; mem load-adbc-c$c
+      done ;;
+    mixed)  # 32 ADBC small-query clients alone, then with 2 heavy SF10 streams (q01, q18 back to back over ADBC)
+      step mixed-base begin
+      cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 32 10 60 "$O/mixed-base.csv" \
+        2>"$O/mixed-base.err" | grep '^adbc' | sed 's/^/mixed-base /' >> "$O/result.txt"
+      step mixed-base end; mem mixed-base
+      step mixed begin
+      cl env SMALL_CLASSES=$LOAD_CLASSES timeout 300 $PY -W ignore "$HERE/clients/load.py" grpc://localhost:32010 32 10 60 "$O/mixed-small.csv" \
+        2>"$O/mixed-small.err" | grep '^adbc' | sed 's/^/mixed-small /' >> "$O/result.txt" &
+      pids=($!)
+      for q in q01 q18; do
+        ( mkdir -p "$O/mixq-$q"; cp "$QUERIES/$q.sql" "$O/mixq-$q/"; end=$(( $(date +%s) + 73 )); i=0
+          while [ "$(date +%s)" -lt $end ]; do
+            cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/mixq-$q" 1 "$O/mixed-$q-$i" > /dev/null 2>&1
+            awk -F'\t' -v q=$q -v i=$i -v t="$(date +%s)" 'NR==2{print "mixed-heavy", q, i, $2, $5, $3, $4, t}' "$O/mixed-$q-$i/summary.tsv" >> "$O/mixed-heavy.txt"
+            i=$((i + 1)); done ) &
+        pids+=($!)
+      done
+      wait "${pids[@]}"; pids=()
+      step mixed end; mem mixed ;;
+    heavy4a)  # 4 heavy SF10 queries at once over ADBC (every server answers ADBC)
+      step heavy4a begin
+      for q in q01 q09 q18 q21; do
+        mkdir -p "$O/h4-$q"; cp "$QUERIES/$q.sql" "$O/h4-$q/"
+        cl timeout 1200 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/h4-$q" 1 "$O/heavy4a-$q" > /dev/null 2>&1 &
+        pids+=($!)
+      done
+      wait "${pids[@]}"; pids=()
+      echo "heavy4a: $(for q in q01 q09 q18 q21; do awk -F'\t' -v q=$q 'NR==2{printf "%s=%s/%s/%s/%s ", q, $2, $5, $3, $4}' "$O/heavy4a-$q/summary.tsv" 2>/dev/null; done)" >> "$O/result.txt"
+      step heavy4a end; mem heavy4a ;;
+    netem)  # client path limited on loopback: netem 5 ms each way (10 ms RTT), 1 Gbit/s; SF10 TPC-H + full lineitem export over ADBC
+      sudo tc qdisc add dev lo root netem delay 5ms rate 1gbit limit 100000 && tc qdisc show dev lo >> "$O/netem.txt"
+      step netem10 begin; tpch_adbc netem10 2; step netem10 end; mem netem10
+      step netemscan begin
+      cl timeout 900 $PY -W ignore "$HERE/clients/scan_adbc.py" grpc://localhost:32010 "SELECT * FROM tpch.lineitem" \
+        2>"$O/netemscan.err" | grep '^adbcscan' | sed 's/^/netem /' >> "$O/result.txt"
+      step netemscan end; mem netemscan
+      sudo tc qdisc del dev lo root ;;
     sf1|adbc1)
       step $w begin
       if [ -z "$sf1started" ]; then

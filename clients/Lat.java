@@ -23,12 +23,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  * classes (metadata tables/schemas, point orders/lineitem, LIMIT 10 without and with ORDER BY, filtered count, prepared point query reused).
  * Keys are deterministic per (thread, round), so the row/value sums per class are comparable between server variants.
  * CSV: client,conc,class,thread,round,lat_ms,rows,val,ok
+ * Closed-loop load mode (LOAD_DURATION_S > 0): every thread runs rounds back to back for LOAD_WARMUP_S (not recorded) and then
+ * LOAD_DURATION_S seconds (recorded; qps = recorded queries / LOAD_DURATION_S); <rounds> is ignored.
  */
 public class Lat {
     static final String[] ALL_CLASSES = {"meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "limit10_ob", "count_filter", "prep_point"};
     /** SMALL_CLASSES (comma-separated) restricts the mix, e.g. for a server without prepared statements. */
     static final String[] CLASSES = System.getenv().getOrDefault("SMALL_CLASSES", "").isBlank() ? ALL_CLASSES
             : System.getenv("SMALL_CLASSES").split(",");
+
+    static final double WARMUP_S = Double.parseDouble(System.getenv().getOrDefault("LOAD_WARMUP_S", "0"));
+    static final double DURATION_S = Double.parseDouble(System.getenv().getOrDefault("LOAD_DURATION_S", "0"));
 
     static long orderKey(long seed) {
         long r = 1 + Math.floorMod(seed * 2654435761L + 12345L, 14_999_999L);
@@ -60,8 +65,17 @@ public class Lat {
                     round(c, ps, tid, -1, conc, fetch, null, errors); // warm-up
                     ready.countDown();
                     go.await();
-                    for (int r = 0; r < rounds; r++) {
-                        round(c, ps, tid, r, conc, fetch, lines, errors);
+                    if (DURATION_S > 0) {
+                        long warmEnd = wall[0] + (long) (WARMUP_S * 1e9), end = warmEnd + (long) (DURATION_S * 1e9);
+                        AtomicInteger warmErrors = new AtomicInteger();
+                        for (int r = 0; System.nanoTime() < end; r++) {
+                            boolean rec = System.nanoTime() >= warmEnd;
+                            round(c, ps, tid, r, conc, fetch, rec ? lines : null, rec ? errors : warmErrors);
+                        }
+                    } else {
+                        for (int r = 0; r < rounds; r++) {
+                            round(c, ps, tid, r, conc, fetch, lines, errors);
+                        }
                     }
                     if (ps != null) {
                         ps.close();
@@ -82,7 +96,7 @@ public class Lat {
             th.join();
         }
         wall[1] = System.nanoTime();
-        double secs = (wall[1] - wall[0]) / 1e9;
+        double secs = DURATION_S > 0 ? DURATION_S : (wall[1] - wall[0]) / 1e9;
         try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(out))) {
             w.println("client,conc,class,thread,round,lat_ms,rows,val,ok");
             for (String l : lines) {
