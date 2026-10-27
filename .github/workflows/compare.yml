@@ -92,7 +92,7 @@ jobs:
         working-directory: up
         run: |
           chmod +x mvnw
-          ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip -Dspotbugs.skip -Djacoco.skip -Denforcer.skip -pl flight-server -am package
+          ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip -Dspotbugs.skip -Djacoco.skip -Denforcer.skip -pl flight-server -am install   # runner-local ~/.m2 only: copy-dependencies needs the sibling modules
           ./mvnw -B -ntp -pl flight-server dependency:copy-dependencies -DincludeScope=provided -DoutputDirectory="$RUNNER_TEMP/up/libs"
       - name: Collect
         run: |
