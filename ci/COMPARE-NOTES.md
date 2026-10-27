@@ -25,3 +25,7 @@
    C0fuge/kestrel -L 1`; at writing `server-1.0.0-7562a5bdb7b9` = 45fc + parameterless prepared queries without a
    statement id + S3 connection caching + retry of a rewritten S3 file). Pair it with 45fc on every workload of the
    45fc-vs-27f5 pairs (local Parquet and S3, threads 4 and 8) and include it in the load/QPS steps.
+5. Reporting order (maintainer, 2026-10-27): run the speed workloads first (small-query latency, TPC-H SF1/SF10, scans)
+   and publish them as soon as they finish - `results/COMPARE-SPEED-2026-10-27.md` plus a short summary in README.md,
+   own commit - before starting the load/QPS steps. The load/QPS and mixed-load results go into a separate report,
+   `results/COMPARE-LOAD-2026-10-27.md`, with its own README summary.
