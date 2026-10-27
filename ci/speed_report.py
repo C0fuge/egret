@@ -10,6 +10,7 @@ Score row sums only the queries every shown server answered correctly. Writes <o
 import collections
 import csv
 import glob
+import hashlib
 import json
 import math
 import os
@@ -34,6 +35,35 @@ def tsv(p):
     return {r["query"]: r for r in csv.DictReader(open(p), delimiter="\t")} if os.path.exists(p) else None
 
 
+def canon(p):
+    """rows of a result .tsv for a numeric comparison: numbers as floats, rows sorted by a coarse (6-digit) key"""
+    if not os.path.exists(p):
+        return None
+    def fld(v):
+        try:
+            return int(v) if re.fullmatch(r"-?\d+", v) else float(v)
+        except ValueError:
+            return v
+    rows = [tuple(fld(v) for v in line.split("\t")) for line in open(p).read().splitlines() if line]
+    return sorted(rows, key=lambda r: tuple(f"{v:.6g}" if isinstance(v, float) else str(v) for v in r))
+
+
+def same(a, b):
+    """two canon() results equal, numbers within a relative 1.5e-9 (two 10-digit roundings at most: DECIMAL exact vs %.10g)"""
+    if a is None or b is None or len(a) != len(b):
+        return False
+    for x, y in zip(a, b):
+        if len(x) != len(y):
+            return False
+        for u, v in zip(x, y):
+            if isinstance(u, (int, float)) and isinstance(v, (int, float)):
+                if not math.isclose(u, v, rel_tol=1.5e-9, abs_tol=1e-12):
+                    return False
+            elif u != v:
+                return False
+    return True
+
+
 def load(src):
     jobs = []
     for job in sorted(glob.glob(os.path.join(src, "*"))):
@@ -49,32 +79,32 @@ def load(src):
             rounds = sorted(glob.glob(os.path.join(job, s, "r*")))
             sides[name] = rounds
         jobs.append((os.path.basename(job), m, ref, sides))
-    # JDBC checksums normalise DECIMAL/DATE values differently from the ADBC reference (pyarrow), so a JDBC answer is
-    # checked by row count against in-process DuckDB and by checksum against the most common JDBC answer of all servers
-    for w, a in (("jdbc1", "adbc1"), ("jdbc10", "adbc10")):
-        votes = collections.defaultdict(collections.Counter)
-        for _, _, ref, sides in jobs:
-            for rounds in sides.values():
-                for r in rounds:
-                    for q, x in (tsv(os.path.join(r, w, "summary.tsv")) or {}).items():
-                        if x["status"] == "ok" and q in ref[a] and x["rows"] == ref[a][q]["rows"]:
-                            votes[q][x["checksum"]] += 1
-        for _, _, ref, _ in jobs:
-            ref[w] = {q: {"rows": x["rows"], "checksum": votes[q].most_common(1)[0][0] if votes[q] else None}
-                      for q, x in ref[a].items()}
+    # JDBC: the runner formats DECIMAL / DOUBLE values differently from the ADBC reference (BigDecimal plain string vs
+    # %.10g), so its answers are compared numerically (relative 1.5e-9) with the reference rows
+    for jid, _, ref, _ in jobs:
+        for w, a in (("jdbc1", "adbc1"), ("jdbc10", "adbc10")):
+            ref[w] = {q: {"rows": x["rows"], "checksum": canon(os.path.join(src, jid, "ref", a, q + ".tsv"))} for q, x in ref[a].items()}
     return jobs
 
 
 def tpch(rounds, ref, w):
     """per query: (median warm s, cold s median, ok) over rounds; ok = every round correct"""
     out = {}
-    per = [tsv(os.path.join(r, w, "summary.tsv")) for r in rounds]
-    per = [p for p in per if p is not None]
+    per = []
+    for r in rounds:
+        p = tsv(os.path.join(r, w, "summary.tsv"))
+        if p is not None and w.startswith("jdbc"):
+            for q, x in p.items():
+                if x["status"] == "ok":
+                    x["checksum"] = canon(os.path.join(r, w, q + ".tsv"))
+        if p is not None:
+            per.append(p)
     if not per:
         return None
     for q in sorted(ref):
         rs = [p.get(q) for p in per]
-        ok = all(x is not None and x["status"] == "ok" and (x["rows"], x["checksum"]) == (ref[q]["rows"], ref[q]["checksum"]) for x in rs)
+        ok = all(x is not None and x["status"] == "ok" and x["rows"] == ref[q]["rows"]
+                 and (same(x["checksum"], ref[q]["checksum"]) if w.startswith("jdbc") else x["checksum"] == ref[q]["checksum"]) for x in rs)
         why = "" if ok else ("failed" if any(x is None or x["status"] != "ok" for x in rs) else "wrong answer")
         out[q] = {"warm": med([float(x["median_s"]) for x in rs if x and x["status"] == "ok"]),
                   "cold": med([float(x["cold_s"]) for x in rs if x and x["status"] == "ok"]), "ok": ok, "why": why}
@@ -184,7 +214,7 @@ def main():
           "| settings | `def` = each server's default (`duckDbThreads` ours 4, upstream 2); `t8` = `-DduckDbThreads=8` on both |",
           "| batch size | server defaults (not overridden) |",
           "| clients | TPC-H: Python ADBC Flight SQL 1.12.0 (pyarrow 26), Flight SQL JDBC 18.0.0; small queries: same; scans: raw Flight (Arrow Java), ADBC export |",
-          "| correctness | TPC-H over ADBC: rows + checksum per query equal to in-process DuckDB on the same files; over JDBC: rows equal to that reference and checksum equal to the most common JDBC answer of all servers (the JDBC runner normalises DECIMAL/DATE values differently from pyarrow) |",
+          "| correctness | TPC-H over ADBC: rows + checksum per query equal to in-process DuckDB on the same files; over JDBC: the result rows compared numerically with the same reference (numbers within a relative 1.5e-9, i.e. two 10-digit roundings; the JDBC runner prints DECIMAL as an exact plain BigDecimal, the reference as %.10g) |",
           "| upstream on S3 | up-native: `s3a://` data dir (Hadoop S3A from its `docker/hadoop-aws` recipe for listing, DuckDB httpfs for scans, `FLIGHT_S3_*` settings); up-main: **n/a**, main at the fork point has no S3 settings (no `FLIGHT_S3_*`, no S3A dependencies) |",
           "| SF30 | not run: SF1+SF10 already fill most of the repo's 10 GB Actions cache, SF30 Parquet (~11 GB) does not fit; generating it per job costs ~20 min of each 4-vCPU runner |",
           ] + [f"| JVM `{k[0]}` `{k[1]}` | `{v}` |" for k, v in sorted(cmds.items())] + [""]

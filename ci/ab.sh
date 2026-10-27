@@ -143,6 +143,10 @@ tpch_adbc() {  # tpch_adbc <name> <reps>
 tpch_result() {
   local d=$O/$1
   echo "$1: ok=$(awk -F'\t' 'NR>1 && $2=="ok"' "$d/summary.tsv" 2>/dev/null | wc -l) cold_sum=$(awk -F'\t' 'NR>1{s+=$5} END{printf "%.2f", s}' "$d/summary.tsv" 2>/dev/null) median_sum=$(awk -F'\t' 'NR>1{s+=$7} END{printf "%.2f", s}' "$d/summary.tsv" 2>/dev/null) md5=$(cut -f1-4 "$d/summary.tsv" 2>/dev/null | md5sum | cut -c1-12)" >> "$O/result.txt"
+  # error text of the first failed queries (job log; artifacts are not readable from every environment)
+  grep -E '^q[0-9]+ +FAIL' "$d/runner.txt" 2>/dev/null | head -3 | cut -c1-300 | sed "s/^/  $1 /" >> "$O/result.txt"
+  grep -q 'FAIL' "$d/runner.txt" 2>/dev/null && docker logs flight 2>&1 | grep -E 'ERROR|WARN|Exception' | tail -3 | cut -c1-300 | sed "s/^/  $1 server: /" >> "$O/result.txt"
+  return 0
 }
 alive() { [ "$(docker inspect -f '{{.State.Running}}' flight 2>/dev/null)" = true ] || { echo "SERVER DIED after $1: $(docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' flight)" >> "$O/result.txt"; docker logs flight > "$O/server-died-$1.log" 2>&1
   echo "  last server log: $(grep -iE 'exception|error|killed' "$O/server-died-$1.log" | tail -3 | cut -c1-300 | tr '\n' ' ')" >> "$O/result.txt"; return 1; }; }

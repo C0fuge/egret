@@ -1,0 +1,6 @@
+[
+ {"variant": "27f5-vs-45fc", "storage": "local", "a_server": "ours-27f5", "a_flags": "", "b_server": "45fc0a9e6e02", "b_flags": "", "workloads": "adbc10 small", "small_classes": ""},
+ {"variant": "27f5-vs-e46f", "storage": "local", "a_server": "ours-27f5", "a_flags": "", "b_server": "e46f28dfdf09", "b_flags": "", "workloads": "adbc10 small", "small_classes": ""},
+ {"variant": "27f5-vs-6acc", "storage": "local", "a_server": "ours-27f5", "a_flags": "", "b_server": "6acc9cce0b26", "b_flags": "", "workloads": "adbc10 small", "small_classes": ""},
+ {"variant": "27f5-vs-7562", "storage": "local", "a_server": "ours-27f5", "a_flags": "", "b_server": "ours-new", "b_flags": "", "workloads": "adbc10 small", "small_classes": ""}
+]
