@@ -14,6 +14,11 @@
   once: 0 failures, peak RSS 4.3 GB). Slow link (10 ms RTT, 1 Gbit/s): up-native with ZSTD exports `lineitem` at 264 MB/s vs
   104 MB/s plain (ours has no Flight compression). TLS + token on ours: latency unchanged, SF10 TPC-H 1.01x, export -11 %.
 
+- **Report 3 ROBUSTNESS** - [results/COMPARE-ROBUSTNESS-2026-10-27.md](results/COMPARE-ROBUSTNESS-2026-10-27.md): 30-min
+  soak without deaths or errors for ours (RSS settles ~2 GB); ours stops work at once on cancel, upstream keeps computing
+  6.7-10.6 s; 3-node cluster on S3 answers TPC-H SF10 22/22 correctly with a node stopped or SIGKILLed mid-query, rejoin
+  4-5 s; Trino + our connector 22/22 on all four servers; 2 DuckDB threads best for many small queries on 2 cores.
+
 ## In progress
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
@@ -25,15 +30,11 @@
     40490378159; fix list items 1-4 at its top, bisect 40537018532: no build regresses).
   - Report 2 LOAD: **published** `results/COMPARE-LOAD-2026-10-27.md`. Still to add: the TLS closed-loop load job
     `new-plain-vs-tls-load` of run 40550942695 (results/c7-load-tls-40550942695 once its aggregate has committed).
-  - Report 3 ROBUSTNESS (all dispatched 17:26-17:33 UTC): `c4-robust` run **40550552130** (rounds 1: 30-min soak, cold
-    starts, cancel; all 3 pairs), `c5-threads` run **40550556746** (rounds 3: ours-new duckDbThreads 1/2/4/8, SF1/SF10 ADBC +
-    small), `c8-robust-cluster` run **40551320307** (new `cluster` workload: 3 kestrel nodes on one runner, 4 GB / 2 CPUs
-    each on cpus 0,1 since 3 x 6 GB does not fit; node 3 stopped before SF10 TPC-H, node 2 SIGKILLed during q18/q21, time until
-    node 1 answers q06 correctly again, rejoin times, every check vs the reference answers), `c9-robust-trino` run
-    **40551575311** (new `trino` workload: TPC-H SF1 through Trino 455 + the C0fuge/heron connector built read-only by the
-    new `trino-plugin` job, answers vs heron's reference via its compare.py; upstream pairs record their failure text).
-    The stock Flight SQL JDBC driver TPC-H is the JDBC tables of Report 1 (upstream fails there). Next: when they have
-    committed, check `robust.md` / `summary.md` and the job logs (cluster / trino lines are in result.txt), fix failures,
-    then write `results/COMPARE-ROBUSTNESS-2026-10-27.md`.
+  - Report 3 ROBUSTNESS: **published** `results/COMPARE-ROBUSTNESS-2026-10-27.md` (soak 40550552130, cold start + cancel
+    40551848571, threads 40550556746, Trino 40551575311, cluster on S3 40553385813; the local-disk cluster attempt 40551320307
+    showed that a cluster refuses complete answers without shared storage).
+  - Next: (1) add the TLS closed-loop load job of run 40550942695 to Report 2 when it has committed; (2) then the final run
+    of the task's "Later addition": newer kestrel pre-releases (`84fec772ec50` and later) as `ours-cache` in an S3-only pair
+    vs `ours-new` (SF1/SF10 and repeated small queries, cache on vs off). Not started.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
