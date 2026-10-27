@@ -1,9 +1,9 @@
 ## In progress
 
-- Server comparison task `ci/COMPARE-TASK.md` (4 servers; `ours-new` resolved at dispatch to `84fec772ec50`, a newer
-  pre-release than the `7562a5bdb7b9` named in the task - check whether it is the S3 read-cache build of the "Later
-  addition"; if it is, the cache pair is `84fec772ec50` vs `7562a5bdb7b9`). Every server runs in an identically
-  limited container (`eclipse-temurin:21-jre`, 2 CPUs on cpus 0,1, 6 GB), clients and S3 in their own container on cpus 2,3.
+- Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
+  first comparison run (workflow input default). The newer pre-release `84fec772ec50` is not `ours-new`; if it is the S3
+  read-cache build, it is the `ours-cache` side of the later S3-only pair. Every server runs in an identically limited
+  container (`eclipse-temurin:21-jre`, 2 CPUs on cpus 0,1, 6 GB), clients and S3 in their own container on cpus 2,3.
   - Report 1 SPEED: `compare` wave `c2-speed`, run **40483119136** (started 09:55 UTC; at 10:35 2 of 16 jobs done,
     `def-tpch-local` and `def-lat-local`, both green). When it is done: check `results/c2-speed-40483119136/` for failed
     or n/a TPC-H queries first (the `def-tpch-local` job took only ~2.5 min per side for SF10 JDBC+ADBC and SF1 on

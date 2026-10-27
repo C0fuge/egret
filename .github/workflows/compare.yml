@@ -18,8 +18,8 @@ on:
         description: 'up-main: upstream branch or full SHA (default: main at our fork point)'
         default: 'dbacd8d585bce2ef2a449c821fe3a53cc6060b57'
       ours-new:
-        description: 'kestrel id for the alias ours-new (empty = newest C0fuge/kestrel server-1.0.0-* pre-release at dispatch)'
-        default: ''
+        description: 'kestrel id for the alias ours-new (pinned to the build of the first comparison run; empty = newest C0fuge/kestrel server-1.0.0-* pre-release at dispatch)'
+        default: '7562a5bdb7b9'
       only:
         description: 'Comma-separated job ids (<variant>-<storage>) to run from the wave (empty = all)'
         default: ''
