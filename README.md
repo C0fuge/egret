@@ -90,7 +90,7 @@ point lookups, filtered count and metadata as small queries, and TPC-H over ADBC
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
-## Latest server comparison: [c4-robust-40551848571](results/c4-robust-40551848571/summary.md)
+## Latest server comparison: [c7-load-tls-40553901245](results/c7-load-tls-40553901245/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
 data dir and same schema-qualified queries for both. Ratio = B / A of the medians over rounds: times < 1 = B faster;
@@ -102,38 +102,41 @@ in-process DuckDB on the same files.
 
 | job | A | B | storage | runner | rounds A/B | small ADBC c1 p50 | small ADBC c32 p95 | small JDBC c1 p50 | small JDBC c32 p95 | TPC-H SF1 ADBC (sum of medians) | TPC-H SF10 ADBC (sum of medians) | TPC-H SF10 JDBC (sum of medians) | lineitem scan x1 | disqualified |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| new-vs-27f5-start-cancel-local | ours-new `-` | ours-27f5 `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 3/3 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
-| new-vs-main-start-cancel-local | ours-new `-` | up-main `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 3/3 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
-| new-vs-native-start-cancel-local | ours-new `-` | up-native `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 3/3 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
+| new-plain-vs-tls-lat-local | ours-new `-` | ours-new `TLS` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 3/3 | 0.96 | 1.01 | 1.08 | 1.09 | n/a | 1.01 | n/a | n/a | none |
 
 ### Per job (absolute medians and ratios)
 
-#### new-vs-27f5-start-cancel-local: A = ours-new `-`, B = ours-27f5 `-`, local
+#### new-plain-vs-tls-lat-local: A = ours-new `-`, B = ours-new `TLS`, local
 
-Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `coldstart cancel`.
-
-| metric | unit | A median | B median | B / A | per-round B / A |
-|---|---|---|---|---|---|
-| server RSS peak | MB | 1360.0 | 1331.0 | 0.98 | 0.98 1.03 0.96 |
-
-#### new-vs-main-start-cancel-local: A = ours-new `-`, B = up-main `-`, local
-
-Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `coldstart cancel`.
+Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `small adbcscan adbc10`.
 
 | metric | unit | A median | B median | B / A | per-round B / A |
 |---|---|---|---|---|---|
-| server RSS peak | MB | 1398.0 | 4909.0 | 3.51 | 3.42 3.58 3.54 |
-
-#### new-vs-native-start-cancel-local: A = ours-new `-`, B = up-native `-`, local
-
-Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `coldstart cancel`.
-
-| metric | unit | A median | B median | B / A | per-round B / A |
-|---|---|---|---|---|---|
-| server RSS peak | MB | 1404.0 | 4481.0 | 3.19 | 3.17 3.12 3.23 |
+| small JDBC c1 p50 | ms | 25.5 | 27.5 | 1.08 | 1.09 1.10 0.95 |
+| small JDBC c1 p95 | ms | 53.3 | 54.3 | 1.02 | 1.02 1.08 0.97 |
+| small JDBC c1 p99 | ms | 58.9 | 61.6 | 1.05 | 1.05 1.05 0.96 |
+| small JDBC c8 p50 | ms | 124.2 | 122.7 | 0.99 | 0.93 1.00 1.01 |
+| small JDBC c8 p95 | ms | 277.6 | 298.6 | 1.08 | 0.98 1.12 1.01 |
+| small JDBC c8 p99 | ms | 340.6 | 406.7 | 1.19 | 0.93 1.20 1.23 |
+| small JDBC c32 p50 | ms | 469.5 | 448.1 | 0.95 | 1.01 0.92 1.01 |
+| small JDBC c32 p95 | ms | 1274.1 | 1385.5 | 1.09 | 0.98 1.11 1.04 |
+| small JDBC c32 p99 | ms | 1788.4 | 1853.5 | 1.04 | 1.08 1.04 1.00 |
+| small ADBC c1 p50 | ms | 17.7 | 17.0 | 0.96 | 1.03 0.95 0.91 |
+| small ADBC c1 p95 | ms | 46.3 | 44.3 | 0.96 | 0.88 0.96 1.02 |
+| small ADBC c1 p99 | ms | 61.4 | 54.4 | 0.89 | 0.85 0.87 0.95 |
+| small ADBC c8 p50 | ms | 114.4 | 110.8 | 0.97 | 0.96 0.89 1.02 |
+| small ADBC c8 p95 | ms | 268.0 | 280.2 | 1.05 | 0.96 1.05 1.08 |
+| small ADBC c8 p99 | ms | 344.6 | 324.6 | 0.94 | 0.98 0.92 1.00 |
+| small ADBC c32 p50 | ms | 436.5 | 435.0 | 1.00 | 0.99 1.01 0.98 |
+| small ADBC c32 p95 | ms | 1244.7 | 1262.3 | 1.01 | 0.90 1.01 1.02 |
+| small ADBC c32 p99 | ms | 1787.1 | 1700.0 | 0.95 | 0.85 0.95 1.05 |
+| TPC-H SF10 ADBC (sum of medians) | s | 39.4 | 39.8 | 1.01 | 1.01 0.99 1.04 |
+| lineitem export ADBC | MB/s | 481.2 | 426.5 | 0.89 | 0.92 0.92 0.86 |
+| server RSS peak | MB | 2587.0 | 2699.0 | 1.04 | 0.99 1.00 1.05 |
 
 ## Results
 
+- [c7-load-tls-40553901245](results/c7-load-tls-40553901245/summary.md) (latest of its wave)
 - [c4-robust-40551848571](results/c4-robust-40551848571/summary.md) (latest of its wave)
 - [c9-robust-trino-40551575311](results/c9-robust-trino-40551575311/summary.md) (latest of its wave)
 - [c8-robust-cluster-40551320307](results/c8-robust-cluster-40551320307/summary.md) (latest of its wave)
