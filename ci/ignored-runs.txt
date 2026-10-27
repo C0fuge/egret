@@ -1,0 +1,3 @@
+# compare runs whose aggregate must not commit results (checked by ci/compare.py)
+40483119136  # c2-speed with ours-new = 84fec772ec50 by mistake (ours-new is pinned to 7562a5bdb7b9)
+40478832460  # c1-servers, superseded by the 4-server task

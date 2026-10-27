@@ -111,6 +111,11 @@ def fmt(x, n=2):
 
 def main():
     src, dst, title = sys.argv[1], sys.argv[2], sys.argv[3]
+    # runs listed in ci/ignored-runs.txt (wrong server build, superseded) must not commit results: fail the aggregate step
+    ign = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ignored-runs.txt")
+    run = os.environ.get("GITHUB_RUN_ID", "")
+    if run and os.path.exists(ign) and run in {l.split("#")[0].strip() for l in open(ign)}:
+        sys.exit(f"run {run} is listed in ci/ignored-runs.txt: no results committed")
     os.makedirs(dst, exist_ok=True)
     jobs = []
     for job in sorted(glob.glob(os.path.join(src, "*"))):

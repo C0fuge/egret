@@ -15,9 +15,9 @@
     (rounds = 3) are committed, not yet dispatched; still to build: 3-node cluster and Trino plugin runs (ours only).
   - Cancelled runs kept running because the `ab` and `aggregate` jobs were gated with `if: always()`, which GitHub
     keeps running after a cancel (fixed in 69b8543: `!cancelled()`; runs dispatched before that can't be stopped and
-    run to the end). Still running from before the fix: 40483119136 (`ours-new` = `84fec772ec50` by mistake: delete
-    `results/c2-speed-40483119136` when its aggregate commits it, never use it), 40481152975 (no-container reference with
+    run to the end). Still running from before the fix: 40483119136 (`ours-new` = `84fec772ec50` by mistake: its aggregate
+    is blocked from committing by `ci/ignored-runs.txt`), 40481152975 (no-container reference with
     `7562a5bdb7b9`: keep `results/c2-speed-40481152975` only as "no-container reference"; its two up-native local jobs died
     with "runner received a shutdown signal" during the up-native side, 22 min into round 1), 40478832460 (old
-    `c1-servers`, only its aggregate left: delete `results/c1-servers-40478832460` if it appears). Runs 40481883941 and
+    `c1-servers`, only its aggregate left, also blocked by `ci/ignored-runs.txt`). Runs 40481883941 and
     40482405265 failed (client image build), 40485420552 was cancelled before it started.
