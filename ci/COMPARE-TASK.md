@@ -1,0 +1,54 @@
+# Server comparison task, 2026-10-27 (maintainer) - supersedes ci/COMPARE-NOTES.md
+
+## Servers (4)
+| id | what | how to get |
+|---|---|---|
+| `ours-new` | newest C0fuge/kestrel pre-release at dispatch time (`gh release list -R C0fuge/kestrel -L 1`; at writing `server-1.0.0-7562a5bdb7b9`) | release assets: jar, flight-server-libs tar, flight-plugins tar |
+| `ours-27f5` | `server-1.0.0-27f583adccd7` (presentation build, DuckDB 1.5.6) | same |
+| `up-native` | upstream VadimSurpin/arrow-flight-server `feat/starrocks-native-integration` @ `07631d72954a` | build read-only from the public repo (see compare/build-upstream workflows) |
+| `up-main` | upstream `main` @ `dbacd8d585bc` (our fork point) | same |
+
+Ours need `duckdb-extensions-v1.5.6.tar.zst` (C0fuge/kestrel release `ci-assets`, `extensions/v1.5.6/linux_amd64/`) and
+`-Darrowflight.duckdb.extensionDir=<dir> -DduckDbAllowUnsignedExtensions=true`. Upstream jars bundle DuckDB 1.5.6, need the
+official httpfs 1.5.6, `--add-modules java.se,jdk.httpserver` + their entrypoint's add-opens/exports. Upstream refuses a data
+dir with a BINARY column -> every server gets the same TPC-H-only data dir and the same `tpch.`-qualified queries. Upstream:
+JDBC prepared statements not implemented, `LIMIT` without `ORDER BY` returns the whole table, `AVG` missing on the native
+branch -> use only workloads it answers correctly, mark the rest `n/a` with the reason. Wrong TPC-H checksum = disqualified
+for that workload, never ranked. Every A/B pair runs on the SAME runner, alternating rounds, 3 rounds, 1 warm-up.
+Settings per server: its defaults AND its best thread count (ours 4 and 8; upstream its default and 8); keep both.
+
+## Report 1 - SPEED (run first, publish as soon as done: `results/COMPARE-SPEED-2026-10-27.md` + README summary, own commit)
+Format like the upstream README benchmark section: an "Experiment setup" table (runner type/vCPU/RAM, scale factor, data
+layout, repetitions, batch size, versions incl. DuckDB per server, JVM flags) and per-query tables:
+`| Q | Pattern | ours-new (ms) | ours-27f5 (ms) | up-native (ms) | up-main (ms) | ours-new vs best upstream |` for TPC-H SF1 and
+SF10 (ADBC; JDBC too where the server supports it) with a Score row, plus a small-query table (point lookup orders /
+lineitem, filtered count, LIMIT 10 with ORDER BY, metadata calls; JDBC and ADBC; c1/c8/c32; p50/p95/p99) and a scan table
+(1/4/8 streams MB/s, full `lineitem` export over ADBC MB/s + server peak RSS). Local Parquet and S3 (the workflow's MinIO).
+SF30 too if the runner disk allows, else note why not.
+
+## Report 2 - LOAD (`results/COMPARE-LOAD-2026-10-27.md`)
+- closed-loop small-query load at 1/8/32/64/128 clients (point + filtered count; JDBC and ADBC), 10 s warm-up + 60 s per step:
+  QPS, p50/p95/p99, error rate, server CPU and RSS; saturation point (highest step with p95 < 100 ms and 0 errors);
+- mixed load: 32 small-query clients + 2 heavy streams (q01, q18): small QPS/p95 with and without heavy, heavy times;
+- 4 heavy queries at once (q01, q09, q18, q21): slowest time, failures, peak RSS;
+- network-limited client path (`tc netem` 10 ms delay, 1 Gbit/s) for SF10 over ADBC, upstream with and without its ZSTD
+  compression (only ADBC decodes it), ours plain; TLS + token on vs off for ours (cost of a secured connection).
+
+## Report 3 - ROBUSTNESS (`results/COMPARE-ROBUSTNESS-2026-10-27.md`)
+- 30-min soak under mixed load: RSS / heap / direct memory over time (sample every 10 s), errors, latency drift;
+- cold start: time until the port answers, first-query latency, idle RSS;
+- cancel: client cancels a running SF10 q18/q21 -> time until server CPU drops (server-side "stopped" evidence);
+- ours only (upstream n/a with reason): 3-node cluster on one runner - stop a node before a query and kill one mid-query,
+  answer correctness and time to recover; Trino SF1 through our plugin (C0fuge/heron release `e2e-assets`/CI artifact)
+  and the stock Flight SQL JDBC driver TPC-H SF1 (upstream: record the failure text); duckDbThreads 1/2/4/8 sweep on SF1/SF10
+  + small c1/c32 (feeds the size-aware default).
+
+## Every run records everything (raw files as artifacts, summaries in results/)
+every sample (cold+warm), p50/p95/p99/max, errors with text; per-query TPC-H times and checksums; rows/s and MB/s; server
+peak RSS, heap used/committed, direct memory, GC count/time, CPU user/sys, threads; Flight bytes/batches/rows; start and
+first-query time; WARN/ERROR excerpts; exact JVM flags and settings; runner CPU model, cores, RAM, kernel, JDK, DuckDB version.
+
+## Rules
+Public repo: no personal data, host names or internal names. Commit as C0fuge <189659128+C0fuge@users.noreply.github.com>,
+trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never push to the upstream repository. Finish within
+~90 min per session; record running CI ids and the next step in README "In progress" so the next session continues.
