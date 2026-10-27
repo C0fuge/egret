@@ -1,0 +1,14 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+new-vs-27f5-def-load-local,7562a5bdb7b9,,27f583adccd7,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,4943,4858,0.9828039652033178,1.022 0.921 1.027
+new-vs-27f5-def-mix-local,7562a5bdb7b9,,27f583adccd7,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V45 96-Core Processor,rss,MB,4148,4134,0.9966248794599807,0.997 1.019 0.983
+new-vs-27f5-t8-load-local,7562a5bdb7b9,-DduckDbThreads=8,27f583adccd7,-DduckDbThreads=8,local,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,4797,4816,1.0039608088388576,0.961 1.033 1.009
+new-vs-27f5-t8-mix-local,7562a5bdb7b9,-DduckDbThreads=8,27f583adccd7,-DduckDbThreads=8,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,4101,4133,1.0078029748841746,0.995 1.010 1.008
+new-vs-main-def-load-local,7562a5bdb7b9,,up-main,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,4556,4587,1.0068042142230027,1.137 1.007 0.985
+new-vs-main-def-mix-local,7562a5bdb7b9,,up-main,,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,rss,MB,4155,1984,0.47749699157641395,0.459 0.516 0.472
+new-vs-main-t8-load-local,7562a5bdb7b9,-DduckDbThreads=8,up-main,-DduckDbThreads=8,local,Linux ubuntu24 4 vCPU INTEL(R) XEON(R) PLATINUM 8573C,rss,MB,4960,4797,0.9671370967741936,0.967 1.021 0.934
+new-vs-main-t8-mix-local,7562a5bdb7b9,-DduckDbThreads=8,up-main,-DduckDbThreads=8,local,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,4127,2111,0.5115095711170342,0.507 0.558 0.482
+new-vs-native-def-load-local,7562a5bdb7b9,,up-native,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V45 96-Core Processor,rss,MB,5106,4968,0.972972972972973,1.030 0.970 0.926
+new-vs-native-def-mix-local,7562a5bdb7b9,,up-native,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,4136,2158,0.5217601547388782,0.522 0.509 0.593
+new-vs-native-t8-load-local,7562a5bdb7b9,-DduckDbThreads=8,up-native,-DduckDbThreads=8,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,rss,MB,5148,4854,0.9428904428904429,1.180 0.919 0.921
+new-vs-native-t8-mix-local,7562a5bdb7b9,-DduckDbThreads=8,up-native,-DduckDbThreads=8,local,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,4298,2278,0.5300139599813867,0.530 0.522 0.541
+new-vs-native-zstd-netem-local,7562a5bdb7b9,,up-native,-DflightCompression=zstd,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1637,637,0.3891264508246793,0.389 0.402 0.358
