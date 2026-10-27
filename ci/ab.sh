@@ -29,10 +29,13 @@ S3_KEY="ci$(openssl rand -hex 8)"; S3_SECRET="$(openssl rand -hex 24)"
 mkdir -p "$OUT"; log() { echo "== $(date -u +%T) $*" | tee -a "$OUT/job.log"; }
 
 # client container: JDK 21 + the same ADBC / pyarrow / duckdb versions as the host venv, host paths mounted 1:1
-docker build -q -t egret-client - > /dev/null <<'DOCKERFILE' || exit 1
-FROM eclipse-temurin:21-jdk
-RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends python3-venv > /dev/null \
- && python3 -m venv /venv && /venv/bin/pip install -q --no-cache-dir adbc-driver-flightsql==1.12.0 pyarrow==26.0.0 duckdb==1.4.1
+# (python:3.12-slim + the Temurin 21 JDK of the eclipse-temurin image; build log kept in OUT/client-build.log)
+docker build --progress=plain -t egret-client - > "$OUT/client-build.log" 2>&1 <<'DOCKERFILE' || { tail -40 "$OUT/client-build.log"; exit 1; }
+FROM python:3.12-slim
+COPY --from=eclipse-temurin:21-jdk /opt/java/openjdk /opt/java/openjdk
+ENV JAVA_HOME=/opt/java/openjdk PATH=/opt/java/openjdk/bin:$PATH
+RUN python -m venv /venv && /venv/bin/pip install -q --no-cache-dir adbc-driver-flightsql==1.12.0 pyarrow==26.0.0 duckdb==1.4.1 \
+ && java -version && /venv/bin/python -c "import adbc_driver_flightsql, pyarrow, duckdb"
 DOCKERFILE
 docker rm -f client > /dev/null 2>&1
 docker run -d --name client --network host --cpuset-cpus=$CPU_CL --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
