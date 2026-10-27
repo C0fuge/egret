@@ -12,8 +12,8 @@ on:
         description: 'A/B rounds per job (A B, B A, ...)'
         default: '3'
       upstream-ref:
-        description: 'Upstream commit (VadimSurpin/arrow-flight-server, built read-only)'
-        default: '07631d72954a'
+        description: 'Upstream commit, full 40-char SHA (VadimSurpin/arrow-flight-server, branch feat/starrocks-native-integration, built read-only)'
+        default: '07631d72954a0dffc2e1ac9840037e09be591835'
       only:
         description: 'Comma-separated job ids (<variant>-<storage>) to run from the wave (empty = all)'
         default: ''
