@@ -37,11 +37,18 @@
     netem 10 ms / 1 Gbit/s full lineitem export over ADBC: up-native with ZSTD 264 MB/s vs ours-new plain 104 MB/s.
     Publish it as `results/COMPARE-LOAD-2026-10-27.md` after Report 1. Earlier: run 40490387806 finished (`results/c3-load-40490387806/load.md`); usable for ours and for upstream
     small-query load over ADBC (upstream TPC-H in heavy x4 / mixed / netem fails for the reasons above; up-main fails
-    every JDBC load query). TLS + token for ours still to build: the
-    server takes `FLIGHT_TLS_CERT` / `FLIGHT_TLS_KEY` (PEM files) and `FLIGHT_BEARER_TOKEN` (without
-    `FLIGHT_ALLOW_INSECURE`); clients then need `grpc+tls://` with the self-signed CA (ADBC) and
-    `useEncryption=true&token=...` (JDBC); ab.sh hardcodes the client URIs today.
-  - Report 3 ROBUSTNESS: waves `c4-robust` (dispatch with rounds = 1: 30-min soak, cold starts, cancel) and `c5-threads`
-    (rounds = 3) are committed, not yet dispatched; still to build: 3-node cluster and Trino plugin runs (ours only).
+    every JDBC load query). TLS + token: run 40550942695 below.
+  - Report 3 ROBUSTNESS (all dispatched 17:26-17:33 UTC): `c4-robust` run **40550552130** (rounds 1: 30-min soak, cold
+    starts, cancel; all 3 pairs), `c5-threads` run **40550556746** (rounds 3: ours-new duckDbThreads 1/2/4/8, SF1/SF10 ADBC +
+    small), `c8-robust-cluster` run **40551320307** (new `cluster` workload: 3 kestrel nodes on one runner, 4 GB / 2 CPUs
+    each on cpus 0,1 since 3 x 6 GB does not fit; node 3 stopped before SF10 TPC-H, node 2 SIGKILLed during q18/q21, time until
+    node 1 answers q06 correctly again, rejoin times, every check vs the reference answers), `c9-robust-trino` run
+    **40551575311** (new `trino` workload: TPC-H SF1 through Trino 455 + the C0fuge/heron connector built read-only by the
+    new `trino-plugin` job, answers vs heron's reference via its compare.py; upstream pairs record their failure text).
+    The stock Flight SQL JDBC driver TPC-H is the JDBC tables of Report 1 (upstream fails there). Next: when they have
+    committed, check `robust.md` / `summary.md` and the job logs (cluster / trino lines are in result.txt), fix failures,
+    then write `results/COMPARE-ROBUSTNESS-2026-10-27.md`.
+  - Report 2 TLS: `c7-load-tls` run **40550942695** (ours-new plain vs TLS + bearer token; new flag word `TLS` in ab.sh:
+    self-signed cert, `FLIGHT_TLS_CERT/KEY` + `FLIGHT_BEARER_TOKEN`, clients `grpc+tls://` / `useEncryption=true&token&tlsRootCerts`).
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
