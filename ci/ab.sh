@@ -9,7 +9,10 @@
 #      Server comparison (compare workflow): SERVER_A / SERVER_B = kestrel release id or "upstream" (ASSETS/srv/<server>,
 #      setup-compare.sh), QUERIES (TPC-H query dir, default queries/tpch), SMALL_CLASSES (small-query classes, all if empty).
 # Per side and round: OUT/<A|B>/r<N>/ with result.txt, small-*.csv, jdbc10/ jdbc1/ (FlightTpch), adbc10/ adbc1/
-# (tpch_adbc.py), mem.txt, steps.tsv.
+# (tpch_adbc.py), mem.txt, steps.tsv, docker-stats.tsv, container.txt.
+# Containers (identical for every server): the server runs in eclipse-temurin:21-jre with --cpus=2 --cpuset-cpus=0,1
+# --memory=6g --memory-swap=6g (JVM -Xmx3g -XX:MaxDirectMemorySize=2g, MALLOC_ARENA_MAX=4); every client (JDBC/ADBC
+# runners, scans, jcmd sampling) runs in the "client" container pinned to cpus 2,3, as does the S3 server.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 : "${VARIANT:?}" "${ASSETS:?}" "${DATA:?}" "${OUT:?}"
@@ -19,13 +22,29 @@ JDBC=$ASSETS/flight-sql-jdbc-driver-18.0.0.jar; SRV=$ASSETS/server; SERVER_A=${S
 QUERIES=${QUERIES:-$HERE/queries/tpch}; UPDUCK=${UPDUCK:-$ASSETS/duckdb-upstream}
 # Scan.java needs the Arrow Flight client classes: any kestrel server jar
 for x in $SERVER_A $SERVER_B; do case $x in upstream|up-*) continue;; esac; [ -f "$ASSETS/srv/$x/server.jar" ] && SRV=$ASSETS/srv/$x; done
+SRV_IMAGE=eclipse-temurin:21-jre; CPU_CL=2,3
+LIMITS=(--cpus=2 --cpuset-cpus=0,1 --memory=6g --memory-swap=6g)
+PY=/venv/bin/python
 S3_KEY="ci$(openssl rand -hex 8)"; S3_SECRET="$(openssl rand -hex 24)"
 mkdir -p "$OUT"; log() { echo "== $(date -u +%T) $*" | tee -a "$OUT/job.log"; }
+
+# client container: JDK 21 + the same ADBC / pyarrow / duckdb versions as the host venv, host paths mounted 1:1
+docker build -q -t egret-client - > /dev/null <<'DOCKERFILE' || exit 1
+FROM eclipse-temurin:21-jdk
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends python3-venv > /dev/null \
+ && python3 -m venv /venv && /venv/bin/pip install -q --no-cache-dir adbc-driver-flightsql==1.12.0 pyarrow==26.0.0 duckdb==1.4.1
+DOCKERFILE
+docker rm -f client > /dev/null 2>&1
+docker run -d --name client --network host --cpuset-cpus=$CPU_CL --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
+  -v "$HERE":"$HERE":ro -v "$ASSETS":"$ASSETS":ro -v "$DATA":"$DATA":ro -v "$OUT":"$OUT" egret-client sleep infinity > /dev/null || exit 1
+cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" client "$@"; }
+docker version --format 'docker {{.Server.Version}}' > "$OUT/containers.txt"
+{ echo "server image: $SRV_IMAGE limits: ${LIMITS[*]}"; echo "client cpuset: $CPU_CL"; docker image inspect -f '{{.Id}}' $SRV_IMAGE 2>/dev/null; } >> "$OUT/containers.txt"
 
 if [ "$STORAGE" = s3 ]; then
   # rclone serves DATA over the S3 API: directory DATA/<layout> = bucket <layout>
   docker rm -f s3 >/dev/null 2>&1
-  docker run -d --name s3 --network host -v "$DATA":/data:ro rclone/rclone:1.68.2 \
+  docker run -d --name s3 --network host --cpuset-cpus=$CPU_CL -v "$DATA":/data:ro rclone/rclone:1.68.2 \
     serve s3 /data --addr 127.0.0.1:9000 --auth-key "$S3_KEY,$S3_SECRET" >/dev/null
   sleep 3
 fi
@@ -36,6 +55,7 @@ data_dir() {  # data_dir <layout> <sf1|sf10>
 
 start_server() {  # start_server <dataDir> <flags...>; server of the current side: $SERVER (empty = legacy $ASSETS/server)
   local dd=$1; shift
+  docker inspect -f 'container exit={{.State.ExitCode}} oom={{.State.OOMKilled}} finished={{.State.FinishedAt}}' flight >> "$O/container.txt" 2>/dev/null
   docker rm -f flight >/dev/null 2>&1
   local t0=$(( $(date +%s%N) / 1000000 ))
   local env=(-e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET")
@@ -45,24 +65,24 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
     --port 32010 --localhost localhost --hosts 127.0.0.1)
   if [ "${SERVER:-}" = upstream ] || [ "${SERVER#up-}" != "${SERVER:-}" ]; then
     # upstream: JVM options of its docker/bin/entrypoint.sh; DuckDB home with the official httpfs 1.5.6; S3 via FLIGHT_S3_*
-    docker run -d --name flight --network host --memory 8g --memory-swap 8g "${env[@]}" -e HOME=/duckhome \
+    docker run -d --name flight --network host "${LIMITS[@]}" "${env[@]}" -e HOME=/duckhome \
       -e FLIGHT_S3_ENDPOINT=http://127.0.0.1:9000 -e FLIGHT_S3_PATH_STYLE=true -e FLIGHT_S3_REGION=us-east-1 \
-      -v "$ASSETS/srv/$SERVER":/app:ro -v "$UPDUCK":/duckhome/.duckdb -v "$DATA":/data:ro -w /tmp eclipse-temurin:21-jdk \
+      -v "$ASSETS/srv/$SERVER":/app:ro -v "$UPDUCK":/duckhome/.duckdb -v "$DATA":/data:ro -w /tmp $SRV_IMAGE \
       java --add-modules java.se,jdk.httpserver --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
         --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
         --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
         -Dio.netty.tryReflectionSetAccessible=true "${common[@]}" "$@" "${args[@]}" >/dev/null
   elif [ -n "${SERVER:-}" ]; then
     # kestrel pre-release with the DuckDB 1.5.6 extension set
-    docker run -d --name flight --network host --memory 8g --memory-swap 8g "${env[@]}" \
-      -v "$ASSETS/srv/$SERVER":/app:ro -v "$ASSETS/duckdb156":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp eclipse-temurin:21-jdk \
+    docker run -d --name flight --network host "${LIMITS[@]}" "${env[@]}" \
+      -v "$ASSETS/srv/$SERVER":/app:ro -v "$ASSETS/duckdb156":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp $SRV_IMAGE \
       java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
         -Darrowflight.plugins.dir=/app/plugins -Darrowflight.duckdb.extensionDir=/ext/duckdb-home/extensions -DduckDbAllowUnsignedExtensions=true \
         -Ds3Endpoint=http://127.0.0.1:9000 -Ds3UrlStyle=path -Ds3Region=us-east-1 "${common[@]}" "$@" "${args[@]}" >/dev/null
   else
-    docker run -d --name flight --network host --memory 8g --memory-swap 8g \
+    docker run -d --name flight --network host "${LIMITS[@]}" \
       -e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET" \
-      -v "$SRV":/app:ro -v "$ASSETS/duckdb":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp eclipse-temurin:21-jdk \
+      -v "$SRV":/app:ro -v "$ASSETS/duckdb":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp $SRV_IMAGE \
       java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
         -Darrow.enable_unsafe_memory_access=true -DmetricsEnabled=false -Dhazelcast.phone.home.enabled=false \
         -Darrowflight.plugins.dir=/app/plugins -Darrowflight.duckdb.extensionDir=/ext/duckdb-home/extensions \
@@ -83,18 +103,20 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
 }
 mem() {  # RSS / peak RSS / threads / CPU ticks of the server process; JVM heap, GC and direct memory via jcmd
   echo "$1 $(docker exec flight sh -c 'echo rss=$(awk "/VmRSS/{print int(\$2/1024)}" /proc/1/status) hwm=$(awk "/VmHWM/{print int(\$2/1024)}" /proc/1/status) threads=$(awk "/Threads/{print \$2}" /proc/1/status) utime=$(cut -d" " -f14 /proc/1/stat) stime=$(cut -d" " -f15 /proc/1/stat)' 2>/dev/null || echo rss=NA hwm=NA)" >> "$O/mem.txt"
-  { echo "== $1"; docker exec flight sh -c 'jcmd 1 GC.heap_info; jcmd 1 VM.native_memory summary 2>/dev/null | head -5; jstat -gcutil 1' 2>&1 | head -30; } >> "$O/jvm.txt"
+  { echo "== $1"; docker run --rm --pid container:flight --cap-add SYS_PTRACE --cpuset-cpus=$CPU_CL eclipse-temurin:21-jdk sh -c \
+      'jcmd 1 GC.heap_info; jcmd 1 PerfCounter.print | grep -E "sun.gc.collector.[0-9].(name|invocations|time)|java.threads.live=|sun.os.hrt.frequency"; jstat -gcutil 1' 2>&1 | head -40; } >> "$O/jvm.txt"
+  docker inspect -f "$1 oom={{.State.OOMKilled}} running={{.State.Running}}" flight >> "$O/container.txt" 2>/dev/null
 }
 step() { echo -e "$1\t$2\t$(date +%s)\t$(cut -d' ' -f1 /proc/loadavg)" >> "$O/steps.tsv"; }
 tpch() {  # tpch <name> <sf> <reps>
   local d=$O/$1; mkdir -p "$d"
-  timeout 1500 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
+  cl timeout 1500 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
     "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" "$QUERIES" "$3" "$d" > "$d/runner.txt" 2>&1
   tpch_result "$1"
 }
 tpch_adbc() {  # tpch_adbc <name> <reps>
   local d=$O/$1; mkdir -p "$d"
-  timeout 1500 "$ASSETS/venv/bin/python" -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$QUERIES" "$2" "$d" > "$d/runner.txt" 2>&1
+  cl timeout 1500 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$QUERIES" "$2" "$d" > "$d/runner.txt" 2>&1
   tpch_result "$1"
 }
 tpch_result() {
@@ -111,8 +133,14 @@ side() {  # side <A|B> <round>
   step start begin
   # shellcheck disable=SC2086
   if ! start_server "$(data_dir $layout sf10)" $flags > "$O/start.txt" 2>&1; then echo "START FAILED" >> "$O/result.txt"; return; fi
+  # docker stats of the server container every ~5 s for the whole side (survives server restarts)
+  rm -f "$O/.stats-stop"
+  ( while [ ! -e "$O/.stats-stop" ]; do
+      docker stats --no-stream --format "{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.PIDs}}" flight 2>/dev/null | sed "s|^|$(date +%s)\t|" >> "$O/docker-stats.tsv"
+      sleep 3; done ) &
+  local statspid=$!
   mem idle
-  "$ASSETS/venv/bin/python" -W ignore -c 'import sys, time, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
+  cl $PY -W ignore -c 'import sys, time, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
 t0 = time.perf_counter(); c = d.connect(sys.argv[1], db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"}); cur = c.cursor()
 try:
     cur.execute("SELECT version()"); v = cur.fetchall()[0][0]
@@ -126,9 +154,9 @@ print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grp
     small)
       step small begin
       for c in "1 20" "8 10" "32 5"; do set -- $c
-        SMALL_CLASSES=${SMALL_CLASSES:-} timeout 600 java -Xmx1g -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/Lat.java" \
+        cl timeout 600 java -Xmx1g -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/Lat.java" \
           "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" $1 $2 "$O/small-jdbc-c$1.csv" 2>"$O/small-jdbc-c$1.err" | grep '^jdbc' >> "$O/result.txt"
-        SMALL_CLASSES=${SMALL_CLASSES:-} timeout 600 "$ASSETS/venv/bin/python" -W ignore "$HERE/clients/lat.py" grpc://localhost:32010 $1 $2 "$O/small-adbc-c$1.csv" \
+        cl timeout 600 $PY -W ignore "$HERE/clients/lat.py" grpc://localhost:32010 $1 $2 "$O/small-adbc-c$1.csv" \
           2>"$O/small-adbc-c$1.err" | grep '^adbc' >> "$O/result.txt"
       done
       step small end; mem small ;;
@@ -137,20 +165,20 @@ print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grp
     scan)
       step scan begin
       for c in 1 4 8; do
-        timeout 900 java -Xmx1g -XX:MaxDirectMemorySize=3g --add-opens java.base/java.nio=ALL-UNNAMED -Darrow.enable_unsafe_memory_access=true \
+        cl timeout 900 java -Xmx1g -XX:MaxDirectMemorySize=3g --add-opens java.base/java.nio=ALL-UNNAMED -Darrow.enable_unsafe_memory_access=true \
           -cp "$SRV/server.jar" "$HERE/clients/Scan.java" localhost 32010 $c 1 complete "SELECT * FROM tpch.lineitem" 2>"$O/scan-c$c.err" | grep '^scan' >> "$O/result.txt"
       done
       step scan end; mem scan ;;
     adbcscan)
       step adbcscan begin
-      timeout 900 "$ASSETS/venv/bin/python" -W ignore "$HERE/clients/scan_adbc.py" grpc://localhost:32010 "SELECT * FROM tpch.lineitem" \
+      cl timeout 900 $PY -W ignore "$HERE/clients/scan_adbc.py" grpc://localhost:32010 "SELECT * FROM tpch.lineitem" \
         2>"$O/adbcscan.err" | grep '^adbcscan' >> "$O/result.txt"
       step adbcscan end; mem adbcscan ;;
     heavy4)
       step heavy4 begin
       for q in q01 q09 q18 q21; do
         mkdir -p "$O/h-$q/q" "$O/heavy4-$q"; cp "$HERE/queries/tpch/$q.sql" "$O/h-$q/q/"
-        timeout 1200 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
+        cl timeout 1200 java -Duser.timezone=UTC --add-opens java.base/java.nio=ALL-UNNAMED -cp "$JDBC" "$HERE/clients/FlightTpch.java" \
           "jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false" "$O/h-$q/q" 1 "$O/heavy4-$q" > "$O/heavy4-$q/runner.txt" 2>&1 &
       done
       wait
@@ -173,10 +201,13 @@ print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grp
   docker logs flight > "$O/server-last.log" 2>&1
   grep -cE 'ERROR|OutOfMemory|SIGSEGV' "$O"/server-*.log | awk -F: '{s+=$NF} END{print s+0}' > "$O/server-errors.txt"
   step end end
+  touch "$O/.stats-stop"; wait "$statspid" 2>/dev/null; rm -f "$O/.stats-stop"
+  docker inspect -f 'container exit={{.State.ExitCode}} oom={{.State.OOMKilled}} running={{.State.Running}}' flight >> "$O/container.txt" 2>/dev/null
   docker rm -f flight >/dev/null 2>&1
 }
 
 for r in $(seq 1 "$ROUNDS"); do
   if [ $((r % 2)) = 1 ]; then side A "$r"; side B "$r"; else side B "$r"; side A "$r"; fi
 done
+docker rm -f client s3 >/dev/null 2>&1
 log "done"

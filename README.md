@@ -6,7 +6,7 @@ alternating rounds (A B, B A, A B), so runner-to-runner noise cancels out. Resul
 absolute numbers from shared 4-vCPU runners are not comparable with a real deployment.
 
 - Server: the public release `server-1.0.0-<id>` of C0fuge/kestrel (jar + runtime libs + plugins), DuckDB v1.4.5
-  httpfs extension from extensions.duckdb.org, 8 GB server container (`-Xmx3g -XX:MaxDirectMemorySize=2g`).
+  httpfs extension from extensions.duckdb.org, server in an `eclipse-temurin:21-jre` container limited to 2 CPUs (cpus 0,1) and 6 GB (`-Xmx3g -XX:MaxDirectMemorySize=2g`), clients in their own container on cpus 2,3.
 - Data: TPC-H SF1 and SF10 generated with DuckDB `dbgen` (cached), 8 files per big table, 122880-row row groups;
   layout variants rewrite `lineitem` and `orders` (row group size, file size, one file).
 - Storage: local disk (`file://`) or S3 served by `rclone serve s3`.
@@ -38,8 +38,9 @@ point lookups, filtered count and metadata as small queries, and TPC-H over ADBC
 ## In progress
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers: ours-new, ours-27f5, up-native, up-main). Report 1 SPEED:
-  `compare` wave `c2-speed` (16 same-runner pairs, local + S3, settings `def` and `t8`), run id: see the next commit.
-  Earlier `c1-servers` runs (45fc0a9e6e02 pairs) were superseded and cancelled.
+  `compare` wave `c2-speed` with every server in an identically limited container (2 CPUs, 6 GB), clients pinned to the
+  other cores: run id in the next commit. Run 40481152975 (same wave, dispatched before the container rule) is kept only
+  as a no-container reference. Earlier `c1-servers` runs were superseded and cancelled (40478832460 cancelled 09:33 UTC).
 
 ## Results
 

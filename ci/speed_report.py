@@ -40,6 +40,7 @@ def load(src):
         if not os.path.exists(os.path.join(job, "job.json")):
             continue
         m = json.load(open(os.path.join(job, "job.json")))
+        m["containers"] = os.path.exists(os.path.join(job, "containers.txt"))
         m["setting"] = "t8" if "Threads=8" in (m.get("flags_a") or "") else "def"
         ref = {n: tsv(os.path.join(job, "ref", n, "summary.tsv")) or {} for n in ("adbc1", "adbc10")}
         ref["jdbc1"], ref["jdbc10"] = ref["adbc1"], ref["adbc10"]
@@ -102,6 +103,32 @@ def scans(rounds):
     return {k: med(x) for k, x in v.items()}
 
 
+def mib(t):
+    m = re.match(r"([\d.]+)\s*([KMG]i?B|B)", t.strip())
+    if not m:
+        return None
+    return float(m.group(1)) * {"B": 1 / 2**20, "KiB": 1 / 1024, "KB": 1 / 1024, "MiB": 1, "MB": 1, "GiB": 1024, "GB": 1024}[m.group(2)]
+
+
+def container(rounds):
+    """docker stats of the server container (CPU % of one core, memory MiB; samples every ~5 s) and OOM kills"""
+    cpu, mem, oom = [], [], 0
+    for r in rounds:
+        p = os.path.join(r, "docker-stats.tsv")
+        for line in open(p) if os.path.exists(p) else []:
+            x = line.rstrip("\n").split("\t")
+            if len(x) >= 3 and x[1].endswith("%"):
+                cpu.append(float(x[1][:-1]))
+                v = mib(x[2].split("/")[0])
+                if v is not None:
+                    mem.append(v)
+        p = os.path.join(r, "container.txt")
+        if os.path.exists(p) and "oom=true" in open(p).read():
+            oom += 1
+    return {"cpu_p50": pct(cpu, .5) if cpu else None, "cpu_max": max(cpu) if cpu else None,
+            "mem_max": max(mem) if mem else None, "oom": oom, "n": len(cpu), "rounds": len(rounds)}
+
+
 def f(x, n=0):
     return "n/a" if x is None else f"{x:.{n}f}"
 
@@ -131,7 +158,9 @@ def main():
     runners = sorted({m.get("runner", "") for _, m, _, _ in jobs})
     L += [f"# Server comparison - Report 1: SPEED (compare run {run})", "",
           "## Experiment setup", "", "| item | value |", "|---|---|",
-          f"| runner | GitHub-hosted `ubuntu-latest`: {'; '.join(runners)}; RAM {m0.get('mem_mb', '?')} MB; kernel {m0.get('kernel', '?')}; JDK Temurin 21 (server container eclipse-temurin:21-jdk, 8 GB limit) |",
+          f"| runner | GitHub-hosted `ubuntu-latest`: {'; '.join(runners)}; RAM {m0.get('mem_mb', '?')} MB; kernel {m0.get('kernel', '?')}; JDK Temurin 21 |",
+          ("| containers | every server: `eclipse-temurin:21-jre`, `--cpus=2 --cpuset-cpus=0,1 --memory=6g --memory-swap=6g`, JVM `-Xmx3g -XX:MaxDirectMemorySize=2g`, `MALLOC_ARENA_MAX=4`, host network; clients (JDBC/ADBC/Flight runners, jcmd sampling) and the S3 server in their own containers on cpus 2,3 |" if all(m["containers"] for _, m, _, _ in jobs) else
+           "| containers | **no-container reference run**: server in `eclipse-temurin:21-jdk` with an 8 GB memory limit and no CPU limit, clients on the runner host; not the reported numbers |"),
           "| servers | " + "; ".join(f"{k} = `{srv.get(k, '?')}` (DuckDB {duck.get(k, '?')})" for k in SERVERS) + " |",
           "| data | TPC-H SF1 and SF10, DuckDB dbgen, Parquet, 8 files per big table, 122880-row row groups, one data dir `tpch.*` per SF |",
           "| storage | local disk (`file://`, page-cached) and S3 (`rclone serve s3` on the same runner, path style) |",
@@ -240,6 +269,13 @@ def main():
                            ("adbcscan", "full export over ADBC"), ("rss", "server peak RSS (MB)")):
                 L.append(f"| {lab} | " + " | ".join(f(med(sc[s][k])) for s in SERVERS)
                          + f" | {f(min(sr[k]), 2) + 'x' if sr.get(k) else ('-' if k == 'rss' else 'n/a')} |")
+            L.append("")
+            L += ["### Server container (docker stats every ~5 s, all workloads of this setting)", "",
+                  "| metric | " + " | ".join(SERVERS) + " |", "|---|" + "---|" * len(SERVERS)]
+            ct = {s: container([r for _, m, _, sides in js for name, rounds in sides.items() if name == s for r in rounds]) for s in SERVERS}
+            for k, lab, n in (("cpu_p50", "CPU % p50 (200 = both cores)", 0), ("cpu_max", "CPU % max", 0), ("mem_max", "memory peak (MiB, limit 6144)", 0)):
+                L.append(f"| {lab} | " + " | ".join(f(ct[s][k], n) for s in SERVERS) + " |")
+            L.append("| OOM-killed rounds | " + " | ".join(f"{ct[s]['oom']} / {ct[s]['rounds']}" if ct[s]["rounds"] else "n/a" for s in SERVERS) + " |")
             L.append("")
     open(dst, "w").write("\n".join(L) + "\n")
     with open(os.path.splitext(dst)[0] + "-queries.csv", "w", newline="") as fh:

@@ -6,7 +6,7 @@ alternating rounds (A B, B A, A B), so runner-to-runner noise cancels out. Resul
 absolute numbers from shared 4-vCPU runners are not comparable with a real deployment.
 
 - Server: the public release `server-1.0.0-<id>` of C0fuge/kestrel (jar + runtime libs + plugins), DuckDB v1.4.5
-  httpfs extension from extensions.duckdb.org, 8 GB server container (`-Xmx3g -XX:MaxDirectMemorySize=2g`).
+  httpfs extension from extensions.duckdb.org, server in an `eclipse-temurin:21-jre` container limited to 2 CPUs (cpus 0,1) and 6 GB (`-Xmx3g -XX:MaxDirectMemorySize=2g`), clients in their own container on cpus 2,3.
 - Data: TPC-H SF1 and SF10 generated with DuckDB `dbgen` (cached), 8 files per big table, 122880-row row groups;
   layout variants rewrite `lineitem` and `orders` (row group size, file size, one file).
 - Storage: local disk (`file://`) or S3 served by `rclone serve s3`.
