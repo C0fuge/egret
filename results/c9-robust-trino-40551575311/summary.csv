@@ -1,0 +1,4 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+new-vs-27f5-trino-local,7562a5bdb7b9,,27f583adccd7,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,954,806,0.8448637316561844,0.845
+new-vs-main-trino-local,7562a5bdb7b9,,up-main,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,970,1359,1.4010309278350515,1.401
+new-vs-native-trino-local,7562a5bdb7b9,,up-native,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,825,1123,1.3612121212121213,1.361

@@ -90,7 +90,7 @@ point lookups, filtered count and metadata as small queries, and TPC-H over ADBC
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
-## Latest server comparison: [c8-robust-cluster-40551320307](results/c8-robust-cluster-40551320307/summary.md)
+## Latest server comparison: [c9-robust-trino-40551575311](results/c9-robust-trino-40551575311/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
 data dir and same schema-qualified queries for both. Ratio = B / A of the medians over rounds: times < 1 = B faster;
@@ -102,20 +102,39 @@ in-process DuckDB on the same files.
 
 | job | A | B | storage | runner | rounds A/B | small ADBC c1 p50 | small ADBC c32 p95 | small JDBC c1 p50 | small JDBC c32 p95 | TPC-H SF1 ADBC (sum of medians) | TPC-H SF10 ADBC (sum of medians) | TPC-H SF10 JDBC (sum of medians) | lineitem scan x1 | disqualified |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| new-vs-27f5-cluster-local | ours-new `-` | ours-27f5 `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 1/1 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
+| new-vs-27f5-trino-local | ours-new `-` | ours-27f5 `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor | 1/1 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
+| new-vs-main-trino-local | ours-new `-` | up-main `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 1/1 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
+| new-vs-native-trino-local | ours-new `-` | up-native `-` | local | Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor | 1/1 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | none |
 
 ### Per job (absolute medians and ratios)
 
-#### new-vs-27f5-cluster-local: A = ours-new `-`, B = ours-27f5 `-`, local
+#### new-vs-27f5-trino-local: A = ours-new `-`, B = ours-27f5 `-`, local
 
-Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `cluster`.
+Runner: Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor. Workloads: `trino`.
 
 | metric | unit | A median | B median | B / A | per-round B / A |
 |---|---|---|---|---|---|
-| server RSS peak | MB | 295.0 | 296.0 | 1.00 | 1.00 |
+| server RSS peak | MB | 954.0 | 806.0 | 0.84 | 0.84 |
+
+#### new-vs-main-trino-local: A = ours-new `-`, B = up-main `-`, local
+
+Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `trino`.
+
+| metric | unit | A median | B median | B / A | per-round B / A |
+|---|---|---|---|---|---|
+| server RSS peak | MB | 970.0 | 1359.0 | 1.40 | 1.40 |
+
+#### new-vs-native-trino-local: A = ours-new `-`, B = up-native `-`, local
+
+Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `trino`.
+
+| metric | unit | A median | B median | B / A | per-round B / A |
+|---|---|---|---|---|---|
+| server RSS peak | MB | 825.0 | 1123.0 | 1.36 | 1.36 |
 
 ## Results
 
+- [c9-robust-trino-40551575311](results/c9-robust-trino-40551575311/summary.md) (latest of its wave)
 - [c8-robust-cluster-40551320307](results/c8-robust-cluster-40551320307/summary.md) (latest of its wave)
 - [c3-load-40540885908](results/c3-load-40540885908/summary.md) (latest of its wave)
 - [c6-bisect-40537018532](results/c6-bisect-40537018532/summary.md) (latest of its wave)
