@@ -30,9 +30,10 @@
     build.
   - Report 2 LOAD: run 40490387806 finished (`results/c3-load-40490387806/load.md`); usable for ours and for upstream
     small-query load over ADBC (upstream TPC-H in heavy x4 / mixed / netem fails for the reasons above; up-main fails
-    every JDBC load query). Next: dispatch `c3-load` with `only=new-vs-native-zstd-netem` (up-native
+    every JDBC load query). Running: `c3-load` run **40540885908** with `only=new-vs-native-zstd-netem` (up-native
     `-DflightCompression=zstd` on the netem path; its lineitem export is the comparable number) and
-    `merge-run=40490387806`, `merge-prefix=new-vs-` so `load.md` covers both. TLS + token for ours still to build: the
+    `merge-run=40490387806`, `merge-prefix=new-vs-`, so its `load.md` covers both runs: publish that as
+    `results/COMPARE-LOAD-2026-10-27.md` after Report 1. TLS + token for ours still to build: the
     server takes `FLIGHT_TLS_CERT` / `FLIGHT_TLS_KEY` (PEM files) and `FLIGHT_BEARER_TOKEN` (without
     `FLIGHT_ALLOW_INSECURE`); clients then need `grpc+tls://` with the self-signed CA (ADBC) and
     `useEncryption=true&token=...` (JDBC); ab.sh hardcodes the client URIs today.
