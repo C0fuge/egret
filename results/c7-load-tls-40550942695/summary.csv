@@ -1,0 +1,23 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc1_p50,ms,17.2405,18.988500000000002,1.1013891708477133,1.124 1.024 1.104
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc1_p95,ms,33.971399999999996,35.4369,1.0431392288807646,1.068 0.938 1.043
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc1_p99,ms,41.71236999999999,41.71742,1.0001210672038057,0.987 0.896 1.142
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc8_p50,ms,80.54849999999999,84.66300000000001,1.0510810257174252,1.018 1.062 1.138
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc8_p95,ms,204.71109999999996,188.63254999999992,0.9214573611299044,0.977 0.969 0.904
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc8_p99,ms,250.01573000000002,238.07670000000005,0.9522468846260195,1.042 0.952 0.891
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc32_p50,ms,310.711,330.0485,1.0622362903147942,1.073 1.015 1.037
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc32_p95,ms,856.26055,822.98745,0.9611413838930218,0.977 0.912 0.982
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,jdbc32_p99,ms,1140.631650000001,1117.1395000000005,0.9794042625417237,1.079 0.880 0.979
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc1_p50,ms,12.273,11.630500000000001,0.9476493114967817,0.991 0.945 0.985
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc1_p95,ms,31.31639999999999,30.57669999999997,0.9763797882259768,1.019 1.048 0.859
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc1_p99,ms,37.9929,43.69940999999998,1.1501993793577217,0.955 1.236 1.093
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc8_p50,ms,76.582,73.101,0.9545454545454546,1.067 0.955 0.935
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc8_p95,ms,182.38049999999996,178.09295,0.9764911818971878,0.976 1.047 0.822
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc8_p99,ms,237.80316000000008,221.41365000000005,0.9310795113067462,1.039 0.901 0.833
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc32_p50,ms,306.13250000000005,299.68399999999997,0.9789355916147418,0.995 0.949 0.999
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc32_p95,ms,881.2531499999999,859.8630999999998,0.9757276895974782,0.994 0.928 0.912
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc32_p99,ms,1221.1461300000012,1189.8946500000002,0.9744080751416696,1.035 0.994 0.825
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbc10,s,30.333,29.897,0.9856262156726997,1.004 0.984 0.986
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,adbcscan,MB/s,592.0,576.1,0.9731418918918919,0.917 0.973 0.992
+new-plain-vs-tls-lat-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,rss,MB,2661,2694,1.012401352874859,1.025 0.969 0.996
+new-plain-vs-tls-load-local,7562a5bdb7b9,,7562a5bdb7b9,TLS,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,4666,4699,1.0070724389198458,0.977 1.040 0.979
