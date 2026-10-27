@@ -61,22 +61,20 @@ point lookups, filtered count and metadata as small queries, and TPC-H over ADBC
     small/scan local), copy it to `results/COMPARE-SPEED-2026-10-27.md` with the bisect result (below) and the upstream
     TPC-H reasons at the top, add a README summary, own commit. If an up-native `-lat` local job dies again with a runner
     shutdown, its log now shows the last workload and the host's free memory before it.
-  - Fix list item 4, first look (job 27f5-vs-7562 of the bisect run, 5 rounds on one runner): ADBC SF10 sum of warm
-    medians per round ours-27f5 25.9-27.4 s vs 7562a5bdb7b9 26.3-28.6 s, i.e. about 1 % apart, not 30-45 %. The gap in
-    the first speed report is an aggregation artifact: its ours-new column pooled all ours-new jobs of a storage/setting
-    (upstream pairs on other runners and CPU types included) while ours-27f5 came from its own pair job only. The speed
-    report now prints the same-runner ours-27f5 / ours-new ratio under each TPC-H table ; in the first
-    run's own pair job the ADBC SF10 ratio was 0.97 (summary.md).
-  - Fix list item 4 (ours-new 30-45 % slower than ours-27f5 on ADBC SF10): wave `c6-bisect`, run **40537018532**
-    (dispatched 16:02 UTC, 5 rounds, ADBC SF10 + small, ours-27f5 vs 45fc0a9e6e02 / e46f28dfdf09 / 6acc9cce0b26 /
-    7562a5bdb7b9, each pair on one runner); its `results/c6-bisect-40537018532/summary.md` B/A ratios give the first slow
-    build.
-  - Report 2 LOAD: run 40490387806 finished (`results/c3-load-40490387806/load.md`); usable for ours and for upstream
+  - Fix list item 4 done, run 40537018532 (`results/c6-bisect-40537018532/summary.md`, 5 rounds, each build vs
+    ours-27f5 on one runner): ADBC SF10 sum of medians B / A = 45fc0a9e6e02 1.00, e46f28dfdf09 0.98, 6acc9cce0b26
+    1.00, 7562a5bdb7b9 1.01; small ADBC c1 p50 0.90-1.01 (newer builds equal or faster). **No build regresses.** The
+    30-45 % gap of the first speed report was an aggregation artifact (its ours-new column pooled jobs from other runners
+    and CPU types, ours-27f5 came from its own pair job only); the speed report now prints the same-runner
+    ours-27f5 / ours-new ratio under each TPC-H table. Put this at the top of Report 1.
+  - up-main small/scan (`-lat` jobs of 40537011671): JDBC point / count / LIMIT queries fail at once (no prepared
+    statements), metadata answers, and the server is OOM-killed (exit 137) inside its 6 GB limit during the ADBC c1
+    small queries in every round, so its scans are n/a too (a result, limit not raised).
+  - Report 2 LOAD: ZSTD run 40540885908 finished (`results/c3-load-40540885908/load.md`, merged with 40490387806):
+    netem 10 ms / 1 Gbit/s full lineitem export over ADBC: up-native with ZSTD 264 MB/s vs ours-new plain 104 MB/s.
+    Publish it as `results/COMPARE-LOAD-2026-10-27.md` after Report 1. Earlier: run 40490387806 finished (`results/c3-load-40490387806/load.md`); usable for ours and for upstream
     small-query load over ADBC (upstream TPC-H in heavy x4 / mixed / netem fails for the reasons above; up-main fails
-    every JDBC load query). Running: `c3-load` run **40540885908** with `only=new-vs-native-zstd-netem` (up-native
-    `-DflightCompression=zstd` on the netem path; its lineitem export is the comparable number) and
-    `merge-run=40490387806`, `merge-prefix=new-vs-`, so its `load.md` covers both runs: publish that as
-    `results/COMPARE-LOAD-2026-10-27.md` after Report 1. TLS + token for ours still to build: the
+    every JDBC load query). TLS + token for ours still to build: the
     server takes `FLIGHT_TLS_CERT` / `FLIGHT_TLS_KEY` (PEM files) and `FLIGHT_BEARER_TOKEN` (without
     `FLIGHT_ALLOW_INSECURE`); clients then need `grpc+tls://` with the self-signed CA (ADBC) and
     `useEncryption=true&token=...` (JDBC); ab.sh hardcodes the client URIs today.
