@@ -4,7 +4,9 @@ count_filter, prep_point (same parameterised text every time: the dbapi cursor k
 import sys, time, datetime, multiprocessing as mp
 import adbc_driver_flightsql.dbapi as d, adbc_driver_flightsql as a
 
-CLASSES = ["meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "count_filter", "prep_point"]
+import os
+CLASSES = [c for c in os.environ.get("SMALL_CLASSES", "").split(",") if c] or \
+    ["meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "count_filter", "prep_point"]
 
 def okey(seed):
     r = 1 + (seed * 2654435761 + 12345) % 14_999_999

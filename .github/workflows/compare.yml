@@ -1,0 +1,205 @@
+name: compare
+
+# Server comparison: every matrix job runs server A and server B (a kestrel pre-release or the upstream reference build)
+# ON THE SAME RUNNER in alternating rounds, on the same TPC-H data and the same schema-qualified queries.
+on:
+  workflow_dispatch:
+    inputs:
+      wave:
+        description: 'Wave file in ci/waves (without .json)'
+        default: 'c1-servers'
+      rounds:
+        description: 'A/B rounds per job (A B, B A, ...)'
+        default: '3'
+      upstream-ref:
+        description: 'Upstream commit (VadimSurpin/arrow-flight-server, built read-only)'
+        default: '07631d72954a'
+      only:
+        description: 'Comma-separated job ids (<variant>-<storage>) to run from the wave (empty = all)'
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/data/default
+          key: tpch-default-sf1-sf10-v1
+          lookup-only: true
+      - name: Generate TPC-H SF1 + SF10 (DuckDB dbgen)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv" && "$RUNNER_TEMP/venv/bin/pip" install -q duckdb==1.4.1
+          D="$RUNNER_TEMP/data/default"
+          "$RUNNER_TEMP/venv/bin/python" ci/datagen.py gen "$D/sf1" 1
+          "$RUNNER_TEMP/venv/bin/python" ci/datagen.py gen "$D/sf10" 10
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/data/default
+          key: tpch-default-sf1-sf10-v1
+
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+      upstream: ${{ steps.m.outputs.upstream }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        env:
+          WAVE: ${{ inputs.wave }}
+          ONLY: ${{ inputs.only }}
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os
+          w = json.load(open(f"ci/waves/{os.environ['WAVE']}.json"))
+          for j in w:
+              j["id"] = f"{j['variant']}-{j['storage']}".replace("+", "_")
+          only = [x for x in os.environ.get("ONLY", "").split(",") if x]
+          if only:
+              w = [j for j in w if j["id"] in only or j["variant"] in only]
+          print("matrix=" + json.dumps({"include": w}))
+          print("upstream=" + str(any("upstream" in (j["a_server"], j["b_server"]) for j in w)).lower())
+          EOF
+
+  upstream:
+    needs: plan
+    if: needs.plan.outputs.upstream == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: VadimSurpin/arrow-flight-server
+          ref: ${{ inputs.upstream-ref }}
+          path: up
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: up/**/pom.xml
+      - name: Build shaded server jar (tests skipped) + its provided (Hadoop) dependencies
+        working-directory: up
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip -Dspotbugs.skip -Djacoco.skip -Denforcer.skip -pl flight-server -am package
+          ./mvnw -B -ntp -pl flight-server dependency:copy-dependencies -DincludeScope=provided -DoutputDirectory="$RUNNER_TEMP/up/libs"
+      - name: Collect
+        run: |
+          O="$RUNNER_TEMP/up"; ls -la up/flight-server/target/*.jar
+          j=$(ls -S up/flight-server/target/*.jar | grep -vE 'original-|sources|javadoc|tests' | head -1)
+          cp "$j" "$O/server.jar"
+          echo "upstream $(git -C up rev-parse HEAD) $(basename "$j")" > "$O/REF.txt"
+          (cd "$O" && sha256sum server.jar libs/*.jar > SHA256SUMS && ls libs | wc -l && cat REF.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-server
+          path: ${{ runner.temp }}/up
+          retention-days: 14
+
+  ab:
+    needs: [data, plan, upstream]
+    if: always() && needs.data.result == 'success' && needs.plan.result == 'success' && needs.upstream.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/data/default
+          key: tpch-default-sf1-sf10-v1
+          fail-on-cache-miss: true
+      - if: matrix.a_server == 'upstream' || matrix.b_server == 'upstream'
+        uses: actions/download-artifact@v4
+        with:
+          name: upstream-server
+          path: ${{ runner.temp }}/upstream
+      - name: Assets
+        env:
+          SERVERS: ${{ matrix.a_server }} ${{ matrix.b_server }}
+          UPSTREAM_DIR: ${{ runner.temp }}/upstream
+        run: bash ci/setup-compare.sh "$RUNNER_TEMP/assets"
+      - name: Reference answers (in-process DuckDB on the same Parquet files)
+        run: |
+          OUT="$RUNNER_TEMP/out/${{ matrix.id }}"; mkdir -p "$OUT/ref"
+          for sf in sf1 sf10; do
+            "$RUNNER_TEMP/assets/venv/bin/python" clients/tpch_adbc.py "duckdb:$RUNNER_TEMP/data/default/$sf" queries/tpch-schema 1 "$OUT/ref/adbc${sf#sf}" > /dev/null
+            cut -f1-4 "$OUT/ref/adbc${sf#sf}/summary.tsv"
+          done
+      - name: A ${{ matrix.a_server }} vs B ${{ matrix.b_server }} (${{ matrix.storage }})
+        env:
+          VARIANT: ${{ matrix.variant }}
+          SERVER_A: ${{ matrix.a_server }}
+          SERVER_B: ${{ matrix.b_server }}
+          FLAGS_A: ${{ matrix.a_flags }}
+          FLAGS_B: ${{ matrix.b_flags }}
+          STORAGE: ${{ matrix.storage }}
+          ROUNDS: ${{ inputs.rounds }}
+          WORKLOADS: ${{ matrix.workloads }}
+          SMALL_CLASSES: ${{ matrix.small_classes }}
+        run: |
+          nproc; free -g; grep -m1 'model name' /proc/cpuinfo; df -h "$RUNNER_TEMP" | tail -1
+          OUT="$RUNNER_TEMP/out/${{ matrix.id }}"; mkdir -p "$OUT"
+          python3 - "$OUT/job.json" <<'EOF'
+          import json, os, sys
+          keys = ["VARIANT", "SERVER_A", "SERVER_B", "FLAGS_A", "FLAGS_B", "STORAGE", "ROUNDS", "WORKLOADS", "SMALL_CLASSES"]
+          cpu = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")), "")
+          json.dump({k.lower(): os.environ.get(k, "") for k in keys} | {"runner": f"{os.environ.get('RUNNER_OS')} {os.environ.get('ImageOS', '')} {os.cpu_count()} vCPU {cpu}"},
+                    open(sys.argv[1], "w"))
+          EOF
+          ASSETS="$RUNNER_TEMP/assets" DATA="$RUNNER_TEMP/data" OUT="$OUT" QUERIES="$PWD/queries/tpch-schema" bash ci/ab.sh
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ab-${{ matrix.id }}
+          path: ${{ runner.temp }}/out/
+          retention-days: 14
+
+  aggregate:
+    needs: [ab]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ab-*
+          path: ${{ runner.temp }}/art
+      - name: Tables
+        env:
+          WAVE: ${{ inputs.wave }}
+          UPREF: ${{ inputs.upstream-ref }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/jobs"
+          for d in "$RUNNER_TEMP"/art/ab-*; do for j in "$d"/*/; do cp -r "$j" "$RUNNER_TEMP/jobs/"; done; done
+          R="results/$WAVE-$GITHUB_RUN_ID"
+          python3 ci/compare.py "$RUNNER_TEMP/jobs" "$R" "Wave $WAVE (server comparison, upstream $UPREF), run $GITHUB_RUN_ID" > /dev/null
+          cat "$R/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          python3 ci/readme.py
+          git config user.name C0fuge
+          git config user.email 189659128+C0fuge@users.noreply.github.com
+          git add results README.md
+          git commit -m "Results: wave $WAVE (run $GITHUB_RUN_ID)" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done

@@ -25,7 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * CSV: client,conc,class,thread,round,lat_ms,rows,val,ok
  */
 public class Lat {
-    static final String[] CLASSES = {"meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "count_filter", "prep_point"};
+    static final String[] ALL_CLASSES = {"meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "count_filter", "prep_point"};
+    /** SMALL_CLASSES (comma-separated) restricts the mix, e.g. for a server without prepared statements. */
+    static final String[] CLASSES = System.getenv().getOrDefault("SMALL_CLASSES", "").isBlank() ? ALL_CLASSES
+            : System.getenv("SMALL_CLASSES").split(",");
 
     static long orderKey(long seed) {
         long r = 1 + Math.floorMod(seed * 2654435761L + 12345L, 14_999_999L);
@@ -53,7 +56,7 @@ public class Lat {
             final int tid = t;
             Thread th = new Thread(() -> {
                 try (Connection c = DriverManager.getConnection(url)) {
-                    PreparedStatement ps = c.prepareStatement("SELECT o_orderkey, o_totalprice FROM tpch.orders WHERE o_orderkey = ?");
+                    PreparedStatement ps = !List.of(CLASSES).contains("prep_point") ? null : c.prepareStatement("SELECT o_orderkey, o_totalprice FROM tpch.orders WHERE o_orderkey = ?");
                     round(c, ps, tid, -1, conc, fetch, null, errors); // warm-up
                     ready.countDown();
                     go.await();

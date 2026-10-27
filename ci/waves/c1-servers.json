@@ -1,0 +1,52 @@
+[
+ {
+  "variant": "45fc-vs-27f5-t4",
+  "storage": "local",
+  "a_server": "27f583adccd7",
+  "a_flags": "-DduckDbThreads=4",
+  "b_server": "45fc0a9e6e02",
+  "b_flags": "-DduckDbThreads=4",
+  "workloads": "small sf10 adbc10 sf1 adbc1 scan",
+  "small_classes": ""
+ },
+ {
+  "variant": "45fc-vs-27f5-t4",
+  "storage": "s3",
+  "a_server": "27f583adccd7",
+  "a_flags": "-DduckDbThreads=4",
+  "b_server": "45fc0a9e6e02",
+  "b_flags": "-DduckDbThreads=4",
+  "workloads": "small sf10 adbc10 sf1 adbc1 scan",
+  "small_classes": ""
+ },
+ {
+  "variant": "45fc-vs-27f5-t8",
+  "storage": "local",
+  "a_server": "27f583adccd7",
+  "a_flags": "-DduckDbThreads=8",
+  "b_server": "45fc0a9e6e02",
+  "b_flags": "-DduckDbThreads=8",
+  "workloads": "small sf10 adbc10 sf1 adbc1 scan",
+  "small_classes": ""
+ },
+ {
+  "variant": "45fc-vs-27f5-t8",
+  "storage": "s3",
+  "a_server": "27f583adccd7",
+  "a_flags": "-DduckDbThreads=8",
+  "b_server": "45fc0a9e6e02",
+  "b_flags": "-DduckDbThreads=8",
+  "workloads": "small sf10 adbc10 sf1 adbc1 scan",
+  "small_classes": ""
+ },
+ {
+  "variant": "upstream-t2-vs-45fc-t4",
+  "storage": "local",
+  "a_server": "45fc0a9e6e02",
+  "a_flags": "-DduckDbThreads=4",
+  "b_server": "upstream",
+  "b_flags": "-DduckDbThreads=2",
+  "workloads": "small adbc10 adbc1",
+  "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter"
+ }
+]
