@@ -1,0 +1,4 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+new-vs-27f5-start-cancel-local,7562a5bdb7b9,,27f583adccd7,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1360,1331,0.9786764705882353,0.977 1.029 0.961
+new-vs-main-start-cancel-local,7562a5bdb7b9,,up-main,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1398,4909,3.511444921316166,3.419 3.581 3.541
+new-vs-native-start-cancel-local,7562a5bdb7b9,,up-native,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1404,4481,3.1915954415954415,3.169 3.125 3.228
