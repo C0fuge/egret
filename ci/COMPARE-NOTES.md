@@ -21,3 +21,7 @@
    - mixed load: 32 small-query clients plus 2 heavy TPC-H streams (q01, q18) at the same time - small-query QPS and
      p95 with and without the heavy streams, and the heavy queries' times;
    - report QPS ratios between servers per step and the saturation points side by side.
+4. Fifth server (maintainer, 2026-10-27): the newest kestrel pre-release at the time you dispatch (`gh release list -R
+   C0fuge/kestrel -L 1`; at writing `server-1.0.0-7562a5bdb7b9` = 45fc + parameterless prepared queries without a
+   statement id + S3 connection caching + retry of a rewritten S3 file). Pair it with 45fc on every workload of the
+   45fc-vs-27f5 pairs (local Parquet and S3, threads 4 and 8) and include it in the load/QPS steps.
