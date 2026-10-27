@@ -28,12 +28,12 @@
   container on cpus 2,3.
   - Report 1 SPEED: **published** `results/COMPARE-SPEED-2026-10-27.md` (run 40537011671 merged with the ours pairs of
     40490378159; fix list items 1-4 at its top, bisect 40537018532: no build regresses).
-  - Report 2 LOAD: **published** `results/COMPARE-LOAD-2026-10-27.md`. Still to add: the TLS closed-loop load job
-    `new-plain-vs-tls-load` of run 40550942695 (results/c7-load-tls-40550942695 once its aggregate has committed).
+  - Report 2 LOAD: **published** `results/COMPARE-LOAD-2026-10-27.md`; TLS load split still to add (Next (1)).
   - Report 3 ROBUSTNESS: **published** `results/COMPARE-ROBUSTNESS-2026-10-27.md` (soak 40550552130, cold start + cancel
     40551848571, threads 40550556746, Trino 40551575311, cluster on S3 40553385813; the local-disk cluster attempt 40551320307
     showed that a cluster refuses complete answers without shared storage).
-  - Next: (1) add the TLS closed-loop load job of run 40550942695 to Report 2 when it has committed; (2) then the final run
+  - Next: (1) TLS closed-loop load (run 40550942695, committed in results/c7-load-tls-40550942695): load_report.py pools
+    A (plain) and B (TLS) because both are ours-new; split them by side (FLAGS_B = TLS) and add the per-side table to Report 2; (2) then the final run
     of the task's "Later addition": newer kestrel pre-releases (`84fec772ec50` and later) as `ours-cache` in an S3-only pair
     vs `ours-new` (SF1/SF10 and repeated small queries, cache on vs off). Not started. Hints: the cache size key is
     `CACHE_MEGABYTES_KEY` of `flight-plugin-s3/.../S3ReadCache.java` in C0fuge/kestrel (MiB, 0 = off; find how the

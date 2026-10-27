@@ -173,5 +173,7 @@ Missing or invalid Flight bearer token`; `grpc+tls://` with the token -> `SELECT
 probes yet, another runner) gave the same picture: small-query QPS within 5 %, SF10 TPC-H 0.99-1.01x, `lineitem` export
 -3 to -8 %.
 
-Closed-loop load steps (1-128 clients) with TLS on vs off: job `new-plain-vs-tls-load` of run 40550942695, still running
-when this report was published; added here when it has finished.
+Closed-loop load steps (1-128 clients, TLS on vs off): job `new-plain-vs-tls-load` of run
+[40550942695](c7-load-tls-40550942695/load.md) finished with 0 errors at every step on both sides and equal peak RSS (4666 vs
+4699 MB, 1.01x); `load_report.py` pools both sides of that job under "ours-new" (same server id), so the per-side QPS / p95
+split is still to be extracted (next session).
