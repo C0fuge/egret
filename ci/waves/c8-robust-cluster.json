@@ -1,0 +1,12 @@
+[
+ {
+  "variant": "new-vs-27f5-cluster",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "ours-27f5",
+  "b_flags": "",
+  "workloads": "cluster",
+  "small_classes": ""
+ }
+]

@@ -138,6 +138,38 @@ print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' "$A
 cpuloop() {  # cpuloop <file> <stopfile>: server process CPU ticks (utime stime, 100/s) every ~0.25 s
   while [ ! -e "$2" ]; do echo "$(date +%s.%N) $(docker exec flight cut -d' ' -f14,15 /proc/1/stat 2>/dev/null)" >> "$1"; sleep 0.25; done
 }
+cluster_node() {  # cluster_node <i> <dataDir> <flags...>: kestrel node i of a 3-node cluster on this runner (Flight 3200<9+i>,
+  # Hazelcast 570<i>); container "flight" for node 1, flight2 / flight3; each node 2 CPUs on cpus 0,1 and 4 GB (3 x 6 GB would not fit)
+  local i=$1 dd=$2 n=flight; shift 2; [ "$i" = 1 ] || n=flight$i
+  docker rm -f $n > /dev/null 2>&1
+  docker run -d --name $n --network host --cpus=2 --cpuset-cpus=0,1 --memory=4g --memory-swap=4g \
+    -e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true \
+    -v "$ASSETS/srv/$SERVER":/app:ro -v "$ASSETS/duckdb156":/ext/duckdb-home:ro -v "$DATA":/data:ro -w /tmp $SRV_IMAGE \
+    java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
+      -Darrowflight.plugins.dir=/app/plugins -Darrowflight.duckdb.extensionDir=/ext/duckdb-home/extensions -DduckDbAllowUnsignedExtensions=true \
+      -Darrow.enable_unsafe_memory_access=true -DmetricsEnabled=false -Dhazelcast.phone.home.enabled=false \
+      -DnumServers=3 -Xmx2g -XX:MaxDirectMemorySize=1g -DdataDir="$dd" "$@" \
+      -cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer \
+      --port $((32009 + i)) --localhost localhost --hazelcast-port $((5700 + i)) --hosts 127.0.0.1:5701,127.0.0.1:5702,127.0.0.1:5703 > /dev/null
+}
+cluster_wait() {  # cluster_wait <container...>: seconds until every listed node logged its start (max 300 s), else "timeout"
+  local t0=$(date +%s%N) n ok
+  for _ in $(seq 1 1500); do
+    ok=1; for n in "$@"; do docker logs $n 2>&1 | grep -q 'Server Arrow Flight SQL started' || { ok=; break; }; done
+    [ -n "$ok" ] && { awk -v a=$t0 -v b=$(date +%s%N) 'BEGIN{printf "%.1f", (b - a) / 1e9}'; return 0; }
+    sleep 0.2
+  done
+  echo timeout; return 1
+}
+cluster_check() {  # cluster_check <name> <query dir>: ADBC TPC-H SF10 through node 1, 1 run, answers vs the reference
+  local d=$O/cluster-$1; mkdir -p "$d"; local t0=$(date +%s%N)
+  cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$2" 1 "$d" > "$d/runner.txt" 2>&1
+  local s; s=$(awk -v a=$t0 -v b=$(date +%s%N) 'BEGIN{printf "%.1f", (b - a) / 1e9}')
+  local ref=$OUT/ref/adbc10/summary.tsv
+  echo "cluster $1: wall_s=$s queries=$(awk 'NR>1' "$d/summary.tsv" 2>/dev/null | wc -l) ok=$(awk -F'\t' 'NR>1 && $2=="ok"' "$d/summary.tsv" 2>/dev/null | wc -l) correct=$(awk -F'\t' 'NR==FNR{r[$1]=$3"/"$4; next} FNR>1 && $2=="ok" && r[$1]==$3"/"$4' "$ref" "$d/summary.tsv" 2>/dev/null | wc -l) failed=[$(awk '$2=="FAIL"{printf "%s ", $1}' "$d/runner.txt")]" >> "$O/result.txt"
+  for e in "$d"/q*.error; do [ -e "$e" ] && echo "  cluster $1 error $(basename "$e" .error): $(head -c 300 "$e" | tr '\n' ' ')"; done | sort -t: -k2 -u | head -5 >> "$O/result.txt"
+  return 0
+}
 step() { echo -e "$1\t$2\t$(date +%s)\t$(cut -d' ' -f1 /proc/loadavg)" >> "$O/steps.tsv"; }
 tpch() {  # tpch <name> <sf> <reps>
   local d=$O/$1; mkdir -p "$d"
@@ -313,6 +345,51 @@ side() {  # side <A|B> <round>
       done
       touch "$O/.soak-stop"; wait $jp $hp; rm -f "$O/.soak-stop"; docker rm -f jsamp > /dev/null 2>&1
       step soak end; mem soak ;;
+    cluster)  # Report 3, ours only: 3-node cluster on this runner (SF10): node stopped (graceful) before a query, node killed
+              # (SIGKILL) during q18/q21, time until node 1 answers correctly again, time for a node to rejoin; answers vs reference
+      case $SERVER in up-*|upstream) echo "cluster: n/a (upstream: no tested multi-node mode, ours only)" >> "$O/result.txt"; continue;; esac
+      step cluster begin
+      docker logs flight > "$O/server-before-cluster.log" 2>&1; docker rm -f flight > /dev/null 2>&1
+      local cdd; cdd=$(data_dir $layout sf10)
+      # shellcheck disable=SC2086
+      for i in 1 2 3; do cluster_node $i "$cdd" $flags; done
+      echo "cluster start: all 3 nodes started in $(cluster_wait flight flight2 flight3)s" >> "$O/result.txt"
+      for n in flight flight2 flight3; do docker logs $n 2>&1 | grep -m3 -iE 'nodes connected|members|Hosts:' | cut -c1-200 | sed "s/^/  $n: /"; done >> "$O/cluster.txt"
+      mkdir -p "$O/cq-quick" "$O/cq-kill"; cp "$QUERIES/q06.sql" "$O/cq-quick/"; cp "$QUERIES/q18.sql" "$QUERIES/q21.sql" "$O/cq-kill/"
+      cluster_check all-up "$QUERIES"
+      docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' flight flight2 flight3 >> "$O/cluster.txt" 2>&1
+      local ts=$(date +%s%N); docker stop -t 30 flight3 > /dev/null
+      echo "cluster stop-node3: docker stop took $(awk -v a=$ts -v b=$(date +%s%N) 'BEGIN{printf "%.1f", (b - a) / 1e9}')s" >> "$O/result.txt"
+      cluster_check node3-stopped "$QUERIES"
+      docker logs flight3 > "$O/cluster-flight3-stopped.log" 2>&1
+      # shellcheck disable=SC2086
+      cluster_node 3 "$cdd" $flags; echo "cluster rejoin-node3 (new container): $(cluster_wait flight3)s" >> "$O/result.txt"
+      cluster_check node3-back "$QUERIES"
+      mkdir -p "$O/cluster-kill"
+      ( cl timeout 900 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/cq-kill" 1 "$O/cluster-kill" > "$O/cluster-kill/runner.txt" 2>&1 ) & local kp=$!
+      sleep 3; local tk=$(date +%s%N); docker kill flight2 > /dev/null
+      wait $kp
+      echo "cluster kill-node2-mid-query: $(awk -F'\t' 'NR>1{printf "%s=%s ", $1, $2}' "$O/cluster-kill/summary.tsv" 2>/dev/null) $(head -c 250 "$O"/cluster-kill/*.error 2>/dev/null | tr '\n' ' ')" >> "$O/result.txt"
+      local rec=; for k in $(seq 1 180); do
+        rm -rf "$O/cluster-rec"; cl timeout 60 $PY -W ignore "$HERE/clients/tpch_adbc.py" grpc://localhost:32010 "$O/cq-quick" 1 "$O/cluster-rec" > /dev/null 2>&1
+        if awk -F'\t' 'NR==FNR{r[$1]=$3"/"$4; next} FNR>1 && $2=="ok" && r[$1]==$3"/"$4{f=1} END{exit !f}' "$OUT/ref/adbc10/summary.tsv" "$O/cluster-rec/summary.tsv" 2>/dev/null; then
+          rec=$(awk -v a=$tk -v b=$(date +%s%N) 'BEGIN{printf "%.1f", (b - a) / 1e9}'); break; fi
+        sleep 1
+      done
+      echo "cluster recover-after-kill: first correct q06 through node 1 after ${rec:-never (>180 s)}s, attempts=$k" >> "$O/result.txt"
+      cluster_check node2-dead "$QUERIES"
+      # shellcheck disable=SC2086
+      docker logs flight2 > "$O/cluster-flight2-killed.log" 2>&1
+      # shellcheck disable=SC2086
+      cluster_node 2 "$cdd" $flags; echo "cluster restart-node2: $(cluster_wait flight2)s" >> "$O/result.txt"
+      cluster_check node2-back "$QUERIES"
+      for n in flight flight2 flight3; do docker logs $n > "$O/cluster-$n.log" 2>&1
+        docker inspect -f "$n exit={{.State.ExitCode}} oom={{.State.OOMKilled}} running={{.State.Running}}" $n >> "$O/container.txt" 2>/dev/null; done
+      grep -hE 'WARN|ERROR' "$O"/cluster-flight*.log | cut -c1-250 | sort | uniq -c | sort -rn | head -15 > "$O/cluster-warn.txt"
+      docker rm -f flight2 flight3 > /dev/null 2>&1
+      # shellcheck disable=SC2086
+      start_server "$cdd" $flags > "$O/restart-after-cluster.txt" 2>&1
+      step cluster end ;;
     sf1|adbc1)
       step $w begin
       if [ -z "$sf1started" ]; then
