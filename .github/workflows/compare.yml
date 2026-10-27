@@ -20,6 +20,9 @@ on:
       ours-new:
         description: 'kestrel id for the alias ours-new (pinned to the build of the first comparison run; empty = newest C0fuge/kestrel server-1.0.0-* pre-release at dispatch)'
         default: '7562a5bdb7b9'
+      ours-cache:
+        description: 'kestrel id for the alias ours-cache (newer pre-release with the S3 read cache; final run of the task)'
+        default: '4e77c6bda59a'
       only:
         description: 'Comma-separated job ids (<variant>-<storage>) to run from the wave (empty = all)'
         default: ''
@@ -73,6 +76,7 @@ jobs:
           WAVE: ${{ inputs.wave }}
           ONLY: ${{ inputs.only }}
           OURS_NEW: ${{ inputs.ours-new }}
+          OURS_CACHE: ${{ inputs.ours-cache }}
           UP_NATIVE: ${{ inputs.upstream-ref }}
           UP_MAIN: ${{ inputs.upstream-main-ref }}
           GH_TOKEN: ${{ github.token }}
@@ -89,7 +93,7 @@ jobs:
           python3 - <<'EOF' >> "$GITHUB_OUTPUT"
           import json, os
           w = json.load(open(f"ci/waves/{os.environ['WAVE']}.json"))
-          alias = {"ours-new": os.environ["OURS_NEW"], "ours-27f5": "27f583adccd7"}
+          alias = {"ours-new": os.environ["OURS_NEW"], "ours-27f5": "27f583adccd7", "ours-cache": os.environ.get("OURS_CACHE", "")}
           up = {"up-native": os.environ["UP_NATIVE_SHA"], "up-main": os.environ["UP_MAIN_SHA"]}
           for j in w:
               j["id"] = f"{j['variant']}-{j['storage']}".replace("+", "_")

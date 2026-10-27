@@ -1,0 +1,6 @@
+[
+ {"variant": "cache-off-vs-on", "storage": "s3", "a_server": "ours-cache", "a_flags": "-DduckDbThreads=4", "b_server": "ours-cache", "b_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024", "workloads": "adbc10 adbc1 small", "small_classes": ""},
+ {"variant": "new-vs-cache-off", "storage": "s3", "a_server": "ours-new", "a_flags": "-DduckDbThreads=4", "b_server": "ours-cache", "b_flags": "-DduckDbThreads=4", "workloads": "adbc10 adbc1 small", "small_classes": ""},
+ {"variant": "new-vs-cache-on", "storage": "s3", "a_server": "ours-new", "a_flags": "-DduckDbThreads=4", "b_server": "ours-cache", "b_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024", "workloads": "adbc10 adbc1 small", "small_classes": ""},
+ {"variant": "new-vs-84fe", "storage": "s3", "a_server": "ours-new", "a_flags": "-DduckDbThreads=4", "b_server": "84fec772ec50", "b_flags": "-DduckDbThreads=4", "workloads": "adbc10 adbc1 small", "small_classes": ""}
+]
