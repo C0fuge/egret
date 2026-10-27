@@ -65,6 +65,7 @@ jobs:
       upstream: ${{ steps.m.outputs.upstream }}
       upbuilds: ${{ steps.m.outputs.upbuilds }}
       servers: ${{ steps.m.outputs.servers }}
+      trino: ${{ steps.m.outputs.trino }}
     steps:
       - uses: actions/checkout@v4
       - id: m
@@ -103,6 +104,7 @@ jobs:
           print("upstream=" + str(bool(used)).lower())
           print("upbuilds=" + json.dumps([{"name": n, "ref": up[n]} for n in used] or [{"name": "none", "ref": ""}]))
           print("servers=" + json.dumps(alias | up))
+          print("trino=" + str(any("trino" in j["workloads"].split() for j in w)).lower())
           EOF
 
   upstream:
@@ -155,9 +157,41 @@ jobs:
           path: ${{ runner.temp }}/up
           retention-days: 14
 
+  trino-plugin:
+    # Trino connector of C0fuge/heron (public, built read-only from main), its Trino TPC-H SF1 queries and DuckDB reference answers
+    needs: plan
+    if: needs.plan.outputs.trino == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: C0fuge/heron
+          ref: main
+          path: heron
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Build plugin (Trino 455 profile, tests skipped)
+        working-directory: heron
+        run: mvn -B -ntp -P trino-455 -DskipTests clean package
+      - name: Collect
+        run: |
+          T="$RUNNER_TEMP/trino"; mkdir -p "$T"
+          cp heron/trino-arrow-flight/target/trino-arrow-flight-*.zip "$T/plugin.zip"
+          cp -r heron/e2e/ci/queries heron/e2e/ci/reference/sf1 heron/e2e/ci/compare.py "$T/"
+          git -C heron rev-parse HEAD > "$T/REF.txt"; cat "$T/REF.txt"; ls -l "$T"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trino-plugin
+          path: ${{ runner.temp }}/trino
+          retention-days: 14
+
   ab:
-    needs: [data, plan, upstream]
-    if: ${{ !cancelled() && needs.data.result == 'success' && needs.plan.result == 'success' && needs.upstream.result != 'cancelled' }}
+    needs: [data, plan, upstream, trino-plugin]
+    if: ${{ !cancelled() && needs.data.result == 'success' && needs.plan.result == 'success' && needs.upstream.result != 'cancelled' && needs.trino-plugin.result != 'cancelled' && needs.trino-plugin.result != 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 170
     strategy:
@@ -180,6 +214,11 @@ jobs:
         with:
           pattern: upstream-up-*
           path: ${{ runner.temp }}/upstream
+      - if: contains(matrix.workloads, 'trino')
+        uses: actions/download-artifact@v4
+        with:
+          name: trino-plugin
+          path: ${{ runner.temp }}/assets/trino
       - name: Assets
         env:
           SERVERS: ${{ matrix.a_server }} ${{ matrix.b_server }}

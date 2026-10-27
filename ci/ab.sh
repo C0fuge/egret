@@ -170,6 +170,36 @@ cluster_check() {  # cluster_check <name> <query dir>: ADBC TPC-H SF10 through n
   for e in "$d"/q*.error; do [ -e "$e" ] && echo "  cluster $1 error $(basename "$e" .error): $(head -c 300 "$e" | tr '\n' ' ')"; done | sort -t: -k2 -u | head -5 >> "$O/result.txt"
   return 0
 }
+trino_run() {  # Report 3: TPC-H SF1 through Trino 455 + our connector (ASSETS/trino from the trino-plugin job), Trino in the client
+  # cores (cpus 2,3, 6 GB, -Xmx3G); 2 runs per query (cold, warm); answers of the first run vs the connector's DuckDB reference (compare.py)
+  local T=$ASSETS/trino d=$O/trino; mkdir -p "$d/plugin" "$d/etc/catalog" "$d/r1" "$d/r2"
+  [ -f "$T/plugin.zip" ] || { echo "trino: n/a (plugin artifact missing)" >> "$O/result.txt"; return 0; }
+  unzip -qj "$T/plugin.zip" -d "$d/plugin"
+  printf '%s\n' connector.name=arrow_flight arrow-flight.host=localhost arrow-flight.port=32010 arrow-flight.bearer-token=unused > "$d/etc/catalog/flight.properties"
+  printf '%s\n' -server -Xmx3G -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -Djdk.attach.allowAttachSelf=true \
+    --add-opens=java.base/java.nio=ALL-UNNAMED -Darrow.enable_unsafe_memory_access=true > "$d/etc/jvm.config"
+  docker rm -f trino > /dev/null 2>&1
+  docker run -d --name trino --network host --cpuset-cpus=$CPU_CL --memory=6g --memory-swap=6g \
+    -v "$d/plugin":/usr/lib/trino/plugin/arrow-flight:ro -v "$d/etc/catalog/flight.properties":/etc/trino/catalog/flight.properties:ro \
+    -v "$d/etc/jvm.config":/etc/trino/jvm.config:ro -v "$T/queries":/queries:ro trinodb/trino:455 > /dev/null
+  for _ in $(seq 1 120); do docker exec trino trino --execute 'SELECT 1' > /dev/null 2>&1 && break; sleep 2; done
+  docker exec trino trino --execute 'SHOW SCHEMAS FROM flight' > "$d/schemas.txt" 2>&1
+  local q r t0 n=0 fail=
+  for q in $(cd "$T/queries" && ls *.sql | sed 's/\.sql$//'); do
+    for r in 1 2; do
+      t0=$(date +%s%N)
+      if docker exec trino trino --catalog flight --schema tpch --output-format TSV -f "/queries/$q.sql" > "$d/r$r/$q.tsv" 2> "$d/r$r/$q.err"; then
+        rm -f "$d/r$r/$q.err"; st=ok; else rm -f "$d/r$r/$q.tsv"; st=FAIL; [ $r = 1 ] && fail="$fail $q"; fi
+      echo -e "$q\t$r\t$st\t$(awk -v a=$t0 -v b=$(date +%s%N) 'BEGIN{printf "%.3f", (b - a) / 1e9}')" >> "$d/times.tsv"
+    done
+  done
+  cl $PY -I "$T/compare.py" "$T/sf1" "$d/r1" "$T/queries" "$d/compare.tsv" > "$d/compare.txt" 2>&1
+  echo "trino sf1: $(tail -1 "$d/compare.txt") cold_sum=$(awk -F'\t' '$2==1{s+=$4} END{printf "%.2f", s}' "$d/times.tsv") warm_sum=$(awk -F'\t' '$2==2{s+=$4} END{printf "%.2f", s}' "$d/times.tsv") failed=[${fail# }] heron=$(cut -c1-12 "$T/REF.txt")" >> "$O/result.txt"
+  awk -F'\t' 'NR>1 && $2!="OK"{print "  trino diff " $1 ": " $2 " " substr($3, 1, 200)}' "$d/compare.tsv" | head -8 >> "$O/result.txt"
+  for e in "$d"/r1/*.err; do [ -e "$e" ] && echo "$(basename "$e" .err): $(grep -m1 -E 'Query .* failed|Error|Exception' "$e" | cut -c1-300)"; done \
+    | sort -t: -k2 -u | head -6 | sed 's/^/  trino error /' >> "$O/result.txt"
+  docker logs trino > "$d/trino.log" 2>&1; docker rm -f trino > /dev/null 2>&1
+}
 step() { echo -e "$1\t$2\t$(date +%s)\t$(cut -d' ' -f1 /proc/loadavg)" >> "$O/steps.tsv"; }
 tpch() {  # tpch <name> <sf> <reps>
   local d=$O/$1; mkdir -p "$d"
@@ -222,7 +252,7 @@ side() {  # side <A|B> <round>
   firstq
   # sf1 / adbc1 restart the server on SF1: always last
   local sf1started=
-  for w in $(for x in $WORKLOADS; do case $x in sf1|adbc1) ;; *) echo $x;; esac; done) $(for x in $WORKLOADS; do case $x in sf1|adbc1) echo $x;; esac; done); do
+  for w in $(for x in $WORKLOADS; do case $x in sf1|adbc1|trino) ;; *) echo $x;; esac; done) $(for x in $WORKLOADS; do case $x in sf1|adbc1|trino) echo $x;; esac; done); do
     log "  $s r$r $w (host free MB: $(free -m | awk '/Mem:/{print $7}'))"
     case $w in
     small)
@@ -390,7 +420,7 @@ side() {  # side <A|B> <round>
       # shellcheck disable=SC2086
       start_server "$cdd" $flags > "$O/restart-after-cluster.txt" 2>&1
       step cluster end ;;
-    sf1|adbc1)
+    sf1|adbc1|trino)
       step $w begin
       if [ -z "$sf1started" ]; then
         docker logs flight > "$O/server-sf10.log" 2>&1
@@ -398,7 +428,7 @@ side() {  # side <A|B> <round>
         if start_server "$(data_dir $layout sf1)" $flags > "$O/start-sf1.txt" 2>&1; then sf1started=1; else sf1started=failed; fi
       fi
       if [ "$sf1started" = 1 ]; then
-        if [ $w = sf1 ]; then tpch jdbc1 sf1 3; else tpch_adbc adbc1 3; fi; mem $w
+        case $w in sf1) tpch jdbc1 sf1 3;; adbc1) tpch_adbc adbc1 3;; trino) trino_run;; esac; mem $w
       else echo "START FAILED $w" >> "$O/result.txt"; fi
       step $w end ;;
     esac

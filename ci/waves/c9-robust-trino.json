@@ -1,0 +1,5 @@
+[
+ {"variant": "new-vs-27f5-trino", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "ours-27f5", "b_flags": "", "workloads": "trino", "small_classes": ""},
+ {"variant": "new-vs-native-trino", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "up-native", "b_flags": "", "workloads": "trino", "small_classes": ""},
+ {"variant": "new-vs-main-trino", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "up-main", "b_flags": "", "workloads": "trino", "small_classes": ""}
+]
