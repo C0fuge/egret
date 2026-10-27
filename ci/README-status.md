@@ -4,8 +4,12 @@
   pre-release than the `7562a5bdb7b9` named in the task - check whether it is the S3 read-cache build of the "Later
   addition"; if it is, the cache pair is `84fec772ec50` vs `7562a5bdb7b9`). Every server runs in an identically
   limited container (`eclipse-temurin:21-jre`, 2 CPUs on cpus 0,1, 6 GB), clients and S3 in their own container on cpus 2,3.
-  - Report 1 SPEED: `compare` wave `c2-speed`, run **40483119136** (started 09:55 UTC). When it is done: copy
-    `results/c2-speed-40483119136/speed.md` to `results/COMPARE-SPEED-2026-10-27.md`, add a README summary, own commit.
+  - Report 1 SPEED: `compare` wave `c2-speed`, run **40483119136** (started 09:55 UTC; at 10:35 2 of 16 jobs done,
+    `def-tpch-local` and `def-lat-local`, both green). When it is done: check `results/c2-speed-40483119136/` for failed
+    or n/a TPC-H queries first (the `def-tpch-local` job took only ~2.5 min per side for SF10 JDBC+ADBC and SF1 on
+    2 CPUs, which looks short), then copy `speed.md` to `results/COMPARE-SPEED-2026-10-27.md`, add a README summary,
+    own commit. Artifacts can't be downloaded from the agent sandbox (blob host blocked); runs from commit 8c8db96 on
+    print per-round results in the job log.
   - Report 2 LOAD: wave `c3-load`, run **40485420552** (queued behind the speed run; aggregate writes `load.md`). Still
     missing: upstream with its ZSTD Flight compression on the netem path (option name: `COMPRESSION.txt` in the upstream
     build artifact / log) and TLS + token on vs off for ours.
