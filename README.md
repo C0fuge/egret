@@ -136,6 +136,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `trino
 
 - [c9-robust-trino-40551575311](results/c9-robust-trino-40551575311/summary.md) (latest of its wave)
 - [c8-robust-cluster-40551320307](results/c8-robust-cluster-40551320307/summary.md) (latest of its wave)
+- [c5-threads-40550556746](results/c5-threads-40550556746/summary.md) (latest of its wave)
 - [c3-load-40540885908](results/c3-load-40540885908/summary.md) (latest of its wave)
 - [c6-bisect-40537018532](results/c6-bisect-40537018532/summary.md) (latest of its wave)
 - [c3-load-40490387806](results/c3-load-40490387806/summary.md)
