@@ -87,6 +87,19 @@ def load(src):
     return jobs
 
 
+REASONS = [  # client error text -> short reason (the server-side exception is in the job log)
+    ("Failed to prepare Flight SQL statement", "the server's schema resolver rejects it (upstream: single-table parser, `Can only select from ONE table`; `AVG` unsupported on main)"),
+    ("Error getting Arrow schema", "the server's schema resolver rejects it (upstream: single-table parser, `Can only select from ONE table`; `AVG` unsupported on main)"),
+    ("does not exist because schema", "subquery table not rewritten: DuckDB `schema \"tpch\" does not exist`"),
+    ("inconsistent schema", "advertised schema differs from the data (e.g. float64 vs decimal(38,4)): ADBC rejects the stream"),
+]
+
+
+def reason(p):
+    t = " ".join(open(p).read().split())[:400]
+    return next((r for k, r in REASONS if k in t), t[:160])
+
+
 def tpch(rounds, ref, w):
     """per query: (median warm s, cold s median, ok) over rounds; ok = every round correct"""
     out = {}
@@ -106,6 +119,9 @@ def tpch(rounds, ref, w):
         ok = all(x is not None and x["status"] == "ok" and x["rows"] == ref[q]["rows"]
                  and (same(x["checksum"], ref[q]["checksum"]) if w.startswith("jdbc") else x["checksum"] == ref[q]["checksum"]) for x in rs)
         why = "" if ok else ("failed" if any(x is None or x["status"] != "ok" for x in rs) else "wrong answer")
+        if why == "failed":
+            why = "failed: " + next((reason(os.path.join(r, w, q + ".error")) for r in rounds
+                                     if os.path.exists(os.path.join(r, w, q + ".error"))), "no result")
         out[q] = {"warm": med([float(x["median_s"]) for x in rs if x and x["status"] == "ok"]),
                   "cold": med([float(x["cold_s"]) for x in rs if x and x["status"] == "ok"]), "ok": ok, "why": why}
     return out
@@ -169,6 +185,15 @@ def container(rounds):
             oom += 1
     return {"cpu_p50": pct(cpu, .5) if cpu else None, "cpu_max": max(cpu) if cpu else None,
             "mem_max": max(mem) if mem else None, "oom": oom, "n": len(cpu), "rounds": len(rounds)}
+
+
+def group(notes):
+    """'q01 failed: why' notes -> 'failed: why: q01 q04'; other notes unchanged"""
+    by, rest = collections.defaultdict(list), []
+    for n in sorted(notes):
+        q, _, why = n.partition(" ")
+        (by[why].append(q) if re.fullmatch(r"q\d+", q) else rest.append(n))
+    return [f"{why}: {' '.join(qs)}" for why, qs in sorted(by.items())] + rest
 
 
 def f(x, n=0):
@@ -275,7 +300,7 @@ def main():
                 for s in SERVERS:
                     if s not in shown:
                         notes[s].add("not run: " + ("upstream has no JDBC prepared statements (the Flight SQL JDBC driver prepares every query)" if s in UP and w.startswith("jdbc") else "not in this setting's jobs"))
-                L += [""] + [f"- {s}: " + "; ".join(sorted(v)) for s, v in notes.items() if v] + [""]
+                L += [""] + [f"- {s}: " + "; ".join(group(v)) for s, v in notes.items() if v] + [""]
             # small queries
             L += ["### Small queries (ms, p50 / p95 / p99 over all rounds)", "",
                   "| class | client | c | " + " | ".join(SERVERS) + " |", "|---|---|---|" + "---|" * len(SERVERS)]
