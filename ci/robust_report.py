@@ -3,7 +3,7 @@
 - soak: 30 min, 32 ADBC small-query clients in 6 x 5-min segments + 1 heavy stream (q01 / q18 alternating); RSS, heap,
   GC and threads every 10 s; p95 per segment (latency drift = last / first segment), errors, heavy query times;
 - cold start: 5 starts on SF10: port answers, server log "started", first query (connect + SELECT version()), idle RSS;
-- cancel: SF10 q18 / q21 cancelled from the client after 3 s: client return time and the time until the server process
+- cancel: SF10 q18 / q21 / lagg (single-table lineitem aggregation) cancelled from the client after 1 s: client return time and the time until the server process
   CPU falls below 0.1 core for 1 s (server-side evidence the work stopped);
 - threads: ours-new duckDbThreads 4 (A) vs 1 / 2 / 8 (B) on the same runner: TPC-H SF1 / SF10 ADBC sums, small c1 / c32 p50.
 """
@@ -177,9 +177,9 @@ def main():
             L.append(f"| {lab} | " + " | ".join(f(med(co[s][k])) + (f" (n={len(co[s][k])})" if co[s][k] else "") for s in SERVERS) + " |")
         L.append("")
     if any("cancel" in m.get("workloads", "") for m, _, _ in jobs):
-        L += ["## Cancel a running SF10 query after 3 s (ADBC `adbc_cancel`)", "",
+        L += ["## Cancel a running SF10 query after 1 s (ADBC `adbc_cancel`)", "",
               "| query | metric | " + " | ".join(SERVERS) + " |", "|---|---|" + "---|" * len(SERVERS)]
-        for q in ("q18", "q21"):
+        for q in ("q18", "q21", "lagg"):
             ca = {s: cancel(by.get(s, []), q) for s in SERVERS}
             L.append(f"| {q} | client returns, s after cancel | " + " | ".join(f(med(ca[s]["ret"]), 2) for s in SERVERS) + " |")
             L.append(f"| {q} | server CPU < 0.1 core, s after cancel | " + " | ".join(

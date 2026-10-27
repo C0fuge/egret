@@ -344,12 +344,15 @@ side() {  # side <A|B> <round>
         # shellcheck disable=SC2086
         start_server "$(data_dir $layout sf10)" $flags > "$O/coldstart-$i.txt" 2>&1 && { firstq; sleep 5; mem cold$i; }
       done ;;
-    cancel)  # Report 3: cancel a running SF10 q18 / q21 after 3 s; server CPU sampled to see when it stops working
-      for q in q18 q21; do
+    cancel)  # Report 3: cancel a running SF10 query after 1 s (q18 / q21, and lagg = single-table lineitem aggregation, which
+             # upstream answers too: it rejects multi-table queries); server CPU sampled to see when it stops working
+      echo "SELECT l_orderkey, l_partkey, sum(l_extendedprice * (1 - l_discount)) AS rev, count(*) AS n FROM tpch.lineitem GROUP BY l_orderkey, l_partkey ORDER BY rev DESC, l_orderkey, l_partkey LIMIT 20" > "$O/lagg.sql"
+      for q in q18 q21 lagg; do
+        local qf=$QUERIES/$q.sql; [ $q = lagg ] && qf=$O/lagg.sql
         step cancel-$q begin
         rm -f "$O/.cpu-stop"; cpuloop "$O/cancel-$q-cpu.txt" "$O/.cpu-stop" & local cp=$!
         sleep 2
-        cl timeout 700 $PY -W ignore "$HERE/clients/cancel.py" "$ADBC_URI" "$QUERIES/$q.sql" 3 2>"$O/cancel-$q.err" >> "$O/result.txt"
+        cl timeout 700 $PY -W ignore "$HERE/clients/cancel.py" "$ADBC_URI" "$qf" 1 2>"$O/cancel-$q.err" >> "$O/result.txt"
         sleep 20; touch "$O/.cpu-stop"; wait $cp; rm -f "$O/.cpu-stop"
         step cancel-$q end; mem cancel-$q
       done ;;
