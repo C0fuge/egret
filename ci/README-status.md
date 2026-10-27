@@ -24,6 +24,12 @@
     small/scan local), copy it to `results/COMPARE-SPEED-2026-10-27.md` with the bisect result (below) and the upstream
     TPC-H reasons at the top, add a README summary, own commit. If an up-native `-lat` local job dies again with a runner
     shutdown, its log now shows the last workload and the host's free memory before it.
+  - Fix list item 4, first look (job 27f5-vs-7562 of the bisect run, 5 rounds on one runner): ADBC SF10 sum of warm
+    medians per round ours-27f5 25.9-27.4 s vs 7562a5bdb7b9 26.3-28.6 s, i.e. about 1 % apart, not 30-45 %. The gap in
+    the first speed report is an aggregation artifact: its ours-new column pooled all ours-new jobs of a storage/setting
+    (upstream pairs on other runners and CPU types included) while ours-27f5 came from its own pair job only. The speed
+    report now prints the same-runner ours-27f5 / ours-new ratio under each TPC-H table ; in the first
+    run's own pair job the ADBC SF10 ratio was 0.97 (summary.md).
   - Fix list item 4 (ours-new 30-45 % slower than ours-27f5 on ADBC SF10): wave `c6-bisect`, run **40537018532**
     (dispatched 16:02 UTC, 5 rounds, ADBC SF10 + small, ours-27f5 vs 45fc0a9e6e02 / e46f28dfdf09 / 6acc9cce0b26 /
     7562a5bdb7b9, each pair on one runner); its `results/c6-bisect-40537018532/summary.md` B/A ratios give the first slow

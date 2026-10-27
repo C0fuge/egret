@@ -254,6 +254,7 @@ def main():
             for w, label in (("adbc10", "TPC-H SF10, ADBC"), ("adbc1", "TPC-H SF1, ADBC"), ("jdbc10", "TPC-H SF10, JDBC"), ("jdbc1", "TPC-H SF1, JDBC")):
                 vals = collections.defaultdict(list)   # (server, q) -> [per job dict]
                 ratio = collections.defaultdict(dict)  # q -> up -> same-runner up/ours
+                same27 = []  # (ours-27f5 / ours-new sum of warm medians, queries, runner) per pair job
                 ref = {}
                 for jid, m, rf, sides in js:
                     ref = ref or rf.get(w, {})
@@ -262,6 +263,10 @@ def main():
                         for q, x in (d or {}).items():
                             vals[(name, q)].append(x)
                     b = m.get("name_b")
+                    if b == "ours-27f5" and t.get("ours-new") and t.get(b):  # same-runner ours-27f5 / ours-new
+                        qq = [q for q in t[b] if t[b][q]["ok"] and (t["ours-new"].get(q) or {}).get("ok")]
+                        if qq:
+                            same27.append((sum(t[b][q]["warm"] for q in qq) / sum(t["ours-new"][q]["warm"] for q in qq), len(qq), m.get("runner", "")))
                     if b in UP and t.get("ours-new") and t.get(b):
                         for q in t[b]:
                             a, u = t["ours-new"].get(q), t[b][q]
@@ -300,7 +305,12 @@ def main():
                 for s in SERVERS:
                     if s not in shown:
                         notes[s].add("not run: " + ("upstream has no JDBC prepared statements (the Flight SQL JDBC driver prepares every query)" if s in UP and w.startswith("jdbc") else "not in this setting's jobs"))
-                L += [""] + [f"- {s}: " + "; ".join(group(v)) for s, v in notes.items() if v] + [""]
+                L += [""] + [f"- {s}: " + "; ".join(group(v)) for s, v in notes.items() if v]
+                L += [f"- same runner: ours-27f5 / ours-new = {r:.2f} (sum of {n} warm medians, {cpu.split(' vCPU ')[-1]})" for r, n, cpu in same27]
+                if same27:
+                    L.append("- the ours-new column is the median over all its jobs of this storage and setting (other runners and CPU types), "
+                             "ours-27f5 comes only from its own pair job: compare the two by the same-runner ratio above, not by the columns")
+                L.append("")
             # small queries
             L += ["### Small queries (ms, p50 / p95 / p99 over all rounds)", "",
                   "| class | client | c | " + " | ".join(SERVERS) + " |", "|---|---|---|" + "---|" * len(SERVERS)]
