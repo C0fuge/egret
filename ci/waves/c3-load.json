@@ -118,5 +118,15 @@
   "b_flags": "-DduckDbThreads=8",
   "workloads": "mixed heavy4a netem",
   "small_classes": ""
+ },
+ {
+  "variant": "new-vs-native-zstd-netem",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-native",
+  "b_flags": "-DflightCompression=zstd",
+  "workloads": "netem",
+  "small_classes": ""
  }
 ]

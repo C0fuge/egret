@@ -32,7 +32,8 @@ def load(src):
         if not os.path.exists(os.path.join(job, "job.json")):
             continue
         m = json.load(open(os.path.join(job, "job.json")))
-        m["setting"] = "t8" if "Threads=8" in (m.get("flags_a") or "") else "def"
+        m["setting"] = ("zstd" if "flightCompression=zstd" in (m.get("flags_b") or "") else
+                        "t8" if "Threads=8" in (m.get("flags_a") or "") else "def")
         ref = tsv(os.path.join(job, "ref", "adbc10", "summary.tsv")) or {}
         sides = {(m.get(f"name_{s.lower()}") or m.get(f"server_{s.lower()}")): sorted(glob.glob(os.path.join(job, s, "r*"))) for s in "AB"}
         jobs.append((m, ref, sides))
@@ -114,8 +115,8 @@ def main():
          "| data | TPC-H SF10 Parquet on local disk (load, mixed, heavy, netem) |",
          "| pairs | ours-new (side A) vs one other server (side B) on the same runner, rounds A B / B A / A B |",
          "| load mix | `point_orders`, `point_lineitem`, `count_filter` (every server answers them; upstream has no JDBC prepared statements) |",
-         "| settings | `def` = each server's default `duckDbThreads` (ours 4, upstream 2); `t8` = 8 on both |", ""]
-    for setting in ("def", "t8"):
+         "| settings | `def` = each server's default `duckDbThreads` (ours 4, upstream 2); `t8` = 8 on both; `zstd` = netem path only, up-native with its ZSTD batch compression (`-DflightCompression=zstd`, decoded by ADBC) vs ours plain (up-main has no such option) |", ""]
+    for setting in ("def", "t8", "zstd"):
         js = [j for j in jobs if j[0]["setting"] == setting]
         if not js:
             continue
@@ -214,8 +215,9 @@ def main():
             f"{f(med(hv[s]['nt-sum']), 1)} ({min(hv[s]['nt-ok'])}/22 q)" if hv[s]["nt-sum"] else "n/a" for s in SERVERS) + " |")
         L.append("| netem: full lineitem export over ADBC, MB/s | " + " | ".join(f(med(hv[s]["nt-scan"])) for s in SERVERS) + " |")
         L.append("")
-    L += ["Not yet in this report: upstream with its ZSTD Flight compression on the netem path (the option name is taken from the",
-          "upstream build log, `COMPRESSION.txt`, in a follow-up run) and TLS + token on/off for ours.", ""]
+    if not any(m["setting"] == "zstd" for m, _, _ in jobs):
+        L += ["Not in this run: up-native with its ZSTD Flight compression on the netem path (job `new-vs-native-zstd-netem`).", ""]
+    L += ["Not yet in this report: TLS + token on/off for ours.", ""]
     open(dst, "w").write("\n".join(L) + "\n")
     print("\n".join(L))
 
