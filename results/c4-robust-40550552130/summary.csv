@@ -1,0 +1,7 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+new-vs-27f5-soak-local,7562a5bdb7b9,,27f583adccd7,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,2837,2725,0.9605216778286922,0.961
+new-vs-27f5-start-cancel-local,7562a5bdb7b9,,27f583adccd7,,local,Linux ubuntu24 4 vCPU INTEL(R) XEON(R) PLATINUM 8573C,rss,MB,1162,1156,0.9948364888123924,0.995
+new-vs-main-soak-local,7562a5bdb7b9,,up-main,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V45 96-Core Processor,rss,MB,3024,4649,1.5373677248677249,1.537
+new-vs-main-start-cancel-local,7562a5bdb7b9,,up-main,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1212,350,0.2887788778877888,0.289
+new-vs-native-soak-local,7562a5bdb7b9,,up-native,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V45 96-Core Processor,rss,MB,2942,2938,0.9986403806934059,0.999
+new-vs-native-start-cancel-local,7562a5bdb7b9,,up-native,,local,Linux ubuntu24 4 vCPU AMD EPYC 9V45 96-Core Processor,rss,MB,1251,342,0.2733812949640288,0.273
