@@ -9,7 +9,15 @@ def run_id(p):
 
 
 runs = sorted(glob.glob("results/*/summary.md"), key=run_id, reverse=True)
-lines = [intro, "", "## Results", ""]
+lines = [intro]
+if os.path.exists("ci/README-status.md"):  # hand-maintained: runs still in progress
+    lines += ["", open("ci/README-status.md").read().rstrip()]
+latest_compare = next((p for p in runs if os.path.basename(os.path.dirname(p)).startswith("c")), None)
+if latest_compare:
+    body = open(latest_compare).read().split("\n", 1)[1]
+    lines += ["", f"## Latest server comparison: [{os.path.basename(os.path.dirname(latest_compare))}]({latest_compare})",
+              body.replace("\n### ", "\n#### ").replace("\n## ", "\n### ").rstrip()]
+lines += ["", "## Results", ""]
 seen = set()
 for p in runs:
     d = os.path.dirname(p)

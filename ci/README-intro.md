@@ -19,3 +19,17 @@ absolute numbers from shared 4-vCPU runners are not comparable with a real deplo
 
 Run: Actions → screen → wave (file in `ci/waves/`), rounds, workloads. The `aggregate` job writes
 `results/<wave>-<run id>/summary.md` / `summary.csv` and this index.
+
+## Server comparison (`compare` workflow)
+
+Each job of the `compare` workflow runs two different servers on one runner in alternating rounds (A B, B A, A B):
+kestrel pre-releases `server-1.0.0-<id>` with the DuckDB 1.5.6 extension set (release `ci-assets`), and the upstream
+reference server built in the same run from the public upstream repository (read-only checkout; shaded jar plus its
+`provided` Hadoop dependencies; DuckDB 1.5.6 bundled, official httpfs 1.5.6; JVM options of its docker entrypoint).
+All servers get the same TPC-H-only data dir and the same schema-qualified queries (`queries/tpch-schema`); TPC-H over
+ADBC (`clients/tpch_adbc.py`) is checked per query against in-process DuckDB on the same files, and a server with wrong
+or failed answers is marked n/a for that workload (never ranked). Upstream has no JDBC prepared statements (the Flight
+SQL JDBC driver prepares every query) and answers `LIMIT` without `ORDER BY` with the whole table, so its pair runs only
+point lookups, filtered count and metadata as small queries, and TPC-H over ADBC. Wave `c1-servers`:
+45fc0a9e6e02 vs 27f583adccd7 at `duckDbThreads` 4 and 8 (local Parquet and S3), and upstream at its default
+`duckDbThreads=2` (its `arrowflight.properties`; its docs give no other recommendation) vs 45fc0a9e6e02 at its default 4.
