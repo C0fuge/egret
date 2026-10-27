@@ -8,6 +8,12 @@
   p50 at c1/c8 but fails at c32; both upstream servers were OOM-killed inside the 6 GB limit in 3 of 6 rounds, ours never
   (peak 1.7-3.2 GB). Parallel raw Flight scans: up-native faster (4-8 streams, up to ~1.8x) at twice the memory.
 
+- **Report 2 LOAD** - [results/COMPARE-LOAD-2026-10-27.md](results/COMPARE-LOAD-2026-10-27.md): on 2 server cores every
+  server saturates at 1 client (p95 < 100 ms); throughput at saturation for point / count queries: up-native ~84 QPS, ours-new
+  ~50, ours-27f5 ~45, up-main ~48 over ADBC (up-main fails every JDBC query). Only ours runs the heavy parts (mixed, 4 heavy at
+  once: 0 failures, peak RSS 4.3 GB). Slow link (10 ms RTT, 1 Gbit/s): up-native with ZSTD exports `lineitem` at 264 MB/s vs
+  104 MB/s plain (ours has no Flight compression). TLS + token on ours: latency unchanged, SF10 TPC-H 1.01x, export -11 %.
+
 ## In progress
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
@@ -17,11 +23,8 @@
   container on cpus 2,3.
   - Report 1 SPEED: **published** `results/COMPARE-SPEED-2026-10-27.md` (run 40537011671 merged with the ours pairs of
     40490378159; fix list items 1-4 at its top, bisect 40537018532: no build regresses).
-  - Report 2 LOAD: ZSTD run 40540885908 finished (`results/c3-load-40540885908/load.md`, merged with 40490387806):
-    netem 10 ms / 1 Gbit/s full lineitem export over ADBC: up-native with ZSTD 264 MB/s vs ours-new plain 104 MB/s.
-    Publish it as `results/COMPARE-LOAD-2026-10-27.md` after Report 1. Earlier: run 40490387806 finished (`results/c3-load-40490387806/load.md`); usable for ours and for upstream
-    small-query load over ADBC (upstream TPC-H in heavy x4 / mixed / netem fails for the reasons above; up-main fails
-    every JDBC load query). TLS + token: run 40550942695 below.
+  - Report 2 LOAD: **published** `results/COMPARE-LOAD-2026-10-27.md`. Still to add: the TLS closed-loop load job
+    `new-plain-vs-tls-load` of run 40550942695 (results/c7-load-tls-40550942695 once its aggregate has committed).
   - Report 3 ROBUSTNESS (all dispatched 17:26-17:33 UTC): `c4-robust` run **40550552130** (rounds 1: 30-min soak, cold
     starts, cancel; all 3 pairs), `c5-threads` run **40550556746** (rounds 3: ours-new duckDbThreads 1/2/4/8, SF1/SF10 ADBC +
     small), `c8-robust-cluster` run **40551320307** (new `cluster` workload: 3 kestrel nodes on one runner, 4 GB / 2 CPUs
@@ -32,7 +35,5 @@
     The stock Flight SQL JDBC driver TPC-H is the JDBC tables of Report 1 (upstream fails there). Next: when they have
     committed, check `robust.md` / `summary.md` and the job logs (cluster / trino lines are in result.txt), fix failures,
     then write `results/COMPARE-ROBUSTNESS-2026-10-27.md`.
-  - Report 2 TLS: `c7-load-tls` run **40550942695** (ours-new plain vs TLS + bearer token; new flag word `TLS` in ab.sh:
-    self-signed cert, `FLIGHT_TLS_CERT/KEY` + `FLIGHT_BEARER_TOKEN`, clients `grpc+tls://` / `useEncryption=true&token&tlsRootCerts`).
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
