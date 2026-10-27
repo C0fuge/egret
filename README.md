@@ -72,7 +72,11 @@ point lookups, filtered count and metadata as small queries, and TPC-H over ADBC
     showed that a cluster refuses complete answers without shared storage).
   - Next: (1) add the TLS closed-loop load job of run 40550942695 to Report 2 when it has committed; (2) then the final run
     of the task's "Later addition": newer kestrel pre-releases (`84fec772ec50` and later) as `ours-cache` in an S3-only pair
-    vs `ours-new` (SF1/SF10 and repeated small queries, cache on vs off). Not started.
+    vs `ours-new` (SF1/SF10 and repeated small queries, cache on vs off). Not started. Hints: the cache size key is
+    `CACHE_MEGABYTES_KEY` of `flight-plugin-s3/.../S3ReadCache.java` in C0fuge/kestrel (MiB, 0 = off; find how the
+    plugin's config keys map to `-D` flags); newer pre-releases also change the `duckDbThreads` default to size-aware
+    (cores / 4 between 2 and 8, item 19), so pin `-DduckDbThreads=4` on both sides of the cache pair.
+    When (1) and (2) are done: write `ALL DONE <date>` at the top of this section.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
