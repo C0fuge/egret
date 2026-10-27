@@ -35,7 +35,10 @@ def load(src):
         m["setting"] = ("zstd" if "flightCompression=zstd" in (m.get("flags_b") or "") else
                         "t8" if "Threads=8" in (m.get("flags_a") or "") else "def")
         ref = tsv(os.path.join(job, "ref", "adbc10", "summary.tsv")) or {}
-        sides = {(m.get(f"name_{s.lower()}") or m.get(f"server_{s.lower()}")): sorted(glob.glob(os.path.join(job, s, "r*"))) for s in "AB"}
+        names = {s: m.get(f"name_{s.lower()}") or m.get(f"server_{s.lower()}") for s in "AB"}
+        if names["A"] == names["B"] and m.get("flags_b"):
+            names["B"] += f" {m['flags_b']}"  # same server on both sides (e.g. TLS on/off): keep the sides apart
+        sides = {names[s]: sorted(glob.glob(os.path.join(job, s, "r*"))) for s in "AB"}
         jobs.append((m, ref, sides))
     return jobs
 
@@ -107,6 +110,7 @@ def main():
         print("no jobs")
         return
     srv = jobs[0][0].get("servers", {})
+    cols = SERVERS + sorted({n for _, _, sides in jobs for n in sides} - set(SERVERS))
     L = [f"# Server comparison - Report 2: LOAD (compare run {run})", "",
          "## Setup", "", "| item | value |", "|---|---|",
          f"| runner | GitHub-hosted `ubuntu-latest`: {'; '.join(sorted({m.get('runner', '') for m, _, _ in jobs}))}; RAM {jobs[0][0].get('mem_mb', '?')} MB |",
@@ -124,11 +128,11 @@ def main():
         # load steps
         for cl in ("jdbc", "adbc"):
             L += [f"### Closed-loop load, {cl.upper()} (QPS / p50 / p95 / p99 ms / errors / server CPU % / server mem MiB)", "",
-                  "| clients | " + " | ".join(SERVERS) + " |", "|---|" + "---|" * len(SERVERS)]
+                  "| clients | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
             sat = {}
             for c in STEPS:
                 cells = []
-                for s in SERVERS:
+                for s in cols:
                     rs = [r for m, _, sides in js if "load" in m.get("workloads", "") for name, rounds in sides.items() if name == s for r in rounds]
                     vals = []
                     for r in rs:
@@ -149,11 +153,11 @@ def main():
                     cells.append(f"{f(q)} / {f(med([v['p50'] for v in vals]), 1)} / {f(p95, 1)} / {f(med([v['p99'] for v in vals]), 1)} / "
                                  f"{errs}{' (' + e1[:60] + ')' if e1 else ''} / {f(med([v['cpu'] for v in vals]))} / {f(max((v['mem'] for v in vals if v['mem']), default=None))}")
                 L.append(f"| {c} | " + " | ".join(cells) + " |")
-            L.append("| **saturation** (highest step with p95 < 100 ms, 0 errors) | " + " | ".join(str(sat.get(s, "none")) for s in SERVERS) + " |")
+            L.append("| **saturation** (highest step with p95 < 100 ms, 0 errors) | " + " | ".join(str(sat.get(s, "none")) for s in cols) + " |")
             L.append("")
         # mixed
         L += ["### Mixed load: 32 ADBC small-query clients alone / with 2 heavy SF10 streams (q01, q18)", "",
-              "| metric | " + " | ".join(SERVERS) + " |", "|---|" + "---|" * len(SERVERS)]
+              "| metric | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
         mix = collections.defaultdict(lambda: collections.defaultdict(list))
         for m, ref, sides in js:
             if "mixed" not in m.get("workloads", ""):
@@ -175,14 +179,14 @@ def main():
         for k, lab, n in (("mixed-base-qps", "small QPS alone", 0), ("mixed-small-qps", "small QPS with heavy", 0),
                           ("mixed-base-p95", "small p95 ms alone", 1), ("mixed-small-p95", "small p95 ms with heavy", 1),
                           ("q01", "heavy q01 s (median of runs during the window)", 2), ("q18", "heavy q18 s", 2)):
-            L.append(f"| {lab} | " + " | ".join(f(med(mix[s][k]), n) for s in SERVERS) + " |")
+            L.append(f"| {lab} | " + " | ".join(f(med(mix[s][k]), n) for s in cols) + " |")
         L.append("| small errors alone / with heavy; heavy failures or wrong answers | " + " | ".join(
             f"{sum(mix[s]['mixed-base-err'])} / {sum(mix[s]['mixed-small-err'])}; {len(mix[s]['q01-bad']) + len(mix[s]['q18-bad'])}" if mix[s] else "n/a"
-            for s in SERVERS) + " |")
+            for s in cols) + " |")
         L.append("")
         # heavy4a and netem
         L += ["### 4 heavy SF10 queries at once (q01 q09 q18 q21, ADBC) and network-limited client path (netem 10 ms RTT, 1 Gbit/s)", "",
-              "| metric | " + " | ".join(SERVERS) + " |", "|---|" + "---|" * len(SERVERS)]
+              "| metric | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
         hv = collections.defaultdict(lambda: collections.defaultdict(list))
         for m, ref, sides in js:
             for s, rounds in sides.items():
@@ -208,16 +212,17 @@ def main():
                         mm = re.search(r"^netem adbcscan .*?mb_per_s=([\d.]+) errors=(\d+)", txt, re.M)
                         if mm and not int(mm.group(2)):
                             hv[s]["nt-scan"].append(float(mm.group(1)))
-        L.append("| heavy x4: slowest query s (n/a if any failed) | " + " | ".join(f(med(hv[s]["h4-slow"]), 1) for s in SERVERS) + " |")
-        L.append("| heavy x4: failed or wrong (all rounds) | " + " | ".join(str(sum(hv[s]["h4-bad"])) if hv[s]["h4-bad"] else "n/a" for s in SERVERS) + " |")
-        L.append("| heavy x4: server peak RSS MiB | " + " | ".join(f(max((x for x in hv[s]["h4-rss"] if x), default=None)) for s in SERVERS) + " |")
+        L.append("| heavy x4: slowest query s (n/a if any failed) | " + " | ".join(f(med(hv[s]["h4-slow"]), 1) for s in cols) + " |")
+        L.append("| heavy x4: failed or wrong (all rounds) | " + " | ".join(str(sum(hv[s]["h4-bad"])) if hv[s]["h4-bad"] else "n/a" for s in cols) + " |")
+        L.append("| heavy x4: server peak RSS MiB | " + " | ".join(f(max((x for x in hv[s]["h4-rss"] if x), default=None)) for s in cols) + " |")
         L.append("| netem: SF10 TPC-H ADBC, sum of warm medians s (correct queries) | " + " | ".join(
-            f"{f(med(hv[s]['nt-sum']), 1)} ({min(hv[s]['nt-ok'])}/22 q)" if hv[s]["nt-sum"] else "n/a" for s in SERVERS) + " |")
-        L.append("| netem: full lineitem export over ADBC, MB/s | " + " | ".join(f(med(hv[s]["nt-scan"])) for s in SERVERS) + " |")
+            f"{f(med(hv[s]['nt-sum']), 1)} ({min(hv[s]['nt-ok'])}/22 q)" if hv[s]["nt-sum"] else "n/a" for s in cols) + " |")
+        L.append("| netem: full lineitem export over ADBC, MB/s | " + " | ".join(f(med(hv[s]["nt-scan"])) for s in cols) + " |")
         L.append("")
     if not any(m["setting"] == "zstd" for m, _, _ in jobs):
         L += ["Not in this run: up-native with its ZSTD Flight compression on the netem path (job `new-vs-native-zstd-netem`).", ""]
-    L += ["Not yet in this report: TLS + token on/off for ours.", ""]
+    if not any(" TLS" in c for c in cols):
+        L += ["Not yet in this report: TLS + token on/off for ours.", ""]
     open(dst, "w").write("\n".join(L) + "\n")
     print("\n".join(L))
 
