@@ -72,3 +72,6 @@ trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never push to
 If a newer C0fuge/kestrel pre-release appears while this task runs (expected: the S3 plugin's node-wide byte-bounded read
 cache, item 17 option A), add it as `ours-cache` in an extra S3-only pair against `ours-new` (SF1/SF10 and repeated
 small queries, cache on vs off) after Report 1 is published; do not restart finished work.
+
+Update (maintainer, 2026-10-27): `ours-new` stays `7562a5bdb7b9` for Reports 1-3. Newer pre-releases (first one:
+`84fec772ec50`) are collected and tested only in a final run once Reports 1-3 are done (S3 cache pair included).

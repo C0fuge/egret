@@ -1,8 +1,8 @@
 ## In progress
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
-  first comparison run (workflow input default). The newer pre-release `84fec772ec50` is not `ours-new`; if it is the S3
-  read-cache build, it is the `ours-cache` side of the later S3-only pair. Every server runs in an identically limited
+  first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
+  collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
   container (`eclipse-temurin:21-jre`, 2 CPUs on cpus 0,1, 6 GB), clients and S3 in their own container on cpus 2,3.
   - Report 1 SPEED: `compare` wave `c2-speed`, run **40490378159** (dispatched 10:41 UTC with `ours-new=7562a5bdb7b9`).
     When it is done: check `results/c2-speed-40490378159/` for failed or n/a TPC-H queries, then copy `speed.md` to
