@@ -208,6 +208,9 @@ jobs:
                     open(sys.argv[1], "w"), indent=1)
           EOF
           ASSETS="$RUNNER_TEMP/assets" DATA="$RUNNER_TEMP/data" OUT="$OUT" QUERIES="$PWD/queries/tpch-schema" bash ci/ab.sh
+          # results in the job log too (artifacts are not readable from every environment)
+          for f in "$OUT"/[AB]/r*/result.txt; do echo "== $f"; cat "$f"; done
+          for f in "$OUT"/[AB]/r*/container.txt; do echo "== $f"; tail -3 "$f"; done
       - if: always()
         uses: actions/upload-artifact@v4
         with:
