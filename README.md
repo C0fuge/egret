@@ -75,7 +75,12 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
   - Final run ("Later addition"): **published** `results/COMPARE-CACHE-2026-10-27.md` (run 40569584228, wave `c10-cache`):
     S3 cache on (`4e77c6bda59a`, 1 GiB) makes repeated small queries faster (p50 1.4-4x, p95 8-20x) and SF1 ~2-3x, SF10 ~8 % slower, peak RSS
     ~5.7 GB of the 6 GB limit; cache off equals `ours-new`; `84fec772ec50` inconclusive (noisy rounds, no consistent regression).
-  - Next: Phase B, `ci/BUILD-TRACK-TASK.md`.
+  - Phase B (`ci/BUILD-TRACK-TASK.md`): build 1 = `d22cdaccb4e1` (item 20 (b) LZ4 streams; contains ZSTD streams 6ca7352,
+    item 19 threads default, item 17 (b)-(d), Iceberg items; skipped as contained: 84fec772ec50 8625e28f08cd b28fedf9edbf
+    752e272b3ab6 04e558056068 4e77c6bda59a b7be8d166498 85aaf4604d9a) vs `7562a5bdb7b9`: compare run **40602868592**
+    (wave `track-load-d22cdaccb4e1`, 14 jobs: core def/t4 local+S3, netem plain/zstd/lz4 client-requested, up-native ZSTD
+    reference, fast-link compression cost). Next: when it finishes, write `results/track-d22cdaccb4e1/summary.md` and
+    `results/BUILDS.md` row; fix failed jobs and re-run with `only=`.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
