@@ -43,13 +43,25 @@ def load(src):
         m["containers"] = os.path.exists(os.path.join(job, "containers.txt"))
         m["setting"] = "t8" if "Threads=8" in (m.get("flags_a") or "") else "def"
         ref = {n: tsv(os.path.join(job, "ref", n, "summary.tsv")) or {} for n in ("adbc1", "adbc10")}
-        ref["jdbc1"], ref["jdbc10"] = ref["adbc1"], ref["adbc10"]
         sides = {}
         for s in "AB":
             name = m.get(f"name_{s.lower()}") or m.get(f"server_{s.lower()}")
             rounds = sorted(glob.glob(os.path.join(job, s, "r*")))
             sides[name] = rounds
         jobs.append((os.path.basename(job), m, ref, sides))
+    # JDBC checksums normalise DECIMAL/DATE values differently from the ADBC reference (pyarrow), so a JDBC answer is
+    # checked by row count against in-process DuckDB and by checksum against the most common JDBC answer of all servers
+    for w, a in (("jdbc1", "adbc1"), ("jdbc10", "adbc10")):
+        votes = collections.defaultdict(collections.Counter)
+        for _, _, ref, sides in jobs:
+            for rounds in sides.values():
+                for r in rounds:
+                    for q, x in (tsv(os.path.join(r, w, "summary.tsv")) or {}).items():
+                        if x["status"] == "ok" and q in ref[a] and x["rows"] == ref[a][q]["rows"]:
+                            votes[q][x["checksum"]] += 1
+        for _, _, ref, _ in jobs:
+            ref[w] = {q: {"rows": x["rows"], "checksum": votes[q].most_common(1)[0][0] if votes[q] else None}
+                      for q, x in ref[a].items()}
     return jobs
 
 
@@ -141,7 +153,11 @@ def main():
         return
     L, rows_csv = [], []
     m0 = jobs[0][1]
-    srv = m0.get("servers", {})
+    srv = dict(m0.get("servers", {}))
+    for _, m, _, _ in jobs:  # a server's id from a job that ran it (merged runs may resolve up-native differently)
+        for k in (m.get("name_a"), m.get("name_b")):
+            if k in m.get("servers", {}):
+                srv[k] = m["servers"][k]
     # setup
     duck, cmds = {}, {}
     for _, m, _, sides in jobs:
@@ -168,6 +184,8 @@ def main():
           "| settings | `def` = each server's default (`duckDbThreads` ours 4, upstream 2); `t8` = `-DduckDbThreads=8` on both |",
           "| batch size | server defaults (not overridden) |",
           "| clients | TPC-H: Python ADBC Flight SQL 1.12.0 (pyarrow 26), Flight SQL JDBC 18.0.0; small queries: same; scans: raw Flight (Arrow Java), ADBC export |",
+          "| correctness | TPC-H over ADBC: rows + checksum per query equal to in-process DuckDB on the same files; over JDBC: rows equal to that reference and checksum equal to the most common JDBC answer of all servers (the JDBC runner normalises DECIMAL/DATE values differently from pyarrow) |",
+          "| upstream on S3 | up-native: `s3a://` data dir (Hadoop S3A from its `docker/hadoop-aws` recipe for listing, DuckDB httpfs for scans, `FLIGHT_S3_*` settings); up-main: **n/a**, main at the fork point has no S3 settings (no `FLIGHT_S3_*`, no S3A dependencies) |",
           "| SF30 | not run: SF1+SF10 already fill most of the repo's 10 GB Actions cache, SF30 Parquet (~11 GB) does not fit; generating it per job costs ~20 min of each 4-vCPU runner |",
           ] + [f"| JVM `{k[0]}` `{k[1]}` | `{v}` |" for k, v in sorted(cmds.items())] + [""]
     L += ["Times are warm medians in ms (median over rounds of the per-round warm median). **n/a** = not run, failed or wrong",

@@ -12,7 +12,8 @@
 # (tpch_adbc.py), mem.txt, steps.tsv, docker-stats.tsv, container.txt.
 # Containers (identical for every server): the server runs in eclipse-temurin:21-jre with --cpus=2 --cpuset-cpus=0,1
 # --memory=6g --memory-swap=6g (JVM -Xmx3g -XX:MaxDirectMemorySize=2g, MALLOC_ARENA_MAX=4); every client (JDBC/ADBC
-# runners, scans, jcmd sampling) runs in the "client" container pinned to cpus 2,3, as does the S3 server.
+# runners, scans, jcmd sampling) runs in the "client" container pinned to cpus 2,3 (6 GB limit, so a client blow-up cannot
+# take the runner down), as does the S3 server.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 : "${VARIANT:?}" "${ASSETS:?}" "${DATA:?}" "${OUT:?}"
@@ -38,7 +39,7 @@ RUN python -m venv /venv && /venv/bin/pip install -q --no-cache-dir adbc-driver-
  && java -version && /venv/bin/python -c "import adbc_driver_flightsql, pyarrow, duckdb"
 DOCKERFILE
 docker rm -f client > /dev/null 2>&1
-docker run -d --name client --network host --cpuset-cpus=$CPU_CL --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
+docker run -d --name client --network host --cpuset-cpus=$CPU_CL --memory=6g --memory-swap=6g --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
   -v "$HERE":"$HERE":ro -v "$ASSETS":"$ASSETS":ro -v "$DATA":"$DATA":ro -v "$OUT":"$OUT" egret-client sleep infinity > /dev/null || exit 1
 cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" client "$@"; }
 docker version --format 'docker {{.Server.Version}}' > "$OUT/containers.txt"
@@ -52,8 +53,9 @@ if [ "$STORAGE" = s3 ]; then
   sleep 3
 fi
 
-data_dir() {  # data_dir <layout> <sf1|sf10>
-  if [ "$STORAGE" = s3 ]; then echo "s3://$1/$2"; else echo "file:///data/$1/$2"; fi
+data_dir() {  # data_dir <layout> <sf1|sf10>; upstream lists S3 through the Hadoop s3a filesystem (its S3Settings)
+  if [ "$STORAGE" != s3 ]; then echo "file:///data/$1/$2"
+  elif [ "${SERVER#up-}" != "${SERVER:-}" ]; then echo "s3a://$1/$2"; else echo "s3://$1/$2"; fi
 }
 
 start_server() {  # start_server <dataDir> <flags...>; server of the current side: $SERVER (empty = legacy $ASSETS/server)
@@ -142,7 +144,8 @@ tpch_result() {
   local d=$O/$1
   echo "$1: ok=$(awk -F'\t' 'NR>1 && $2=="ok"' "$d/summary.tsv" 2>/dev/null | wc -l) cold_sum=$(awk -F'\t' 'NR>1{s+=$5} END{printf "%.2f", s}' "$d/summary.tsv" 2>/dev/null) median_sum=$(awk -F'\t' 'NR>1{s+=$7} END{printf "%.2f", s}' "$d/summary.tsv" 2>/dev/null) md5=$(cut -f1-4 "$d/summary.tsv" 2>/dev/null | md5sum | cut -c1-12)" >> "$O/result.txt"
 }
-alive() { [ "$(docker inspect -f '{{.State.Running}}' flight 2>/dev/null)" = true ] || { echo "SERVER DIED after $1: $(docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' flight)" >> "$O/result.txt"; docker logs flight > "$O/server-died-$1.log" 2>&1; return 1; }; }
+alive() { [ "$(docker inspect -f '{{.State.Running}}' flight 2>/dev/null)" = true ] || { echo "SERVER DIED after $1: $(docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' flight)" >> "$O/result.txt"; docker logs flight > "$O/server-died-$1.log" 2>&1
+  echo "  last server log: $(grep -iE 'exception|error|killed' "$O/server-died-$1.log" | tail -3 | cut -c1-300 | tr '\n' ' ')" >> "$O/result.txt"; return 1; }; }
 
 side() {  # side <A|B> <round>
   local s=$1 r=$2 flags layout
@@ -151,7 +154,8 @@ side() {  # side <A|B> <round>
   log "round $r side $s server=${SERVER:-default} layout=$layout flags=[$flags]"
   step start begin
   # shellcheck disable=SC2086
-  if ! start_server "$(data_dir $layout sf10)" $flags > "$O/start.txt" 2>&1; then echo "START FAILED" >> "$O/result.txt"; return; fi
+  if ! start_server "$(data_dir $layout sf10)" $flags > "$O/start.txt" 2>&1; then
+    echo "START FAILED: $(grep -m4 -iE 'exception|error|caused by' "$O/start.txt" | cut -c1-300 | tr '\n' ' ')" >> "$O/result.txt"; return; fi
   # docker stats of the server container every ~5 s for the whole side (survives server restarts)
   rm -f "$O/.stats-stop"
   ( while [ ! -e "$O/.stats-stop" ]; do
@@ -163,6 +167,7 @@ side() {  # side <A|B> <round>
   # sf1 / adbc1 restart the server on SF1: always last
   local sf1started=
   for w in $(for x in $WORKLOADS; do case $x in sf1|adbc1) ;; *) echo $x;; esac; done) $(for x in $WORKLOADS; do case $x in sf1|adbc1) echo $x;; esac; done); do
+    log "  $s r$r $w (host free MB: $(free -m | awk '/Mem:/{print $7}'))"
     case $w in
     small)
       step small begin

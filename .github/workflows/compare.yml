@@ -23,6 +23,12 @@ on:
       only:
         description: 'Comma-separated job ids (<variant>-<storage>) to run from the wave (empty = all)'
         default: ''
+      merge-run:
+        description: 'Report from this run plus the finished jobs of an earlier compare run (run id; empty = none)'
+        default: ''
+      merge-prefix:
+        description: 'Only jobs of merge-run whose id starts with one of these comma-separated prefixes'
+        default: 'new-vs-27f5-'
 
 permissions:
   contents: read
@@ -127,6 +133,11 @@ jobs:
           chmod +x mvnw
           ./mvnw -B -ntp -DskipTests -Dcheckstyle.skip -Dspotbugs.skip -Djacoco.skip -Denforcer.skip -pl flight-server -am install   # runner-local ~/.m2 only: copy-dependencies needs the sibling modules
           ./mvnw -B -ntp -pl flight-server dependency:copy-dependencies -DincludeScope=provided -DoutputDirectory="$RUNNER_TEMP/up/libs"
+          # S3: hadoop-aws + the AWS SDK modules S3A loads, resolved exactly as upstream's docker/Dockerfile.bench does
+          # (refs without docker/hadoop-aws, e.g. main, have no S3 settings at all: their S3 jobs are n/a)
+          if [ -f docker/hadoop-aws/pom.xml ]; then
+            ./mvnw -B -ntp -f docker/hadoop-aws/pom.xml dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory="$RUNNER_TEMP/up/libs"
+          fi
       - name: Collect
         run: |
           O="$RUNNER_TEMP/up"; ls -la up/flight-server/target/*.jar
@@ -224,6 +235,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -232,13 +244,28 @@ jobs:
         with:
           pattern: ab-*
           path: ${{ runner.temp }}/art
+      - if: inputs.merge-run != ''
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ab-*
+          path: ${{ runner.temp }}/merge
+          run-id: ${{ inputs.merge-run }}
+          github-token: ${{ github.token }}
       - name: Tables
         env:
+          MERGE_PREFIX: ${{ inputs.merge-prefix }}
           WAVE: ${{ inputs.wave }}
           UPREF: ${{ needs.plan.outputs.servers }}
         run: |
           mkdir -p "$RUNNER_TEMP/jobs"
           for d in "$RUNNER_TEMP"/art/ab-*; do for j in "$d"/*/; do cp -r "$j" "$RUNNER_TEMP/jobs/"; done; done
+          # finished jobs of an earlier run (merge-run): only the listed prefixes, never over a job of this run
+          for j in "$RUNNER_TEMP"/merge/ab-*/*/; do
+            [ -d "$j" ] || continue; n=$(basename "$j")
+            for p in ${MERGE_PREFIX//,/ }; do
+              case $n in "$p"*) [ -e "$RUNNER_TEMP/jobs/$n" ] || { cp -r "$j" "$RUNNER_TEMP/jobs/"; echo "merged $n"; };; esac
+            done
+          done
           R="results/$WAVE-$GITHUB_RUN_ID"
           python3 ci/compare.py "$RUNNER_TEMP/jobs" "$R" "Wave $WAVE (server comparison), run $GITHUB_RUN_ID" > /dev/null
           python3 ci/speed_report.py "$RUNNER_TEMP/jobs" "$R/speed.md" "$GITHUB_RUN_ID" || true

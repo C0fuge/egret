@@ -20,23 +20,43 @@
   "small_classes": ""
  },
  {
-  "variant": "new-vs-native-def",
+  "variant": "new-vs-native-def-tpch",
   "storage": "local",
   "a_server": "ours-new",
   "a_flags": "",
   "b_server": "up-native",
   "b_flags": "",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
+  "workloads": "adbc10 adbc1",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-native-def-lat",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-native",
+  "b_flags": "",
+  "workloads": "small scan adbcscan",
   "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
  },
  {
-  "variant": "new-vs-main-def",
+  "variant": "new-vs-main-def-tpch",
   "storage": "local",
   "a_server": "ours-new",
   "a_flags": "",
   "b_server": "up-main",
   "b_flags": "",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
+  "workloads": "adbc10 adbc1",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-main-def-lat",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "",
+  "b_server": "up-main",
+  "b_flags": "",
+  "workloads": "small scan adbcscan",
   "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
  },
  {
@@ -60,23 +80,43 @@
   "small_classes": ""
  },
  {
-  "variant": "new-vs-native-t8",
+  "variant": "new-vs-native-t8-tpch",
   "storage": "local",
   "a_server": "ours-new",
   "a_flags": "-DduckDbThreads=8",
   "b_server": "up-native",
   "b_flags": "-DduckDbThreads=8",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
+  "workloads": "adbc10 adbc1",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-native-t8-lat",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "-DduckDbThreads=8",
+  "b_server": "up-native",
+  "b_flags": "-DduckDbThreads=8",
+  "workloads": "small scan adbcscan",
   "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
  },
  {
-  "variant": "new-vs-main-t8",
+  "variant": "new-vs-main-t8-tpch",
   "storage": "local",
   "a_server": "ours-new",
   "a_flags": "-DduckDbThreads=8",
   "b_server": "up-main",
   "b_flags": "-DduckDbThreads=8",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
+  "workloads": "adbc10 adbc1",
+  "small_classes": ""
+ },
+ {
+  "variant": "new-vs-main-t8-lat",
+  "storage": "local",
+  "a_server": "ours-new",
+  "a_flags": "-DduckDbThreads=8",
+  "b_server": "up-main",
+  "b_flags": "-DduckDbThreads=8",
+  "workloads": "small scan adbcscan",
   "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
  },
  {
@@ -100,23 +140,23 @@
   "small_classes": ""
  },
  {
-  "variant": "new-vs-native-def",
+  "variant": "new-vs-native-def-tpch",
   "storage": "s3",
   "a_server": "ours-new",
   "a_flags": "",
   "b_server": "up-native",
   "b_flags": "",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
-  "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
+  "workloads": "adbc10 adbc1",
+  "small_classes": ""
  },
  {
-  "variant": "new-vs-main-def",
+  "variant": "new-vs-native-def-lat",
   "storage": "s3",
   "a_server": "ours-new",
   "a_flags": "",
-  "b_server": "up-main",
+  "b_server": "up-native",
   "b_flags": "",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
+  "workloads": "small scan adbcscan",
   "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
  },
  {
@@ -140,23 +180,23 @@
   "small_classes": ""
  },
  {
-  "variant": "new-vs-native-t8",
+  "variant": "new-vs-native-t8-tpch",
   "storage": "s3",
   "a_server": "ours-new",
   "a_flags": "-DduckDbThreads=8",
   "b_server": "up-native",
   "b_flags": "-DduckDbThreads=8",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
-  "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
+  "workloads": "adbc10 adbc1",
+  "small_classes": ""
  },
  {
-  "variant": "new-vs-main-t8",
+  "variant": "new-vs-native-t8-lat",
   "storage": "s3",
   "a_server": "ours-new",
   "a_flags": "-DduckDbThreads=8",
-  "b_server": "up-main",
+  "b_server": "up-native",
   "b_flags": "-DduckDbThreads=8",
-  "workloads": "small adbc10 adbc1 scan adbcscan",
+  "workloads": "small scan adbcscan",
   "small_classes": "meta_tables,meta_schemas,point_orders,point_lineitem,count_filter,limit10_ob"
  }
 ]
