@@ -14,3 +14,10 @@
    - server start time (until the port answers) and the first-query time;
    - server logs (WARN/ERROR excerpts) and the exact JVM flags and settings used;
    - runner: CPU model, cores, memory, kernel, JDK, DuckDB version reported by each server.
+3. Load / throughput (maintainer, 2026-10-27). For every server, on the workloads it answers correctly:
+   - closed-loop small-query load at 1 / 8 / 32 / 64 / 128 concurrent clients (point lookups, filtered count; JDBC and
+     ADBC), 60 s per step after a 10 s warm-up: queries per second, p50 / p95 / p99, error rate, server CPU and RSS;
+   - the saturation point: the highest client count / QPS where p95 stays under 100 ms and errors stay at 0;
+   - mixed load: 32 small-query clients plus 2 heavy TPC-H streams (q01, q18) at the same time - small-query QPS and
+     p95 with and without the heavy streams, and the heavy queries' times;
+   - report QPS ratios between servers per step and the saturation points side by side.
