@@ -5,7 +5,7 @@
 |---|---|---|
 | `ours-new` | newest C0fuge/kestrel pre-release at dispatch time (`gh release list -R C0fuge/kestrel -L 1`; at writing `server-1.0.0-7562a5bdb7b9`) | release assets: jar, flight-server-libs tar, flight-plugins tar |
 | `ours-27f5` | `server-1.0.0-27f583adccd7` (presentation build, DuckDB 1.5.6) | same |
-| `up-native` | upstream VadimSurpin/arrow-flight-server `feat/starrocks-native-integration` @ `07631d72954a` | build read-only from the public repo (see compare/build-upstream workflows) |
+| `up-native` | upstream VadimSurpin/arrow-flight-server `feat/starrocks-native-integration`, newest head at dispatch (at writing `30855be44317`, 2026-10-26; was `07631d72954a`) | build read-only from the public repo (see compare/build-upstream workflows) |
 | `up-main` | upstream `main` @ `dbacd8d585bc` (our fork point) | same |
 
 Ours need `duckdb-extensions-v1.5.6.tar.zst` (C0fuge/kestrel release `ci-assets`, `extensions/v1.5.6/linux_amd64/`) and
@@ -52,3 +52,8 @@ first-query time; WARN/ERROR excerpts; exact JVM flags and settings; runner CPU 
 Public repo: no personal data, host names or internal names. Commit as C0fuge <189659128+C0fuge@users.noreply.github.com>,
 trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never push to the upstream repository. Finish within
 ~90 min per session; record running CI ids and the next step in README "In progress" so the next session continues.
+
+## Later addition
+If a newer C0fuge/kestrel pre-release appears while this task runs (expected: the S3 plugin's node-wide byte-bounded read
+cache, item 17 option A), add it as `ours-cache` in an extra S3-only pair against `ours-new` (SF1/SF10 and repeated
+small queries, cache on vs off) after Report 1 is published; do not restart finished work.
