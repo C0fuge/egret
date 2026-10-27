@@ -146,7 +146,7 @@ jobs:
 
   ab:
     needs: [data, plan, upstream]
-    if: always() && needs.data.result == 'success' && needs.plan.result == 'success' && needs.upstream.result != 'cancelled'
+    if: ${{ !cancelled() && needs.data.result == 'success' && needs.plan.result == 'success' && needs.upstream.result != 'cancelled' }}
     runs-on: ubuntu-latest
     timeout-minutes: 170
     strategy:
@@ -220,7 +220,7 @@ jobs:
 
   aggregate:
     needs: [plan, ab]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
