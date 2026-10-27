@@ -1,12 +1,12 @@
 """lat.py <uri> <conc> <rounds> <out.csv>: the Lat.java small-query mix through Python ADBC Flight SQL (one process per client).
-Classes: meta_tables (adbc_get_objects depth=tables), meta_schemas (depth=db_schemas), point_orders, point_lineitem, limit10,
+Classes: meta_tables (adbc_get_objects depth=tables), meta_schemas (depth=db_schemas), point_orders, point_lineitem, limit10, limit10_ob (LIMIT 10 with ORDER BY),
 count_filter, prep_point (same parameterised text every time: the dbapi cursor keeps the prepared statement)."""
 import sys, time, datetime, multiprocessing as mp
 import adbc_driver_flightsql.dbapi as d, adbc_driver_flightsql as a
 
 import os
 CLASSES = [c for c in os.environ.get("SMALL_CLASSES", "").split(",") if c] or \
-    ["meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "count_filter", "prep_point"]
+    ["meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "limit10_ob", "count_filter", "prep_point"]
 
 def okey(seed):
     r = 1 + (seed * 2654435761 + 12345) % 14_999_999
@@ -34,6 +34,7 @@ def one_round(conn, cur, pcur, tid, r, conc, out):
                 sql = {"point_orders": f"SELECT o_orderkey, o_custkey, o_totalprice, o_orderdate FROM tpch.orders WHERE o_orderkey = {okey(seed * 3)}",
                        "point_lineitem": f"SELECT l_orderkey, l_linenumber, l_quantity, l_extendedprice FROM tpch.lineitem WHERE l_orderkey = {okey(seed * 3 + 2)}",
                        "limit10": "SELECT l_orderkey, l_partkey, l_quantity, l_comment FROM tpch.lineitem LIMIT 10",
+                       "limit10_ob": "SELECT l_orderkey, l_linenumber, l_quantity, l_comment FROM tpch.lineitem ORDER BY l_orderkey, l_linenumber LIMIT 10",
                        "count_filter": f"SELECT count(*) FROM tpch.orders WHERE o_orderdate = DATE '{day(seed)}'"}[cls]
                 cur.execute(sql); t = cur.fetch_arrow_table(); rows = t.num_rows
                 if cls != "limit10":

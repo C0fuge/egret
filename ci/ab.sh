@@ -18,7 +18,7 @@ ROUNDS=${ROUNDS:-3}; WORKLOADS=${WORKLOADS:-small sf1 sf10 scan}; NET=egret
 JDBC=$ASSETS/flight-sql-jdbc-driver-18.0.0.jar; SRV=$ASSETS/server; SERVER_A=${SERVER_A:-}; SERVER_B=${SERVER_B:-}
 QUERIES=${QUERIES:-$HERE/queries/tpch}; UPDUCK=${UPDUCK:-$ASSETS/duckdb-upstream}
 # Scan.java needs the Arrow Flight client classes: any kestrel server jar
-for x in $SERVER_A $SERVER_B; do [ "$x" != upstream ] && [ -f "$ASSETS/srv/$x/server.jar" ] && SRV=$ASSETS/srv/$x; done
+for x in $SERVER_A $SERVER_B; do case $x in upstream|up-*) continue;; esac; [ -f "$ASSETS/srv/$x/server.jar" ] && SRV=$ASSETS/srv/$x; done
 S3_KEY="ci$(openssl rand -hex 8)"; S3_SECRET="$(openssl rand -hex 24)"
 mkdir -p "$OUT"; log() { echo "== $(date -u +%T) $*" | tee -a "$OUT/job.log"; }
 
@@ -37,16 +37,17 @@ data_dir() {  # data_dir <layout> <sf1|sf10>
 start_server() {  # start_server <dataDir> <flags...>; server of the current side: $SERVER (empty = legacy $ASSETS/server)
   local dd=$1; shift
   docker rm -f flight >/dev/null 2>&1
+  local t0=$(( $(date +%s%N) / 1000000 ))
   local env=(-e LANG=C.UTF-8 -e MALLOC_ARENA_MAX=4 -e FLIGHT_ALLOW_INSECURE=true -e FLIGHT_S3_ACCESS_KEY="$S3_KEY" -e FLIGHT_S3_SECRET_KEY="$S3_SECRET")
   local common=(-Darrow.enable_unsafe_memory_access=true -DmetricsEnabled=false -Dhazelcast.phone.home.enabled=false
     -DnumServers=1 -Xmx3g -XX:MaxDirectMemorySize=2g -DdataDir="$dd")
   local args=(-cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer
     --port 32010 --localhost localhost --hosts 127.0.0.1)
-  if [ "${SERVER:-}" = upstream ]; then
+  if [ "${SERVER:-}" = upstream ] || [ "${SERVER#up-}" != "${SERVER:-}" ]; then
     # upstream: JVM options of its docker/bin/entrypoint.sh; DuckDB home with the official httpfs 1.5.6; S3 via FLIGHT_S3_*
     docker run -d --name flight --network host --memory 8g --memory-swap 8g "${env[@]}" -e HOME=/duckhome \
       -e FLIGHT_S3_ENDPOINT=http://127.0.0.1:9000 -e FLIGHT_S3_PATH_STYLE=true -e FLIGHT_S3_REGION=us-east-1 \
-      -v "$ASSETS/srv/upstream":/app:ro -v "$UPDUCK":/duckhome/.duckdb -v "$DATA":/data:ro -w /tmp eclipse-temurin:21-jdk \
+      -v "$ASSETS/srv/$SERVER":/app:ro -v "$UPDUCK":/duckhome/.duckdb -v "$DATA":/data:ro -w /tmp eclipse-temurin:21-jdk \
       java --add-modules java.se,jdk.httpserver --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
         --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED \
         --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
@@ -72,12 +73,18 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
         --port 32010 --localhost localhost --hosts 127.0.0.1 >/dev/null
   fi
   for _ in $(seq 1 120); do
-    docker logs flight 2>&1 | grep -q 'Server Arrow Flight SQL started' && return 0
+    if docker logs flight 2>&1 | grep -q 'Server Arrow Flight SQL started'; then
+      docker inspect -f '{{json .Config.Cmd}}' flight > "$O/jvm-cmd.json" 2>/dev/null
+      echo "started_s=$(( $(date +%s%N) / 1000000 - t0 ))ms" >> "$O/start-times.txt"; return 0
+    fi
     [ "$(docker inspect -f '{{.State.Running}}' flight)" = true ] || break; sleep 1
   done
   docker logs flight 2>&1 | tail -30; return 1
 }
-mem() { echo "$1 $(docker exec flight sh -c 'echo rss=$(awk "/VmRSS/{print int(\$2/1024)}" /proc/1/status) hwm=$(awk "/VmHWM/{print int(\$2/1024)}" /proc/1/status)' 2>/dev/null || echo rss=NA hwm=NA)" >> "$O/mem.txt"; }
+mem() {  # RSS / peak RSS / threads / CPU ticks of the server process; JVM heap, GC and direct memory via jcmd
+  echo "$1 $(docker exec flight sh -c 'echo rss=$(awk "/VmRSS/{print int(\$2/1024)}" /proc/1/status) hwm=$(awk "/VmHWM/{print int(\$2/1024)}" /proc/1/status) threads=$(awk "/Threads/{print \$2}" /proc/1/status) utime=$(cut -d" " -f14 /proc/1/stat) stime=$(cut -d" " -f15 /proc/1/stat)' 2>/dev/null || echo rss=NA hwm=NA)" >> "$O/mem.txt"
+  { echo "== $1"; docker exec flight sh -c 'jcmd 1 GC.heap_info; jcmd 1 VM.native_memory summary 2>/dev/null | head -5; jstat -gcutil 1' 2>&1 | head -30; } >> "$O/jvm.txt"
+}
 step() { echo -e "$1\t$2\t$(date +%s)\t$(cut -d' ' -f1 /proc/loadavg)" >> "$O/steps.tsv"; }
 tpch() {  # tpch <name> <sf> <reps>
   local d=$O/$1; mkdir -p "$d"
@@ -105,6 +112,13 @@ side() {  # side <A|B> <round>
   # shellcheck disable=SC2086
   if ! start_server "$(data_dir $layout sf10)" $flags > "$O/start.txt" 2>&1; then echo "START FAILED" >> "$O/result.txt"; return; fi
   mem idle
+  "$ASSETS/venv/bin/python" -W ignore -c 'import sys, time, adbc_driver_flightsql as a, adbc_driver_flightsql.dbapi as d
+t0 = time.perf_counter(); c = d.connect(sys.argv[1], db_kwargs={a.DatabaseOptions.AUTHORIZATION_HEADER.value: "Bearer unused"}); cur = c.cursor()
+try:
+    cur.execute("SELECT version()"); v = cur.fetchall()[0][0]
+except Exception as e:
+    v = "error: " + str(e)[:100]
+print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' grpc://localhost:32010 >> "$O/start-times.txt" 2>&1
   # sf1 / adbc1 restart the server on SF1: always last
   local sf1started=
   for w in $(for x in $WORKLOADS; do case $x in sf1|adbc1) ;; *) echo $x;; esac; done) $(for x in $WORKLOADS; do case $x in sf1|adbc1) echo $x;; esac; done); do
@@ -122,11 +136,16 @@ side() {  # side <A|B> <round>
     adbc10) step adbc10 begin; tpch_adbc adbc10 2; step adbc10 end; mem adbc10 ;;
     scan)
       step scan begin
-      for c in 1 4; do
+      for c in 1 4 8; do
         timeout 900 java -Xmx1g -XX:MaxDirectMemorySize=3g --add-opens java.base/java.nio=ALL-UNNAMED -Darrow.enable_unsafe_memory_access=true \
           -cp "$SRV/server.jar" "$HERE/clients/Scan.java" localhost 32010 $c 1 complete "SELECT * FROM tpch.lineitem" 2>"$O/scan-c$c.err" | grep '^scan' >> "$O/result.txt"
       done
       step scan end; mem scan ;;
+    adbcscan)
+      step adbcscan begin
+      timeout 900 "$ASSETS/venv/bin/python" -W ignore "$HERE/clients/scan_adbc.py" grpc://localhost:32010 "SELECT * FROM tpch.lineitem" \
+        2>"$O/adbcscan.err" | grep '^adbcscan' >> "$O/result.txt"
+      step adbcscan end; mem adbcscan ;;
     heavy4)
       step heavy4 begin
       for q in q01 q09 q18 q21; do

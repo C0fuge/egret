@@ -7,13 +7,19 @@ on:
     inputs:
       wave:
         description: 'Wave file in ci/waves (without .json)'
-        default: 'c1-servers'
+        default: 'c2-speed'
       rounds:
         description: 'A/B rounds per job (A B, B A, ...)'
         default: '3'
       upstream-ref:
-        description: 'Upstream commit, full 40-char SHA (VadimSurpin/arrow-flight-server, branch feat/starrocks-native-integration, built read-only)'
-        default: '07631d72954a0dffc2e1ac9840037e09be591835'
+        description: 'up-native: upstream branch or full 40-char SHA (VadimSurpin/arrow-flight-server, built read-only; a branch is resolved to its head at dispatch)'
+        default: 'feat/starrocks-native-integration'
+      upstream-main-ref:
+        description: 'up-main: upstream branch or full SHA (default: main at our fork point)'
+        default: 'dbacd8d585bce2ef2a449c821fe3a53cc6060b57'
+      ours-new:
+        description: 'kestrel id for the alias ours-new (empty = newest C0fuge/kestrel server-1.0.0-* pre-release at dispatch)'
+        default: ''
       only:
         description: 'Comma-separated job ids (<variant>-<storage>) to run from the wave (empty = all)'
         default: ''
@@ -51,23 +57,46 @@ jobs:
     outputs:
       matrix: ${{ steps.m.outputs.matrix }}
       upstream: ${{ steps.m.outputs.upstream }}
+      upbuilds: ${{ steps.m.outputs.upbuilds }}
+      servers: ${{ steps.m.outputs.servers }}
     steps:
       - uses: actions/checkout@v4
       - id: m
         env:
           WAVE: ${{ inputs.wave }}
           ONLY: ${{ inputs.only }}
+          OURS_NEW: ${{ inputs.ours-new }}
+          UP_NATIVE: ${{ inputs.upstream-ref }}
+          UP_MAIN: ${{ inputs.upstream-main-ref }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # aliases: ours-new = newest kestrel pre-release now, ours-<id prefix> = that release, up-native / up-main = upstream heads now
+          if [ -z "$OURS_NEW" ]; then
+            OURS_NEW=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/C0fuge/kestrel/releases?per_page=30" \
+              | jq -r '[.[] | select(.prerelease and (.tag_name | startswith("server-1.0.0-")))] | sort_by(.published_at) | last | .tag_name' | sed 's/^server-1.0.0-//')
+          fi
+          sha() { case $1 in *[!0-9a-f]*|"") git ls-remote https://github.com/VadimSurpin/arrow-flight-server "refs/heads/$1" | cut -f1;; *) echo "$1";; esac; }
+          export OURS_NEW UP_NATIVE_SHA=$(sha "$UP_NATIVE") UP_MAIN_SHA=$(sha "$UP_MAIN")
+          echo "ours-new=$OURS_NEW up-native=$UP_NATIVE_SHA up-main=$UP_MAIN_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ -n "$OURS_NEW" ] && [ ${#UP_NATIVE_SHA} = 40 ] && [ ${#UP_MAIN_SHA} = 40 ]
           python3 - <<'EOF' >> "$GITHUB_OUTPUT"
           import json, os
           w = json.load(open(f"ci/waves/{os.environ['WAVE']}.json"))
+          alias = {"ours-new": os.environ["OURS_NEW"], "ours-27f5": "27f583adccd7"}
+          up = {"up-native": os.environ["UP_NATIVE_SHA"], "up-main": os.environ["UP_MAIN_SHA"]}
           for j in w:
               j["id"] = f"{j['variant']}-{j['storage']}".replace("+", "_")
+              for s in "ab":
+                  j[f"{s}_name"] = j[f"{s}_server"]
+                  j[f"{s}_server"] = alias.get(j[f"{s}_server"], j[f"{s}_server"])
           only = [x for x in os.environ.get("ONLY", "").split(",") if x]
           if only:
               w = [j for j in w if j["id"] in only or j["variant"] in only]
+          used = sorted({j[f"{s}_server"] for j in w for s in "ab"} & set(up))
           print("matrix=" + json.dumps({"include": w}))
-          print("upstream=" + str(any("upstream" in (j["a_server"], j["b_server"]) for j in w)).lower())
+          print("upstream=" + str(bool(used)).lower())
+          print("upbuilds=" + json.dumps([{"name": n, "ref": up[n]} for n in used] or [{"name": "none", "ref": ""}]))
+          print("servers=" + json.dumps(alias | up))
           EOF
 
   upstream:
@@ -75,11 +104,15 @@ jobs:
     if: needs.plan.outputs.upstream == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.upbuilds) }}
     steps:
       - uses: actions/checkout@v4
         with:
           repository: VadimSurpin/arrow-flight-server
-          ref: ${{ inputs.upstream-ref }}
+          ref: ${{ matrix.ref }}
           path: up
           persist-credentials: false
       - uses: actions/setup-java@v4
@@ -99,11 +132,11 @@ jobs:
           O="$RUNNER_TEMP/up"; ls -la up/flight-server/target/*.jar
           j=$(ls -S up/flight-server/target/*.jar | grep -vE 'original-|sources|javadoc|tests' | head -1)
           cp "$j" "$O/server.jar"
-          echo "upstream $(git -C up rev-parse HEAD) $(basename "$j")" > "$O/REF.txt"
+          echo "${{ matrix.name }} $(git -C up rev-parse HEAD) $(git -C up log -1 --format=%cs) $(basename "$j")" > "$O/REF.txt"
           (cd "$O" && sha256sum server.jar libs/*.jar > SHA256SUMS && ls libs | wc -l && cat REF.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: upstream-server
+          name: upstream-${{ matrix.name }}
           path: ${{ runner.temp }}/up
           retention-days: 14
 
@@ -127,10 +160,10 @@ jobs:
           path: ${{ runner.temp }}/data/default
           key: tpch-default-sf1-sf10-v1
           fail-on-cache-miss: true
-      - if: matrix.a_server == 'upstream' || matrix.b_server == 'upstream'
+      - if: startsWith(matrix.a_server, 'up-') || startsWith(matrix.b_server, 'up-')
         uses: actions/download-artifact@v4
         with:
-          name: upstream-server
+          pattern: upstream-up-*
           path: ${{ runner.temp }}/upstream
       - name: Assets
         env:
@@ -149,6 +182,9 @@ jobs:
           VARIANT: ${{ matrix.variant }}
           SERVER_A: ${{ matrix.a_server }}
           SERVER_B: ${{ matrix.b_server }}
+          NAME_A: ${{ matrix.a_name }}
+          NAME_B: ${{ matrix.b_name }}
+          SERVERS_JSON: ${{ needs.plan.outputs.servers }}
           FLAGS_A: ${{ matrix.a_flags }}
           FLAGS_B: ${{ matrix.b_flags }}
           STORAGE: ${{ matrix.storage }}
@@ -160,10 +196,12 @@ jobs:
           OUT="$RUNNER_TEMP/out/${{ matrix.id }}"; mkdir -p "$OUT"
           python3 - "$OUT/job.json" <<'EOF'
           import json, os, sys
-          keys = ["VARIANT", "SERVER_A", "SERVER_B", "FLAGS_A", "FLAGS_B", "STORAGE", "ROUNDS", "WORKLOADS", "SMALL_CLASSES"]
+          keys = ["VARIANT", "SERVER_A", "SERVER_B", "NAME_A", "NAME_B", "FLAGS_A", "FLAGS_B", "STORAGE", "ROUNDS", "WORKLOADS", "SMALL_CLASSES"]
           cpu = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")), "")
-          json.dump({k.lower(): os.environ.get(k, "") for k in keys} | {"runner": f"{os.environ.get('RUNNER_OS')} {os.environ.get('ImageOS', '')} {os.cpu_count()} vCPU {cpu}"},
-                    open(sys.argv[1], "w"))
+          mem = next(int(l.split()[1]) // 1024 for l in open("/proc/meminfo") if l.startswith("MemTotal"))
+          json.dump({k.lower(): os.environ.get(k, "") for k in keys} | {"servers": json.loads(os.environ["SERVERS_JSON"]), "kernel": os.uname().release,
+                     "mem_mb": mem, "runner": f"{os.environ.get('RUNNER_OS')} {os.environ.get('ImageOS', '')} {os.cpu_count()} vCPU {cpu}"},
+                    open(sys.argv[1], "w"), indent=1)
           EOF
           ASSETS="$RUNNER_TEMP/assets" DATA="$RUNNER_TEMP/data" OUT="$OUT" QUERIES="$PWD/queries/tpch-schema" bash ci/ab.sh
       - if: always()
@@ -174,7 +212,7 @@ jobs:
           retention-days: 14
 
   aggregate:
-    needs: [ab]
+    needs: [plan, ab]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -190,12 +228,13 @@ jobs:
       - name: Tables
         env:
           WAVE: ${{ inputs.wave }}
-          UPREF: ${{ inputs.upstream-ref }}
+          UPREF: ${{ needs.plan.outputs.servers }}
         run: |
           mkdir -p "$RUNNER_TEMP/jobs"
           for d in "$RUNNER_TEMP"/art/ab-*; do for j in "$d"/*/; do cp -r "$j" "$RUNNER_TEMP/jobs/"; done; done
           R="results/$WAVE-$GITHUB_RUN_ID"
-          python3 ci/compare.py "$RUNNER_TEMP/jobs" "$R" "Wave $WAVE (server comparison, upstream $UPREF), run $GITHUB_RUN_ID" > /dev/null
+          python3 ci/compare.py "$RUNNER_TEMP/jobs" "$R" "Wave $WAVE (server comparison), run $GITHUB_RUN_ID" > /dev/null
+          python3 ci/speed_report.py "$RUNNER_TEMP/jobs" "$R/speed.md" "$GITHUB_RUN_ID" || true
           cat "$R/summary.md" >> "$GITHUB_STEP_SUMMARY"
           python3 ci/readme.py
           git config user.name C0fuge

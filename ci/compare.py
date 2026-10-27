@@ -34,7 +34,7 @@ def small(d, cl, c):
     for r in rows:
         sig[r["class"]][0] += int(r["rows"])
         sig[r["class"]][1] += float(r["val"])
-    return {"p50": pct(lat, .5), "p95": pct(lat, .95), "err": sum(1 for r in rows if r["ok"] != "1"), "n": len(rows),
+    return {"p50": pct(lat, .5), "p95": pct(lat, .95), "p99": pct(lat, .99), "err": sum(1 for r in rows if r["ok"] != "1"), "n": len(rows),
             "sig": {k: f"{v[0]}:{v[1]:.0f}" for k, v in sig.items()}}
 
 
@@ -57,7 +57,8 @@ def side_round(d, ref):
         r[f"{cl}{c}"] = s
         if s["err"]:
             r["fail"][f"small-{cl}{c}"].append(f"{s['err']}/{s['n']} errors")
-        r["val"][f"{cl}{c}_p50"], r["val"][f"{cl}{c}_p95"] = s["p50"], s["p95"]
+        for p in ("p50", "p95", "p99"):
+            r["val"][f"{cl}{c}_{p}"] = s[p]
     for n in ("jdbc10", "jdbc1"):
         m = re.search(rf"^{n}: ok=(\d+) cold_sum=([\d.]+) median_sum=([\d.]+) md5=(\w+)", txt, re.M)
         if m:
@@ -84,16 +85,22 @@ def side_round(d, ref):
         r["val"][f"scan{m.group(1)}"] = float(m.group(3))
         if int(m.group(4)) or int(m.group(2)) % 59986052:
             r["fail"][f"scan{m.group(1)}"].append(f"rows={m.group(2)} errors={m.group(4)}")
+    m = re.search(r"^adbcscan wall=[\d.]+ rows=(\d+) .*?mb_per_s=([\d.]+) errors=(\d+)", txt, re.M)
+    if m:
+        r["val"]["adbcscan"] = float(m.group(2))
+        if int(m.group(3)) or int(m.group(1)) % 59986052:
+            r["fail"]["adbcscan"].append(f"rows={m.group(1)} errors={m.group(3)}")
     mp = os.path.join(d, "mem.txt")
     hw = [int(x) for x in re.findall(r"hwm=(\d+)", open(mp).read())] if os.path.exists(mp) else []
     r["val"]["rss"] = max(hw, default=None)
     return r
 
 
-METRICS = ([(f"{cl}{c}_p{p}", f"small {cl.upper()} c{c} p{p}", "ms", f"small-{cl}{c}") for cl, c in CC for p in (50, 95)]
+METRICS = ([(f"{cl}{c}_p{p}", f"small {cl.upper()} c{c} p{p}", "ms", f"small-{cl}{c}") for cl, c in CC for p in (50, 95, 99)]
            + [("adbc1", "TPC-H SF1 ADBC (sum of medians)", "s", "adbc1"), ("adbc10", "TPC-H SF10 ADBC (sum of medians)", "s", "adbc10"),
               ("jdbc1", "TPC-H SF1 JDBC (sum of medians)", "s", "jdbc1"), ("jdbc10", "TPC-H SF10 JDBC (sum of medians)", "s", "jdbc10"),
               ("scan1", "lineitem scan x1", "MB/s", "scan1"), ("scan4", "lineitem scan x4", "MB/s", "scan4"),
+              ("scan8", "lineitem scan x8", "MB/s", "scan8"), ("adbcscan", "lineitem export ADBC", "MB/s", "adbcscan"),
               ("rss", "server RSS peak", "MB", "rss")])
 OVERVIEW = ["adbc1_p50", "adbc32_p95", "jdbc1_p50", "jdbc32_p95", "adbc1", "adbc10", "jdbc10", "scan1"]
 
@@ -154,8 +161,8 @@ def main():
     detail, rows_csv = [], []
     for jid, meta, sides in jobs:
         (a, fa), (b, fb) = agg(sides["A"]), agg(sides["B"])
-        sa = f"{meta.get('server_a', '')} `{meta.get('flags_a', '') or '-'}`"
-        sb = f"{meta.get('server_b', '')} `{meta.get('flags_b', '') or '-'}`"
+        sa = f"{meta.get('name_a') or meta.get('server_a', '')} `{meta.get('flags_a', '') or '-'}`"
+        sb = f"{meta.get('name_b') or meta.get('server_b', '')} `{meta.get('flags_b', '') or '-'}`"
         dq = "; ".join(f"{s}: " + ", ".join(f"{k} ({'; '.join(sorted(v))})" for k, v in sorted(f.items())) for s, f in (("A", fa), ("B", fb)) if f) or "none"
         rat = {k: (b[k] / a[k] if a.get(k) and b.get(k) is not None else None) for k, *_ in METRICS}
         lines.append(f"| {jid} | {sa} | {sb} | {meta.get('storage', '')} | {meta.get('runner', '')} | {len(sides['A'])}/{len(sides['B'])} | "

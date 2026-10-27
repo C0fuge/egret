@@ -20,12 +20,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   java -cp flight-sql-jdbc.jar Lat.java <url> <conc> <rounds> <out.csv> [fetchSize]
  *
  * Each of <conc> threads opens its own connection, runs one warm-up round, then <rounds> rounds of the 7 query
- * classes (metadata tables/schemas, point orders/lineitem, LIMIT 10, filtered count, prepared point query reused).
+ * classes (metadata tables/schemas, point orders/lineitem, LIMIT 10 without and with ORDER BY, filtered count, prepared point query reused).
  * Keys are deterministic per (thread, round), so the row/value sums per class are comparable between server variants.
  * CSV: client,conc,class,thread,round,lat_ms,rows,val,ok
  */
 public class Lat {
-    static final String[] ALL_CLASSES = {"meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "count_filter", "prep_point"};
+    static final String[] ALL_CLASSES = {"meta_tables", "meta_schemas", "point_orders", "point_lineitem", "limit10", "limit10_ob", "count_filter", "prep_point"};
     /** SMALL_CLASSES (comma-separated) restricts the mix, e.g. for a server without prepared statements. */
     static final String[] CLASSES = System.getenv().getOrDefault("SMALL_CLASSES", "").isBlank() ? ALL_CLASSES
             : System.getenv("SMALL_CLASSES").split(",");
@@ -63,7 +63,9 @@ public class Lat {
                     for (int r = 0; r < rounds; r++) {
                         round(c, ps, tid, r, conc, fetch, lines, errors);
                     }
-                    ps.close();
+                    if (ps != null) {
+                        ps.close();
+                    }
                 } catch (Exception e) {
                     errors.incrementAndGet();
                     System.err.println("thread " + tid + ": " + e);
@@ -133,6 +135,7 @@ public class Lat {
                             case "point_lineitem" -> "SELECT l_orderkey, l_linenumber, l_quantity, l_extendedprice FROM tpch.lineitem WHERE l_orderkey = "
                                     + orderKey(seed * 3 + 2);
                             case "limit10" -> "SELECT l_orderkey, l_partkey, l_quantity, l_comment FROM tpch.lineitem LIMIT 10";
+                            case "limit10_ob" -> "SELECT l_orderkey, l_linenumber, l_quantity, l_comment FROM tpch.lineitem ORDER BY l_orderkey, l_linenumber LIMIT 10";
                             default -> "SELECT count(*) FROM tpch.orders WHERE o_orderdate = DATE '" + day(seed) + "'";
                         };
                         try (Statement s = c.createStatement()) {
