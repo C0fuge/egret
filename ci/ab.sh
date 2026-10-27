@@ -251,6 +251,15 @@ side() {  # side <A|B> <round>
   local statspid=$!
   mem idle
   firstq
+  if [ -n "$SECURE" ]; then  # evidence that the secured side really is: plain and wrong-token connections must fail
+    for probe in "grpc://localhost:32010 $TOKEN" "$ADBC_URI wrong-token" "$ADBC_URI $TOKEN"; do set -- $probe
+      echo "tls_probe uri=$1 token=$([ "$2" = "$TOKEN" ] && echo right || echo wrong): $(docker exec -e FLIGHT_TOKEN="$2" -e FLIGHT_CA="$CL_CA" client env PYTHONPATH="$HERE/clients" $PY -W ignore -c 'import sys, flightconn, adbc_driver_flightsql.dbapi as d
+try:
+    c = d.connect(sys.argv[1], db_kwargs=flightconn.db_kwargs()); cur = c.cursor(); cur.execute("SELECT 1"); print("ok", cur.fetchall()[0][0])
+except Exception as e:
+    print("failed", str(e).splitlines()[0][:120])' "$1" 2>&1 | tail -1)" >> "$O/result.txt"
+    done
+  fi
   # sf1 / adbc1 restart the server on SF1: always last
   local sf1started=
   for w in $(for x in $WORKLOADS; do case $x in sf1|adbc1|trino) ;; *) echo $x;; esac; done) $(for x in $WORKLOADS; do case $x in sf1|adbc1|trino) echo $x;; esac; done); do
