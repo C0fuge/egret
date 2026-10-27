@@ -74,7 +74,8 @@ point lookups, filtered count and metadata as small queries, and TPC-H over ADBC
     19:40 UTC, S3 only, `-DduckDbThreads=4` on both sides): `ours-cache` = newest pre-release `4e77c6bda59a` with
     `-Darrowflight.s3.cacheMegabytes=1024` (key `arrowflight.s3.cacheMegabytes`, MiB, 0 = off, at most half the heap) vs the
     same build with the cache off, both vs `ours-new`, and `84fec772ec50` vs `ours-new`; workloads TPC-H SF1/SF10 ADBC +
-    small queries. When it finishes: check for failures, write a short `results/COMPARE-CACHE-2026-10-27.md` (cache on/off
+    small queries. Still running at 21:07 UTC (4 ab jobs in progress after 1 h 38 min, job timeout 170 min;
+    if a job times out, rerun it alone with `only=<job id>` and fewer workloads, e.g. without `adbc1`). When it finishes: check for failures, write a short `results/COMPARE-CACHE-2026-10-27.md` (cache on/off
     ratios, new builds vs ours-new), link it here, then write `ALL DONE <date>` at the top of this section.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
