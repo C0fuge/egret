@@ -189,7 +189,8 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor. Workloads: `mixed
 ## Results
 
 - [c3-load-40490387806](results/c3-load-40490387806/summary.md) (latest of its wave)
-- [c2-speed-40481152975](results/c2-speed-40481152975/summary.md) (latest of its wave)
+- [c2-speed-40490378159](results/c2-speed-40490378159/summary.md) (latest of its wave)
+- [c2-speed-40481152975](results/c2-speed-40481152975/summary.md)
 - [w3-combos-c3b2-40232144198](results/w3-combos-c3b2-40232144198/summary.md) (latest of its wave)
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
