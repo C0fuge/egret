@@ -87,16 +87,20 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       Better: build-1 S3 p95 regression gone (S3 c32 p95 0.99-1.03 of baseline), load +5-6 % at peak and +15-19 % at
       128 clients (still 0.76x upstream native), local small p50 c8/c32 20-26 % faster, 22/22 everywhere.
       **Small regression: local ADBC c8 p95 1.07 / p99 1.15 in all 3 rounds (p50 0.75); JDBC and c32 not affected.**
-    - Build 3 `e70d80bb7995` (newest pre-release; contains `9506620bb170` item 22 (c) opt-in `duckDbProducingStreams`,
+    - Build 3 `e70d80bb7995` (contains `9506620bb170` item 22 (c) opt-in `duckDbProducingStreams`,
       `99113c98c1c3` item 17 (e) S3 cache memory + opt-in `cacheAdmission=reuse`, `7f308a6cdb4d` item 22 (d) opt-in
       `flightZeroCopyWrites`; skipped as contained: those three and `36b2177d51b4` (plugins only); `e70d80bb7995` itself adds
-      auth-provider groups for Ranger, no change for built-in providers): **running**, compare run 40664667021 (wave
-      `track-e70d80bb7995`, 13 jobs, dispatched 09:29 UTC): core vs baseline, local ADBC c8 tail vs `4bb6441569be`,
-      item 22 zero-copy / producing-streams=2 scans (+ zero-copy vs up-native), item 17 cache off/on, always/reuse, on vs `4e77c6bda59a`.
-      State 10:50 UTC: 8/13 jobs green (all local jobs, S3 core-def-lat, S3 core-def-sf1); still running: S3
-      core-def-sf10adbc, core-def-sf10jdbc and the three i17-cache jobs.
-    - Next step (next session): wait for 40664667021 to finish, re-run failed jobs only (`only` input + `merge-run`),
-      commit its results, write `results/track-e70d80bb7995/summary.md` and the BUILDS.md row (flag any regression in bold).
+      auth-provider groups for Ranger, no change for built-in providers): **done**,
+      [`results/track-e70d80bb7995/summary.md`](results/track-e70d80bb7995/summary.md) (run 40664667021, 13/13 jobs green).
+      Better: local small p50 13-26 % faster, scan x8 +22 %, opt-in zero-copy writes scans +4-7 % (on par with upstream
+      native at a third of its RSS), cache-on peak RSS -8 % vs `4e77c6bda59a` at equal speed, 22/22 everywhere; build-2
+      local ADBC c8 tail not seen (p95 0.94). **Flag: S3 small ADBC c1 p50 1.25 (rounds 1.31 1.18 1.36) in a noisy job;
+      re-check in the next build's S3 core job.**
+    - Waiting: `a9e43ca5e296` (item 19b DuckDB threads and memory limit by host size, runtime change; contains
+      `c258adf27dc9` Hive text tables (plugin), `1b3a7bbad4bc` JWT provider, `738d1e7` item 18 step 2 distributedComplete).
+    - Next step (next session): build 4 = `a9e43ca5e296` (or a newer one containing it): new wave `track-a9e43ca5e296`
+      with the core jobs vs baseline (S3 core-def-lat to re-check the S3 ADBC c1 p50 flag), item 18 (3-node cluster on
+      S3, distributedComplete true vs false, answers = single node) and an item 19b check (threads/memory, TPC-H + small).
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
