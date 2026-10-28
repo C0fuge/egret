@@ -50,9 +50,14 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       Better: build-1 S3 p95 regression gone (S3 c32 p95 0.99-1.03 of baseline), load +5-6 % at peak and +15-19 % at
       128 clients (still 0.76x upstream native), local small p50 c8/c32 20-26 % faster, 22/22 everywhere.
       **Small regression: local ADBC c8 p95 1.07 / p99 1.15 in all 3 rounds (p50 0.75); JDBC and c32 not affected.**
-    - Next step (next session): look for a server pre-release newer than `4bb6441569be` (release notes / STATUS.md Log);
-      if one waits, write its wave (core + targeted item, include local ADBC c8 tail vs `4bb6441569be`) and dispatch;
-      otherwise write the idle line. No CI running.
+    - Build 3 `e70d80bb7995` (newest pre-release; contains `9506620bb170` item 22 (c) opt-in `duckDbProducingStreams`,
+      `99113c98c1c3` item 17 (e) S3 cache memory + opt-in `cacheAdmission=reuse`, `7f308a6cdb4d` item 22 (d) opt-in
+      `flightZeroCopyWrites`; skipped as contained: those three and `36b2177d51b4` (plugins only); `e70d80bb7995` itself adds
+      auth-provider groups for Ranger, no change for built-in providers): **running**, compare run 40664667021 (wave
+      `track-e70d80bb7995`, 13 jobs, dispatched 09:29 UTC): core vs baseline, local ADBC c8 tail vs `4bb6441569be`,
+      item 22 zero-copy / producing-streams=2 scans (+ zero-copy vs up-native), item 17 cache off/on, always/reuse, on vs `4e77c6bda59a`.
+    - Next step (next session): wait for 40664667021 (expected ~2 h, until ~11:30 UTC), fix/re-run failed jobs, commit its
+      results, write `results/track-e70d80bb7995/summary.md` and the BUILDS.md row (flag any regression in bold).
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
