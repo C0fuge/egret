@@ -82,15 +82,14 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       queries p95 at 8/32 clients 12-21 % slower in all 3 rounds (JDBC c32 p95 1.21; p50 faster); local not affected.**
     - Build 2 `4bb6441569be` (S3 duckDbThreads default >= 4, aimed at the build-1 S3 p95 regression; contains
       `881b7c62b373` item 21 step 1, `e9f0fd3` item 22 step 1 (opt-in); skipped as contained: `ba4139a2eb93` item 20 (c),
-      `cadd1aca9c23` item 20 (f), `3fbf5b28b186` / `1f600b930eda` plugins/test only): **running** compare run 40638050743,
-      wave `track-load-4bb6441569be` (core local + S3 split, item 21 load 1-128 vs baseline and vs up-native, S3 small vs
-      `d22cdaccb4e1`). Next step: when it finishes, write `results/track-4bb6441569be/summary.md` + BUILDS.md row
-      (check whether the S3 c8/c32 p95 regression is gone), fix/re-run failed jobs with `only=`.
-      State 06:50 UTC: done core-def-tpch-local, core-def-lat-local, core-def-sf1-s3, s3fix-lat-vs-d22-s3; still running
-      the two load jobs, core-def-lat-s3, core-def-sf10jdbc-s3, core-def-sf10adbc-s3 (aggregate commits the results).
-      Early signal (job log of s3fix-lat-vs-d22-s3, wall time only): vs `d22cdaccb4e1` the c32 wall is equal or better
-      (JDBC 0.99 0.76 0.92), but S3 c1 JDBC is slower in all 3 rounds (wall 1.23 1.21 1.22); confirm against the baseline
-      with the p50/p95 tables of core-def-lat-s3 before calling it a regression.
+      `cadd1aca9c23` item 20 (f), `3fbf5b28b186` / `1f600b930eda` plugins/test only): **done**,
+      [`results/track-4bb6441569be/summary.md`](results/track-4bb6441569be/summary.md) (run 40638050743, 9/9 jobs green).
+      Better: build-1 S3 p95 regression gone (S3 c32 p95 0.99-1.03 of baseline), load +5-6 % at peak and +15-19 % at
+      128 clients (still 0.76x upstream native), local small p50 c8/c32 20-26 % faster, 22/22 everywhere.
+      **Small regression: local ADBC c8 p95 1.07 / p99 1.15 in all 3 rounds (p50 0.75); JDBC and c32 not affected.**
+    - Next step (next session): look for a server pre-release newer than `4bb6441569be` (release notes / STATUS.md Log);
+      if one waits, write its wave (core + targeted item, include local ADBC c8 tail vs `4bb6441569be`) and dispatch;
+      otherwise write the idle line. No CI running.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
