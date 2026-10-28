@@ -6,13 +6,14 @@
   `936b2d7c366c`.
 - Runs: core compare 40772221252 (wave `track-9044653333cd`, 8 jobs incl. `i19b-memnone-vs-sized` and `i21-load`,
   3 rounds, all green); item-18 cluster compare 40772225000 (wave `track-9044653333cd-cluster`, `distributedComplete`
-  off vs on, `rounds=2`): **still running** at the time of this summary. Full core tables:
+  off vs on, `rounds=2` in its own wave, job green, both rounds complete). Full core tables:
   [run summary](../track-9044653333cd-40772221252/summary.md), [speed](../track-9044653333cd-40772221252/speed.md),
-  [load](../track-9044653333cd-40772221252/load.md).
+  [load](../track-9044653333cd-40772221252/load.md), [cluster](../track-9044653333cd-cluster-40772225000/robust.md).
 - Pairs: A = baseline (or the named reference), B = candidate, same runner, 3 rounds (A B, B A, A B), containers as
   `COMPARE-TASK.md`. Ratio = B / A of the medians; times < 1 = candidate faster, MB/s and q/s > 1 = candidate faster.
 - Correctness: TPC-H SF1 + SF10, ADBC + JDBC, local + S3: 22/22 for both sides in every round, no job disqualified,
-  no OOM; S3 SF10 ADBC result checksum identical in all 6 side-rounds (`c9c83daae5eb`).
+  no OOM; S3 SF10 ADBC result checksum identical in all 6 side-rounds (`c9c83daae5eb`). 3-node cluster: 22/22 in
+  every check, both modes.
 
 ## Regression check (rule: > 5 % slower on a core metric in all 3 rounds)
 
@@ -90,14 +91,30 @@ fix the candidate is level with the baseline.
 In build 4 the sized limit cut peak RSS by 12 % for 2-3 % SF10. With the thread floor of 4 (`9efe670`) it no longer
 lowers peak RSS here (1.03) and still costs 5 % on SF10.
 
-## Item 18: 3-node cluster on S3, `distributedComplete` off vs on
+## Item 18: 3-node cluster on S3, `distributedComplete` off (A) vs on (B), same build
 
-Run 40772225000 was still running when this summary was written; the table follows when its aggregate is in.
+| check (SF10 ADBC through node 1) | off: wall s (r1 r2) | on: wall s (r1 r2) | on / off | answers |
+|---|---|---|---|---|
+| all 3 nodes up | 291 430 (361) | 298 445 (372) | 1.03 (1.02 1.04) | 22/22 both |
+| node 3 stopped | 286 451 (368) | 399 463 (431) | 1.17 (1.39 1.03) | 22/22 both |
+| node 3 back | 281 455 (368) | 467 473 (470) | 1.28 (1.66 1.04) | 22/22 both |
+| node 2 killed mid-query, dead | 291 463 (377) | 460 468 (464) | 1.23 (1.58 1.01) | 22/22 both |
+| node 2 back | 295 452 (374) | 464 461 (462) | 1.24 (1.57 1.02) | 22/22 both |
+| kill node 2 during q18 / q21 | ok / ok | ok / ok | | |
+| first correct q06 after the kill, s | 65, 89 | 96, 90 | | |
+| cluster start / node rejoin s | 23-24 / 6 | 21 / 6-7 | | |
 
-## Verdict (core)
+Both modes answer 22/22 in every check, also with a node stopped or killed mid-query, and q18 / q21 survive the kill.
+With all nodes up, on is now level with off (1.03; build 5: 1.13). After any node change the on side settles at
+~460-470 s in both rounds while off stays at ~290 s (r1) / ~455 s (r2), so on is still not faster on this setup (2 CPUs
+per node, one runner). Recovery with on after the kill is 90-96 s (build 5: 104-109 s; off 65-89 s): the D3 "no wait
+for a crashed member" steps shorten it, but it is still not below off.
+
+## Verdict
 
 **Same overall, with one small S3 point.** 22/22 everywhere, peak RSS 1-11 % lower, local SF10 back to 1.04 from
 1.07-1.10, the build-5 S3 SF1 JDBC flag gone, local scan x4 +9 %. **Small regression: S3 TPC-H SF10 ADBC total 1.10
 in all 3 rounds (1.06 1.10 1.21); JDBC on S3 not affected (0.97).** The item-21 change does not raise closed-loop load
 (level with the baseline; the +5-7 % peak gain of builds 2 and 4 is not seen), and the item-19b sized memory limit no
-longer saves memory with the new thread floor.
+longer saves memory with the new thread floor. Cluster: 22/22 with node loss in both modes; `distributedComplete=true`
+level with off when all nodes are up and recovers faster than in build 5, but is still not faster than off.
