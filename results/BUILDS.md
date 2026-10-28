@@ -15,6 +15,10 @@ slow at every step); JDBC c1 p50 1.13 not in all rounds; S3 tails and local not 
 Details: [track-e70d80bb7995](track-e70d80bb7995/summary.md).** The local ADBC c8 tail of `4bb6441569be` is not seen
 against the baseline in this run (p95 0.94).
 
+**Regression `94ad61021d93` (small): S3 small queries, ADBC c1 p95 1.08 (rounds 1.07 1.09 1.05), p99 1.09 (1.19 1.09 1.06);
+JDBC and 8/32 clients not affected. The `e70d80bb7995` S3 ADBC c1 p50 flag is not confirmed (1.14, rounds 1.61 1.14
+0.80). Details: [track-94ad61021d93](track-94ad61021d93/summary.md).**
+
 ## Key builds
 
 - `d22cdaccb4e1` (item 20 LZ4/ZSTD Flight streams): on a 1 Gbit/s 10 ms link, the full lineitem export over ADBC rises from 104 MB/s
@@ -26,6 +30,9 @@ against the baseline in this run (p95 0.94).
 - `e70d80bb7995` (item 22 (c)/(d), item 17 (e)): opt-in `flightZeroCopyWrites` scans +4-7 % and on par with upstream
   native (equal at 4 streams, 854 MB/s at 8, a third of native's RSS); S3 cache-on peak RSS -8 % at equal speed;
   local small-query p50 13-26 % faster, scan 8 streams +22 % vs baseline.
+- `94ad61021d93` (item 19b threads + memory by host size, item 18 step 3): closed-loop load +6-7 % at the peak and
+  +18-23 % at 128 clients (48 -> 59 q/s JDBC), sized DuckDB memory cuts peak RSS 12 % for a 2-3 % SF10 cost; 3-node
+  cluster answers 22/22 with a node stopped or killed mid-query in both `distributedComplete` modes (on is not faster).
 
 ## Builds
 
@@ -34,6 +41,7 @@ against the baseline in this run (p95 0.94).
 | 2026-10-28 | `d22cdaccb4e1` | 20 (b) LZ4 + ZSTD streams; contains 19 (threads default), 17 (b)-(d), Iceberg | 0.98 (S3 0.84) | 0.99 (S3 0.60) | ADBC 0.94 (S3 0.88), JDBC 0.95 (S3 0.91) | ADBC 0.88 (S3 0.82), JDBC 0.86 (**S3 1.21**) | not run | 1.15 (S3 1.10) | plain 1.00; CLZ4 2.51 (261); CZSTD 3.46 (361) vs 104 | 22/22 | 0.91-1.14 | better; **S3 p95 regression at c8/c32** | [summary](track-d22cdaccb4e1/summary.md), runs 40602868592 + 40621069419 |
 | 2026-10-28 | `4bb6441569be` | S3 threads default >= 4; contains 21 step 1, 22 step 1 (opt-in) | 1.02 (S3 0.83) | 1.04 (S3 0.63) | ADBC 0.92 (S3 1.08), JDBC 0.96 (S3 0.97) | ADBC 0.97 (S3 0.99), JDBC 0.96 (S3 1.03) | peak 1.06 (JDBC 1.06, ADBC 1.06); c128 1.15-1.19; sat. c1 both; vs up-native 0.76 | 1.14 (S3 1.02) | not run | 22/22 | 0.94-1.10 | better; S3 regression of d22 fixed; **local ADBC c8 p95 1.07** | [summary](track-4bb6441569be/summary.md), run 40638050743 |
 | 2026-10-28 | `e70d80bb7995` | 22 (c) producing streams + 22 (d) zero-copy (opt-in), 17 (e) cache memory + reuse admission (opt-in); Ranger groups | 0.99 (S3 0.67, noisy) | 0.99 (S3 0.67, noisy) | ADBC 0.87 (**S3 1.25**), JDBC 0.96 (S3 1.13) | ADBC 0.99 (S3 1.01), JDBC 0.91 (S3 1.04) | not run | 1.22 (S3 0.95); zero-copy 1.06, prodstreams=2 1.04; zero-copy vs up-native x4 1.00 | not run | 22/22 | 0.94-1.07; cache on 0.92 vs 4e77 | better; **S3 ADBC c1 p50 1.25 (noisy job)** | [summary](track-e70d80bb7995/summary.md), run 40664667021 |
+| 2026-10-28 | `94ad61021d93` | 19b threads + memory limit by host size (+ opt-in idle threads), 18 step 3 counters + backup fail-over, 17 (a) opt-in disk tier | 1.04 (S3 0.64, noisy) | 1.02 (S3 0.66, noisy) | ADBC 0.97 (S3 1.14 noisy; **S3 p95 1.08**), JDBC 0.90 (S3 0.99) | ADBC 0.87 (S3 0.69), JDBC 0.90 (S3 0.96) | peak 1.07 JDBC / 1.06 ADBC; c128 1.18-1.23; sat. c1 both | 1.18 (S3 1.00) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.87-1.06; memnone vs sized 0.88 | better; **S3 ADBC c1 p95 1.08**; dc on not faster | [summary](track-94ad61021d93/summary.md), run 40699820075 (cluster 2 of 3 rounds) |
 
 Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9edbf` `752e272b3ab6` `04e558056068`
 `4e77c6bda59a` `b7be8d166498` `85aaf4604d9a`.
@@ -41,3 +49,5 @@ Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9e
 Skipped as contained in `4bb6441569be`: `881b7c62b373` `e9f0fd3` `ba4139a2eb93` `cadd1aca9c23` `3fbf5b28b186` `1f600b930eda`.
 
 Skipped as contained in `e70d80bb7995`: `9506620bb170` `99113c98c1c3` `7f308a6cdb4d` `36b2177d51b4`.
+
+Skipped as contained in `94ad61021d93`: `a9e43ca5e296` `177dfe3e5716` `f73de96b8773` `c258adf27dc9` `1b3a7bbad4bc`.

@@ -59,19 +59,23 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       native at a third of its RSS), cache-on peak RSS -8 % vs `4e77c6bda59a` at equal speed, 22/22 everywhere; build-2
       local ADBC c8 tail not seen (p95 0.94). **Flag: S3 small ADBC c1 p50 1.25 (rounds 1.31 1.18 1.36) in a noisy job;
       re-check in the next build's S3 core job.**
-    - Build 4 `94ad61021d93` (newest; contains `a9e43ca5e296` item 19b step 1 DuckDB threads + memory limit by host size,
+    - Build 4 `94ad61021d93` (contains `a9e43ca5e296` item 19b step 1 DuckDB threads + memory limit by host size,
       `fd9f62f` item 19b step 2 opt-in `duckDbThreadsWhenIdle`, `ffcbabf`/`c7e436e` item 18 step 3 off-vs-on counters and
       backup fail-over, `ea55a4f` item 17 (a) opt-in S3 cache disk tier; skipped as contained: `a9e43ca5e296`,
-      `177dfe3e5716`, `f73de96b8773`, `c258adf27dc9`, `1b3a7bbad4bc` (plugins / auth)): **running**, run 40699820075
-      (wave `track-94ad61021d93`, 9 jobs: core vs baseline incl. S3 core-def-lat re-check of the ADBC c1 p50 flag,
-      `i18-dc-off-vs-on` 3-node cluster on S3, `i19b-memnone-vs-sized` SF10 + 4 heavy at once, `i19b-load` vs baseline).
-      State 14:55 UTC: 4/9 green (core-def-tpch-local, core-def-lat-local, core-def-sf1-s3, i19b-memnone-vs-sized); S3
-      core-def-lat / sf10jdbc / sf10adbc, i18 cluster and i19b-load still running. Early numbers (job logs): 22/22
-      everywhere, no OOM; local SF10 ADBC/JDBC 1.02 (all rounds 1.01-1.04, below the 5 % rule), SF1 0.89-0.92, small
-      qps c1/c8/c32 +5-15 %, scan x8 1.18; sized DuckDB memory vs `duckDbMemoryLimit=none` on the same build: SF10 ADBC
-      1.02-1.03 slower in all rounds, heavy4a q09 ~1.07 (cost of the 19b memory limit, small).
-    - Next step (next session): when run 40699820075 is green (aggregate commits `results/track-94ad61021d93-40699820075`),
-      write `results/track-94ad61021d93/summary.md` and the BUILDS.md row; failed jobs: fix and re-run with `only=`.
+      `177dfe3e5716`, `f73de96b8773`, `c258adf27dc9`, `1b3a7bbad4bc`): **done**,
+      [`results/track-94ad61021d93/summary.md`](results/track-94ad61021d93/summary.md) (run 40699820075, 8/9 green;
+      load + cluster tables via re-report 40728485498). Better: load +6-7 % at peak and +18-23 % at 128 clients,
+      local small p50 c8/c32 19-26 % faster, scan x8 +18 %, sized DuckDB memory -12 % peak RSS for 2-3 % SF10, 22/22
+      everywhere incl. the 3-node cluster with node loss (dc on and off; on not faster). Local SF10 1.02-1.04 (under the
+      rule). **Small regression: S3 small ADBC c1 p95 1.08 / p99 1.09 in all 3 rounds (JDBC, c8/c32 not affected); the
+      build-3 S3 ADBC c1 p50 flag is not confirmed (1.14, rounds 1.61 1.14 0.80).**
+      The `i18-dc-off-vs-on` job hit the 170-min job limit in round 3 (cluster side-round 28-45 min): only 2 rounds.
+      For the next item-18 build: give the cluster job its own wave with `rounds=2`, or split the 5 checks over two jobs.
+    - Next step (next session): no untracked pre-release after `94ad61021d93` at 16:45 UTC (server repo `main` has only
+      plugins / catalogs / Iceberg commits since, plus D2 (c) part 1 `eb82020` two-process distributed complete, not yet
+      released). Check for a newer `server-1.0.0-*` pre-release; if none, write the idle line. The server repo's
+      STATUS names a maintainer bug "19b thread defaults slow heavy queries": when its fix is released, track that
+      build with the local TPC-H + `i19b-memnone-vs-sized` (heavy4a) jobs.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
