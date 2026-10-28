@@ -5,12 +5,12 @@
   Iceberg time travel; Hive Avro plugin). Still has the item 19b thread defaults (the fix `9efe670` is not released yet).
 - Runs: core compare 40736482953 (wave `track-2cfa23eb62f9`, 6 jobs, 3 rounds, all green); item-18 cluster compare
   40736487295 (wave `track-2cfa23eb62f9-cluster`, `distributedComplete` off vs on, `rounds=2` because of the 170-min
-  job limit). Full core tables: [run summary](../track-2cfa23eb62f9-40736482953/summary.md),
-  [speed](../track-2cfa23eb62f9-40736482953/speed.md).
+  job limit; job green, both rounds complete). Full core tables: [run summary](../track-2cfa23eb62f9-40736482953/summary.md),
+  [speed](../track-2cfa23eb62f9-40736482953/speed.md), [cluster](../track-2cfa23eb62f9-cluster-40736487295/robust.md).
 - Pairs: A = baseline, B = candidate, same runner, 3 rounds (A B, B A, A B), containers as `COMPARE-TASK.md`.
   Ratio = B / A of the medians; times < 1 = candidate faster, MB/s > 1 = candidate faster.
 - Correctness: TPC-H SF1 + SF10, ADBC + JDBC, local + S3: 22/22 for both sides in every round, result checksums of
-  A and B identical (S3 SF1: JDBC `de713f9eea2f`, ADBC `090124efed2e` in all 6 side-rounds); no job disqualified, no OOM.
+  A and B identical (S3 SF1: JDBC `de713f9eea2f`, ADBC `090124efed2e` in all 6 side-rounds); no job disqualified, no OOM. 3-node cluster: 22/22 in every check, both modes.
 
 ## Regression check (rule: > 5 % slower on a core metric in all 3 rounds)
 
@@ -56,8 +56,28 @@ S3 SF10 again has one slow baseline round per job (as in builds 1-4); the other 
 
 ## Item 18: 3-node cluster on S3, `distributedComplete` off (A) vs on (B), same build
 
-Pending: run 40736487295 still running at 19:45 UTC; table added when it ends.
+| check (SF10 ADBC through node 1) | off: wall s (r1 r2) | on: wall s (r1 r2) | on / off | answers |
+|---|---|---|---|---|
+| all 3 nodes up | 329 482 (406) | 408 505 (457) | 1.13 (1.24 1.05) | 22/22 both |
+| node 3 stopped | 329 523 (426) | 548 543 (546) | 1.28 (1.67 1.04) | 22/22 both |
+| node 3 back | 330 513 (421) | 525 533 (529) | 1.26 (1.59 1.04) | 22/22 both |
+| node 2 killed mid-query, dead | 327 532 (430) | 546 544 (545) | 1.27 (1.67 1.02) | 22/22 both |
+| node 2 back | 327 520 (423) | 517 535 (526) | 1.24 (1.58 1.03) | 22/22 both |
+| kill node 2 during q18 / q21 | ok / ok | ok / ok | | |
+| first correct q06 after the kill, s | 62, 98 | 109, 104 | | |
+| cluster start / node rejoin s | 20-25 / 5-6 | 19-21 / 5 | | |
+
+Both modes answer 22/22 in every check, also with a node stopped or killed mid-query, and q18 / q21 survive the
+kill. Same picture as build 4: with `distributedComplete=true` the cluster is not faster on SF10 here (2 CPUs per
+node, one runner); it is ~525-545 s with any node change versus ~330 s (r1) / ~520 s (r2) off. The off side again
+varies a lot between rounds, so with 2 rounds: on is equal-or-slower, not faster. Recovery after the kill is
+slower with on (104-109 s vs 62-98 s). `rounds=2` in its own wave fits the 170-min limit (job ~2 h 45 min).
 
 ## Verdict
 
-Pending the cluster run. Core so far: **better on local small queries and scans, with one small S3 point** (S3 TPC-H SF1 JDBC 1.14 in all 3 rounds), local SF10 1.07-1.10 under the rule, 22/22 everywhere.
+**Better locally, with one small S3 point and a local SF10 trend to watch.** Local small p50 at 8/32 clients 22-28 %
+faster and c32 p95/p99 9-20 % better, local scan 8 streams +15 %, S3 SF10 same-or-faster, peak RSS 6-8 % lower in the
+TPC-H jobs; 22/22 everywhere including the 3-node cluster with node loss in both `distributedComplete` modes.
+**Small regression: S3 TPC-H SF1 JDBC total 1.14 in all 3 rounds (warm medians only; cold sums and ADBC not
+affected).** Local SF10 1.07-1.10 (under the rule, up from 1.02-1.04 in build 4). The build-4 S3 ADBC c1 p95 flag
+is not seen (1.01). `distributedComplete=true` is correct but still not faster than off on this setup.

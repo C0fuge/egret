@@ -74,12 +74,16 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
     - Build 5 `2cfa23eb62f9` (contains `eb82020` item 18 / D2 (c) part 1 two-process distributed complete with TLS +
       token auth, opt-in `dataDirShared`; `3042102` item 13 (c) external file cache bound line; `411e804` item 3 (c)
       Iceberg time travel; Hive Avro plugin; still has the 19b thread defaults, the fix `9efe670` is not released yet):
-      **running**: core wave `track-2cfa23eb62f9` (6 jobs, 3 rounds) 40736482953, item-18 cluster wave
-      `track-2cfa23eb62f9-cluster` (dc off vs on, `rounds=2` because of the 170-min job limit) 40736487295.
-    - Next step (next session): when both runs are done, write `results/track-2cfa23eb62f9/summary.md` + the BUILDS.md
-      row (core vs baseline, cluster 22/22 off/on); re-check the build-4 S3 small ADBC c1 p95 1.08 flag. Then: when the
-      19b thread-floor fix `9efe670` is released, track that build with the local TPC-H + `i19b-memnone-vs-sized`
-      (heavy4a) jobs.
+      **done**, [`results/track-2cfa23eb62f9/summary.md`](results/track-2cfa23eb62f9/summary.md) (core 40736482953,
+      6/6 green; cluster 40736487295, `rounds=2` in its own wave, green). Better locally (small p50 c8/c32 22-28 %
+      faster, scan x8 +15 %), 22/22 everywhere incl. the 3-node cluster with node loss (dc on and off; on still not
+      faster, slower recovery 104-109 s vs 62-98 s). **Small regression: S3 TPC-H SF1 JDBC total 1.14 in all 3 rounds
+      (1.21 1.05 1.14; warm medians only, cold sums and ADBC not affected).** Local SF10 1.07-1.10 (under the rule,
+      up from 1.02-1.04 in build 4). Build-4 S3 ADBC c1 p95 flag not seen (1.01).
+    - Next step (next session): find the newest untracked pre-release after `2cfa23eb62f9`. When the 19b thread-floor
+      fix `9efe670` is released, track that build with the core jobs + `i19b-memnone-vs-sized` (heavy4a); re-check
+      the local SF10 trend (1.10) and the S3 SF1 JDBC 1.14 point there. Item-18 builds: cluster job in its own wave
+      with `rounds=2`. If none is waiting: idle line.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
