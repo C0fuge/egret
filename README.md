@@ -86,6 +86,11 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       wave `track-load-4bb6441569be` (core local + S3 split, item 21 load 1-128 vs baseline and vs up-native, S3 small vs
       `d22cdaccb4e1`). Next step: when it finishes, write `results/track-4bb6441569be/summary.md` + BUILDS.md row
       (check whether the S3 c8/c32 p95 regression is gone), fix/re-run failed jobs with `only=`.
+      State 06:50 UTC: done core-def-tpch-local, core-def-lat-local, core-def-sf1-s3, s3fix-lat-vs-d22-s3; still running
+      the two load jobs, core-def-lat-s3, core-def-sf10jdbc-s3, core-def-sf10adbc-s3 (aggregate commits the results).
+      Early signal (job log of s3fix-lat-vs-d22-s3, wall time only): vs `d22cdaccb4e1` the c32 wall is equal or better
+      (JDBC 0.99 0.76 0.92), but S3 c1 JDBC is slower in all 3 rounds (wall 1.23 1.21 1.22); confirm against the baseline
+      with the p50/p95 tables of core-def-lat-s3 before calling it a regression.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
