@@ -102,6 +102,11 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       `177dfe3e5716`, `f73de96b8773`, `c258adf27dc9`, `1b3a7bbad4bc` (plugins / auth)): **running**, run 40699820075
       (wave `track-94ad61021d93`, 9 jobs: core vs baseline incl. S3 core-def-lat re-check of the ADBC c1 p50 flag,
       `i18-dc-off-vs-on` 3-node cluster on S3, `i19b-memnone-vs-sized` SF10 + 4 heavy at once, `i19b-load` vs baseline).
+      State 14:55 UTC: 4/9 green (core-def-tpch-local, core-def-lat-local, core-def-sf1-s3, i19b-memnone-vs-sized); S3
+      core-def-lat / sf10jdbc / sf10adbc, i18 cluster and i19b-load still running. Early numbers (job logs): 22/22
+      everywhere, no OOM; local SF10 ADBC/JDBC 1.02 (all rounds 1.01-1.04, below the 5 % rule), SF1 0.89-0.92, small
+      qps c1/c8/c32 +5-15 %, scan x8 1.18; sized DuckDB memory vs `duckDbMemoryLimit=none` on the same build: SF10 ADBC
+      1.02-1.03 slower in all rounds, heavy4a q09 ~1.07 (cost of the 19b memory limit, small).
     - Next step (next session): when run 40699820075 is green (aggregate commits `results/track-94ad61021d93-40699820075`),
       write `results/track-94ad61021d93/summary.md` and the BUILDS.md row; failed jobs: fix and re-run with `only=`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
