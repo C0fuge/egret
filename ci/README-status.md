@@ -84,7 +84,7 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       `9044653` item 18 D3 steps 1-2b (no wait for a crashed cluster member), `9efe670` 19b thread floor 4, Hive views,
       Iceberg time travel via Hive; skipped as contained: `a110a2279437`, `0f8eb5e5f65c` (catalog CI probe only),
       `936b2d7c366c`): **running**, waves `track-9044653333cd` (core + `i19b-memnone-vs-sized` + `i21-load`) and
-      `track-9044653333cd-cluster` (`rounds=2`). Run ids: see next commit.
+      `track-9044653333cd-cluster` (`rounds=2`): core 40772221252, cluster 40772225000 (dispatched 21:28 UTC).
     - Next step: wait for both runs, write `results/track-9044653333cd/summary.md` + BUILDS.md row; re-check local
       SF10 trend (1.10 in build 5) and S3 SF1 JDBC 1.14; then the newest untracked pre-release after `9044653333cd`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
