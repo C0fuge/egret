@@ -1,0 +1,15 @@
+[
+ {"variant": "core-def-tpch", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "sf10 adbc10 sf1 adbc1", "small_classes": ""},
+ {"variant": "core-def-lat", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "core-def-lat", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "core-def-sf10jdbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "core-def-sf10adbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "core-def-sf1", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "sf1 adbc1", "small_classes": ""},
+ {"variant": "tail-vs-4bb6", "storage": "local", "a_server": "4bb6441569be", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "i22-zerocopy", "storage": "local", "a_server": "e70d80bb7995", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "-DflightZeroCopyWrites=true", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "i22-prodstreams2", "storage": "local", "a_server": "e70d80bb7995", "a_flags": "", "b_server": "e70d80bb7995", "b_flags": "-DduckDbProducingStreams=2", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "i22-zerocopy-vs-native", "storage": "local", "a_server": "e70d80bb7995", "a_flags": "-DflightZeroCopyWrites=true", "b_server": "up-native", "b_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "i17-cache-off-vs-on", "storage": "s3", "a_server": "e70d80bb7995", "a_flags": "-DduckDbThreads=4", "b_server": "e70d80bb7995", "b_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024", "workloads": "adbc10 adbc1 small", "small_classes": ""},
+ {"variant": "i17-cache-always-vs-reuse", "storage": "s3", "a_server": "e70d80bb7995", "a_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024", "b_server": "e70d80bb7995", "b_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024 -Darrowflight.s3.cacheAdmission=reuse", "workloads": "adbc10 adbc1 small", "small_classes": ""},
+ {"variant": "i17-cache-on-vs-4e77", "storage": "s3", "a_server": "4e77c6bda59a", "a_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024", "b_server": "e70d80bb7995", "b_flags": "-DduckDbThreads=4 -Darrowflight.s3.cacheMegabytes=1024", "workloads": "adbc10 adbc1 small", "small_classes": ""}
+]
