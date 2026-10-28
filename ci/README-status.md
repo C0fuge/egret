@@ -56,8 +56,10 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       auth-provider groups for Ranger, no change for built-in providers): **running**, compare run 40664667021 (wave
       `track-e70d80bb7995`, 13 jobs, dispatched 09:29 UTC): core vs baseline, local ADBC c8 tail vs `4bb6441569be`,
       item 22 zero-copy / producing-streams=2 scans (+ zero-copy vs up-native), item 17 cache off/on, always/reuse, on vs `4e77c6bda59a`.
-    - Next step (next session): wait for 40664667021 (expected ~2 h, until ~11:30 UTC), fix/re-run failed jobs, commit its
-      results, write `results/track-e70d80bb7995/summary.md` and the BUILDS.md row (flag any regression in bold).
+      State 10:50 UTC: 8/13 jobs green (all local jobs, S3 core-def-lat, S3 core-def-sf1); still running: S3
+      core-def-sf10adbc, core-def-sf10jdbc and the three i17-cache jobs.
+    - Next step (next session): wait for 40664667021 to finish, re-run failed jobs only (`only` input + `merge-run`),
+      commit its results, write `results/track-e70d80bb7995/summary.md` and the BUILDS.md row (flag any regression in bold).
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
