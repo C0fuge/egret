@@ -79,8 +79,11 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
     item 19 threads default, item 17 (b)-(d), Iceberg items; skipped as contained: 84fec772ec50 8625e28f08cd b28fedf9edbf
     752e272b3ab6 04e558056068 4e77c6bda59a b7be8d166498 85aaf4604d9a) vs `7562a5bdb7b9`: compare run **40602868592**
     (wave `track-load-d22cdaccb4e1`, 14 jobs: core def/t4 local+S3, netem plain/zstd/lz4 client-requested, up-native ZSTD
-    reference, fast-link compression cost). Next: when it finishes, write `results/track-d22cdaccb4e1/summary.md` and
-    `results/BUILDS.md` row; fix failed jobs and re-run with `only=`.
+    reference with up-native head `a4ebfbc55e23`, fast-link compression cost). State 2026-10-28 01:05 UTC: 12 local
+    jobs done (all success), `core-def-tpch-s3` and `core-def-lat-s3` still running; the aggregate job commits
+    `results/track-load-d22cdaccb4e1-40602868592/` when they end. Next session: check the run (re-run failed jobs with
+    `only=` + `merge-run=40602868592`), then write `results/track-d22cdaccb4e1/summary.md` and the first
+    `results/BUILDS.md` row (ratios, 22/22, peak RSS, verdict; regression rule of the task).
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
