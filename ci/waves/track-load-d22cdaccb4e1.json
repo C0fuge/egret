@@ -12,5 +12,8 @@
  {"variant": "i20-native-zstd-netem", "storage": "local", "a_server": "d22cdaccb4e1", "a_flags": "CZSTD", "b_server": "up-native", "b_flags": "-DflightCompression=zstd", "workloads": "netem", "small_classes": ""},
  {"variant": "i20-lz4-vs-native-zstd-netem", "storage": "local", "a_server": "d22cdaccb4e1", "a_flags": "CLZ4", "b_server": "up-native", "b_flags": "-DflightCompression=zstd", "workloads": "netem", "small_classes": ""},
  {"variant": "i20-fast-zstd", "storage": "local", "a_server": "d22cdaccb4e1", "a_flags": "", "b_server": "d22cdaccb4e1", "b_flags": "CZSTD", "workloads": "adbc10 adbcscan", "small_classes": ""},
- {"variant": "i20-fast-lz4", "storage": "local", "a_server": "d22cdaccb4e1", "a_flags": "", "b_server": "d22cdaccb4e1", "b_flags": "CLZ4", "workloads": "adbc10 adbcscan", "small_classes": ""}
+ {"variant": "i20-fast-lz4", "storage": "local", "a_server": "d22cdaccb4e1", "a_flags": "", "b_server": "d22cdaccb4e1", "b_flags": "CLZ4", "workloads": "adbc10 adbcscan", "small_classes": ""},
+ {"variant": "core-def-sf10jdbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "d22cdaccb4e1", "b_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "core-def-sf10adbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "d22cdaccb4e1", "b_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "core-def-sf1", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "d22cdaccb4e1", "b_flags": "", "workloads": "sf1 adbc1", "small_classes": ""}
 ]
