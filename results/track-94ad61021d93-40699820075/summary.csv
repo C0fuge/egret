@@ -1,0 +1,63 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc1_p50,ms,28.886,26.0535,0.9019421172886519,0.933 0.902 0.947
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc1_p95,ms,54.66994999999998,50.5639,0.9248938402175239,0.952 0.925 0.968
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc1_p99,ms,62.02719999999999,52.83755,0.8518448358139655,0.895 0.852 0.875
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc8_p50,ms,131.24849999999998,101.524,0.7735250307622564,0.774 0.744 0.832
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc8_p95,ms,307.75139999999993,300.5481499999999,0.9765939326352373,1.000 0.977 1.000
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc8_p99,ms,482.04650000000026,344.4720900000001,0.7146034459331203,0.766 0.633 0.863
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc32_p50,ms,486.744,393.18899999999996,0.8077942409151422,0.808 0.763 0.808
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc32_p95,ms,1374.9329,1243.31865,0.9042758741172023,0.892 0.904 0.922
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc32_p99,ms,1870.173540000002,1822.302760000006,0.9744030278601867,0.978 0.974 0.907
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc1_p50,ms,19.016,18.3735,0.9662126630206143,0.876 0.982 0.946
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc1_p95,ms,47.644399999999976,47.01729999999992,0.9868379074980469,0.982 0.987 1.014
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc1_p99,ms,57.33546999999999,55.695109999999985,0.9713901359838857,0.937 1.099 0.924
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc8_p50,ms,117.9005,86.6915,0.7352937434531661,0.742 0.709 0.750
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc8_p95,ms,293.23465,290.31764999999996,0.9900523352202748,1.054 0.932 1.033
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc8_p99,ms,366.61363,328.3962000000001,0.8957555669711463,0.995 0.839 0.940
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc32_p50,ms,449.62850000000003,362.80100000000004,0.8068905774433783,0.779 0.807 0.807
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc32_p95,ms,1360.2160999999999,1188.5519,0.8737963769139331,0.896 0.847 0.884
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc32_p99,ms,1857.3559400000004,1427.2928400000003,0.7684541283993201,0.849 0.746 0.814
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,scan1,MB/s,425.9,387.7,0.910307583939892,0.925 0.894 0.990
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,scan4,MB/s,436.5,468.4,1.0730813287514318,1.067 1.077 1.073
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,scan8,MB/s,410.2,484.9,1.182106289614822,1.172 1.183 1.177
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbcscan,MB/s,504.9,516.3,1.0225787284610814,1.004 1.026 1.009
+core-def-lat-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1693,1589,0.9385705847607797,0.939 0.923 0.944
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc1_p50,ms,31.052999999999997,30.6965,0.9885196277332304,1.088 0.886 0.989
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc1_p95,ms,787.4787499999998,794.11745,1.0084303227229943,1.052 1.052 0.967
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc1_p99,ms,849.6582099999999,868.2732299999998,1.021908833200117,1.063 1.010 0.969
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc8_p50,ms,363.673,356.034,0.9789948662672235,0.853 1.165 1.035
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc8_p95,ms,5840.332699999999,6068.803799999999,1.039119535090869,1.077 0.947 0.941
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc8_p99,ms,10047.166670000011,8412.98833,0.8373493350240193,1.618 0.557 0.837
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc32_p50,ms,1133.6695,1057.0225,0.9323903483334429,1.026 0.867 0.990
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc32_p95,ms,17394.478,16711.33575,0.9607264874519373,0.961 0.974 0.984
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc32_p99,ms,27082.724330000015,26825.934160000004,0.9905183035919485,0.806 1.274 0.701
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc1_p50,ms,22.722499999999997,25.901,1.139883375508857,1.605 1.140 0.805
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc1_p95,ms,778.77155,837.9608,1.0760033542570988,1.075 1.086 1.051
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc1_p99,ms,831.29187,904.03478,1.0875058600055838,1.190 1.088 1.064
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc8_p50,ms,380.092,356.938,0.9390831693379498,0.939 0.980 0.932
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc8_p95,ms,5625.784049999999,5654.2508499999985,1.0050600591396677,0.972 1.005 1.024
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc8_p99,ms,6143.38497,6133.30486,0.998359192847392,0.989 0.998 1.434
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc32_p50,ms,1563.4389999999999,1111.5495,0.7109644188228643,0.999 0.652 0.996
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc32_p95,ms,23721.4392,16388.3445,0.6908663661520166,1.015 0.674 1.091
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc32_p99,ms,27613.140270000004,17860.28458,0.6468038189558655,0.964 0.647 1.314
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,scan1,MB/s,395.1,391.6,0.991141483168818,0.975 1.127 0.993
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,scan4,MB/s,445.1,457.0,1.0267355650415637,1.027 1.063 1.019
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,scan8,MB/s,434.5,434.0,0.998849252013809,1.017 0.982 0.991
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbcscan,MB/s,444.8,442.0,0.993705035971223,0.982 1.185 0.992
+core-def-lat-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,2689,2765,1.028263294905169,0.954 1.028 1.081
+core-def-sf1-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc1,s,23.936,25.229,1.054019050802139,1.054 1.065 0.945
+core-def-sf1-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc1,s,24.69,24.55,0.9943296881328473,1.182 0.693 0.994
+core-def-sf1-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,775,781,1.007741935483871,1.022 1.051 0.990
+core-def-sf10adbc-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,adbc10,s,485.251,308.349,0.635442276265273,1.029 0.629 0.978
+core-def-sf10adbc-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,rss,MB,1761,1540,0.8745031232254401,0.903 0.862 0.835
+core-def-sf10jdbc-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc10,s,499.95,328.92,0.657905790579058,0.991 0.658 0.990
+core-def-sf10jdbc-s3,7562a5bdb7b9,,94ad61021d93,,s3,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1685,1566,0.9293768545994066,0.909 0.929 0.983
+core-def-tpch-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc1,s,3.931,3.584,0.9117272958534725,0.917 0.924 0.889
+core-def-tpch-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc10,s,37.558,38.937,1.0367165450769475,1.017 1.040 1.012
+core-def-tpch-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc1,s,4.03,3.64,0.9032258064516129,0.899 0.910 0.913
+core-def-tpch-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,jdbc10,s,37.57,38.31,1.0196965664093691,1.016 1.017 1.020
+core-def-tpch-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1774,1555,0.8765501691093573,0.848 0.876 0.946
+i18-dc-off-vs-on-s3,94ad61021d93,-DdistributedComplete=false,94ad61021d93,-DdistributedComplete=true,s3,Linux ubuntu24 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,352,339.5,0.9644886363636364,0.949 0.980
+i19b-load-local,7562a5bdb7b9,,94ad61021d93,,local,Linux ubuntu24 4 vCPU Intel(R) Xeon(R) 6973P-C,rss,MB,4855,5146,1.0599382080329558,1.070 1.036 1.035
+i19b-memnone-vs-sized-local,94ad61021d93,-DduckDbMemoryLimit=none,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,adbc10,s,39.165,40.284,1.0285714285714285,1.028 1.015 1.029
+i19b-memnone-vs-sized-local,94ad61021d93,-DduckDbMemoryLimit=none,94ad61021d93,,local,Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,3126,2749,0.8793985924504159,0.881 0.881 0.879
