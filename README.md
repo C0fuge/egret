@@ -117,10 +117,13 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       faster, slower recovery 104-109 s vs 62-98 s). **Small regression: S3 TPC-H SF1 JDBC total 1.14 in all 3 rounds
       (1.21 1.05 1.14; warm medians only, cold sums and ADBC not affected).** Local SF10 1.07-1.10 (under the rule,
       up from 1.02-1.04 in build 4). Build-4 S3 ADBC c1 p95 flag not seen (1.01).
-    - Next step (next session): find the newest untracked pre-release after `2cfa23eb62f9`. When the 19b thread-floor
-      fix `9efe670` is released, track that build with the core jobs + `i19b-memnone-vs-sized` (heavy4a); re-check
-      the local SF10 trend (1.10) and the S3 SF1 JDBC 1.14 point there. Item-18 builds: cluster job in its own wave
-      with `rounds=2`. If none is waiting: idle line.
+    - Build 6 `9044653333cd` (contains `936b2d7` item 21 `duckDbThreadsUnderLoad` fix, `a110a22` / `aef0a7a` /
+      `9044653` item 18 D3 steps 1-2b (no wait for a crashed cluster member), `9efe670` 19b thread floor 4, Hive views,
+      Iceberg time travel via Hive; skipped as contained: `a110a2279437`, `0f8eb5e5f65c` (catalog CI probe only),
+      `936b2d7c366c`): **running**, waves `track-9044653333cd` (core + `i19b-memnone-vs-sized` + `i21-load`) and
+      `track-9044653333cd-cluster` (`rounds=2`). Run ids: see next commit.
+    - Next step: wait for both runs, write `results/track-9044653333cd/summary.md` + BUILDS.md row; re-check local
+      SF10 trend (1.10 in build 5) and S3 SF1 JDBC 1.14; then the newest untracked pre-release after `9044653333cd`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
