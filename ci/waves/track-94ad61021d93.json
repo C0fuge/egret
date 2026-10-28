@@ -1,0 +1,11 @@
+[
+ {"variant": "core-def-tpch", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "sf10 adbc10 sf1 adbc1", "small_classes": ""},
+ {"variant": "core-def-lat", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "core-def-lat", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "core-def-sf10jdbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "core-def-sf10adbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "core-def-sf1", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "sf1 adbc1", "small_classes": ""},
+ {"variant": "i18-dc-off-vs-on", "storage": "s3", "a_server": "94ad61021d93", "a_flags": "-DdistributedComplete=false", "b_server": "94ad61021d93", "b_flags": "-DdistributedComplete=true", "workloads": "cluster", "small_classes": ""},
+ {"variant": "i19b-memnone-vs-sized", "storage": "local", "a_server": "94ad61021d93", "a_flags": "-DduckDbMemoryLimit=none", "b_server": "94ad61021d93", "b_flags": "", "workloads": "adbc10 heavy4a", "small_classes": ""},
+ {"variant": "i19b-load", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "94ad61021d93", "b_flags": "", "workloads": "load", "small_classes": ""}
+]
