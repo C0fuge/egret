@@ -38,22 +38,15 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
   - Final run ("Later addition"): **published** `results/COMPARE-CACHE-2026-10-27.md` (run 40569584228, wave `c10-cache`):
     S3 cache on (`4e77c6bda59a`, 1 GiB) makes repeated small queries faster (p50 1.4-4x, p95 8-20x) and SF1 ~2-3x, SF10 ~8 % slower, peak RSS
     ~5.7 GB of the 6 GB limit; cache off equals `ours-new`; `84fec772ec50` inconclusive (noisy rounds, no consistent regression).
-  - Phase B (`ci/BUILD-TRACK-TASK.md`): build 1 = `d22cdaccb4e1` (item 20 (b) LZ4 streams; contains ZSTD streams 6ca7352,
-    item 19 threads default, item 17 (b)-(d), Iceberg items; skipped as contained: 84fec772ec50 8625e28f08cd b28fedf9edbf
-    752e272b3ab6 04e558056068 4e77c6bda59a b7be8d166498 85aaf4604d9a) vs `7562a5bdb7b9`. Compare run 40602868592
-    (wave `track-load-d22cdaccb4e1`): 13 of 14 jobs complete, results in `results/track-load-d22cdaccb4e1-40602868592/`
-    (`load.md` re-reported by 40621233483 with the new per-job netem pair table). `core-def-tpch-s3` hit the 170 min job
-    limit (SF1/SF10 ADBC only 2 rounds; not usable for the regression rule), so it is split into `core-def-sf10jdbc-s3`,
-    `core-def-sf10adbc-s3`, `core-def-sf1-s3`: compare run **40621069419** (started 2026-10-28 02:28 UTC,
-    `merge-run=40602868592`, merge-prefix `core-,i20-`; its aggregate commits `results/track-load-d22cdaccb4e1-40621069419/`
-    with all jobs). So far (B = d22cdaccb4e1 / A = baseline): local SF10 ADBC 0.98, JDBC 0.99, SF1 0.94; t4 ~1.00; small
-    c1 p50 0.94 local / 0.88 S3, c32 p95 0.88 local / 0.82 S3 (JDBC S3 1.21); scan x8 1.15 local / 1.10 S3; netem export
-    plain 1.00, CLZ4 2.51x (261 MB/s), CZSTD 3.46x (361 MB/s) vs 104 MB/s; up-native ZSTD 256-260 MB/s on the same runners;
-    fast link: CZSTD export 0.47x, CLZ4 0.67x of plain; ours 22/22 everywhere (up-native 0/22 on netem TPC-H, upstream
-    side); peak RSS within +-10 %.
-    Next session: check 40621069419 (failed job: re-run it with `only=` + `merge-run=40621069419`), then write
-    `results/track-d22cdaccb4e1/summary.md` and the first `results/BUILDS.md` row (ratios, 22/22, peak RSS, verdict;
-    regression rule of the task), then the next untracked pre-release.
+  - Phase B (`ci/BUILD-TRACK-TASK.md`): tracked builds in [`results/BUILDS.md`](results/BUILDS.md).
+    - Build 1 `d22cdaccb4e1` (item 20 (b) LZ4 + ZSTD streams; contains item 19, 17 (b)-(d), Iceberg): **done**,
+      [`results/track-d22cdaccb4e1/summary.md`](results/track-d22cdaccb4e1/summary.md) (runs 40602868592 + 40621069419).
+      Better (slow-link export CLZ4 2.51x, CZSTD 3.46x; scan x8 +10-15 %; 22/22 everywhere), but **regression: S3 small
+      queries p95 at 8/32 clients 12-21 % slower in all 3 rounds (JDBC c32 p95 1.21; p50 faster); local not affected.**
+    - Next session: build 2 = `881b7c62b373` (item 21 step 1, less CPU per small query; skip as contained:
+      `ba4139a2eb93` item 20 (c), `cadd1aca9c23` item 20 (f)). Add wave `ci/waves/track-<sha12>.json` with the core jobs
+      (S3 TPC-H already split into sf10jdbc / sf10adbc / sf1 to stay under 170 min) + item 21 closed-loop load 1-128
+      with up-native as reference; recheck the S3 c8/c32 p95 tail there.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
