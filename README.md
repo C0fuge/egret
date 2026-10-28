@@ -108,11 +108,15 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       build-3 S3 ADBC c1 p50 flag is not confirmed (1.14, rounds 1.61 1.14 0.80).**
       The `i18-dc-off-vs-on` job hit the 170-min job limit in round 3 (cluster side-round 28-45 min): only 2 rounds.
       For the next item-18 build: give the cluster job its own wave with `rounds=2`, or split the 5 checks over two jobs.
-    - Next step (next session): no untracked pre-release after `94ad61021d93` at 16:45 UTC (server repo `main` has only
-      plugins / catalogs / Iceberg commits since, plus D2 (c) part 1 `eb82020` two-process distributed complete, not yet
-      released). Check for a newer `server-1.0.0-*` pre-release; if none, write the idle line. The server repo's
-      STATUS names a maintainer bug "19b thread defaults slow heavy queries": when its fix is released, track that
-      build with the local TPC-H + `i19b-memnone-vs-sized` (heavy4a) jobs.
+    - Build 5 `2cfa23eb62f9` (contains `eb82020` item 18 / D2 (c) part 1 two-process distributed complete with TLS +
+      token auth, opt-in `dataDirShared`; `3042102` item 13 (c) external file cache bound line; `411e804` item 3 (c)
+      Iceberg time travel; Hive Avro plugin; still has the 19b thread defaults, the fix `9efe670` is not released yet):
+      **running**: core wave `track-2cfa23eb62f9` (6 jobs, 3 rounds) 40736482953, item-18 cluster wave
+      `track-2cfa23eb62f9-cluster` (dc off vs on, `rounds=2` because of the 170-min job limit) 40736487295.
+    - Next step (next session): when both runs are done, write `results/track-2cfa23eb62f9/summary.md` + the BUILDS.md
+      row (core vs baseline, cluster 22/22 off/on); re-check the build-4 S3 small ADBC c1 p95 1.08 flag. Then: when the
+      19b thread-floor fix `9efe670` is released, track that build with the local TPC-H + `i19b-memnone-vs-sized`
+      (heavy4a) jobs.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
