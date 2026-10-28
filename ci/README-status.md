@@ -59,11 +59,14 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       native at a third of its RSS), cache-on peak RSS -8 % vs `4e77c6bda59a` at equal speed, 22/22 everywhere; build-2
       local ADBC c8 tail not seen (p95 0.94). **Flag: S3 small ADBC c1 p50 1.25 (rounds 1.31 1.18 1.36) in a noisy job;
       re-check in the next build's S3 core job.**
-    - Waiting: `a9e43ca5e296` (item 19b DuckDB threads and memory limit by host size, runtime change; contains
-      `c258adf27dc9` Hive text tables (plugin), `1b3a7bbad4bc` JWT provider, `738d1e7` item 18 step 2 distributedComplete).
-    - Next step (next session): build 4 = `a9e43ca5e296` (or a newer one containing it): new wave `track-a9e43ca5e296`
-      with the core jobs vs baseline (S3 core-def-lat to re-check the S3 ADBC c1 p50 flag), item 18 (3-node cluster on
-      S3, distributedComplete true vs false, answers = single node) and an item 19b check (threads/memory, TPC-H + small).
+    - Build 4 `94ad61021d93` (newest; contains `a9e43ca5e296` item 19b step 1 DuckDB threads + memory limit by host size,
+      `fd9f62f` item 19b step 2 opt-in `duckDbThreadsWhenIdle`, `ffcbabf`/`c7e436e` item 18 step 3 off-vs-on counters and
+      backup fail-over, `ea55a4f` item 17 (a) opt-in S3 cache disk tier; skipped as contained: `a9e43ca5e296`,
+      `177dfe3e5716`, `f73de96b8773`, `c258adf27dc9`, `1b3a7bbad4bc` (plugins / auth)): **running**, run 40699820075
+      (wave `track-94ad61021d93`, 9 jobs: core vs baseline incl. S3 core-def-lat re-check of the ADBC c1 p50 flag,
+      `i18-dc-off-vs-on` 3-node cluster on S3, `i19b-memnone-vs-sized` SF10 + 4 heavy at once, `i19b-load` vs baseline).
+    - Next step (next session): when run 40699820075 is green (aggregate commits `results/track-94ad61021d93-40699820075`),
+      write `results/track-94ad61021d93/summary.md` and the BUILDS.md row; failed jobs: fix and re-run with `only=`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
