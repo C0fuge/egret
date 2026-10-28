@@ -32,10 +32,15 @@ def load(src):
         if not os.path.exists(os.path.join(job, "job.json")):
             continue
         m = json.load(open(os.path.join(job, "job.json")))
+        m["_id"] = os.path.basename(job.rstrip("/"))
         m["setting"] = ("zstd" if "flightCompression=zstd" in (m.get("flags_b") or "") else
                         "t8" if "Threads=8" in (m.get("flags_a") or "") else "def")
         ref = tsv(os.path.join(job, "ref", "adbc10", "summary.tsv")) or {}
         names = {s: m.get(f"name_{s.lower()}") or m.get(f"server_{s.lower()}") for s in "AB"}
+        for x in "AB":  # client-requested stream compression is a different setting of the same server
+            codec = [t for t in (m.get(f"flags_{x.lower()}") or "").split() if t in ("CZSTD", "CLZ4")]
+            if codec:
+                names[x] += " " + " ".join(codec)
         if names["A"] == names["B"] and m.get("flags_b"):
             names["B"] += f" {m['flags_b']}"  # same server on both sides (e.g. TLS on/off): keep the sides apart
         sides = {names[s]: sorted(glob.glob(os.path.join(job, s, "r*"))) for s in "AB"}
@@ -219,6 +224,33 @@ def main():
             f"{f(med(hv[s]['nt-sum']), 1)} ({min(hv[s]['nt-ok'])}/22 q)" if hv[s]["nt-sum"] else "n/a" for s in cols) + " |")
         L.append("| netem: full lineitem export over ADBC, MB/s | " + " | ".join(f(med(hv[s]["nt-scan"])) for s in cols) + " |")
         L.append("")
+    nt = [(m, ref, sides) for m, ref, sides in jobs if "netem" in m.get("workloads", "")]
+    if nt:
+        L += ["## Netem pairs per job (both sides on the same runner; medians over rounds, B / A per round)", "",
+              "| job | A | B | TPC-H SF10 ADBC s A | B | B / A | export MB/s A | B | B / A | per-round export B / A | queries not ok A / B |",
+              "|---|---|---|---|---|---|---|---|---|---|---|"]
+        for m, ref, sides in nt:
+            (na, ra), (nb, rb) = list(sides.items())[:2]
+            v = {}
+            for n, rounds in ((na, ra), (nb, rb)):
+                ts, sc, bad = [], [], []
+                for r in rounds:
+                    d = tsv(os.path.join(r, "netem10", "summary.tsv")) or {}
+                    good = [q for q in ref if q in d and d[q]["status"] == "ok" and d[q]["checksum"] == ref[q]["checksum"]]
+                    ts.append(sum(float(d[q]["median_s"]) for q in good) if len(good) == len(ref) and ref else None)
+                    bad.append(len(ref) - len(good))
+                    txt = open(os.path.join(r, "result.txt")).read() if os.path.exists(os.path.join(r, "result.txt")) else ""
+                    mm = re.search(r"^netem adbcscan .*?mb_per_s=([\d.]+) errors=(\d+)", txt, re.M)
+                    sc.append(float(mm.group(1)) if mm and not int(mm.group(2)) else None)
+                v[n] = (ts, sc, bad)
+            def ratio(a, b):
+                a, b = med([x for x in a if x]), med([x for x in b if x])
+                return f(b / a, 2) if a and b else "n/a"
+            pr = " ".join(f(b / a, 2) if a and b else "n/a" for a, b in zip(v[na][1], v[nb][1]))
+            L.append(f"| {m['_id']} | {na} | {nb} | {f(med([x for x in v[na][0] if x]), 1)} | {f(med([x for x in v[nb][0] if x]), 1)} | "
+                     f"{ratio(v[na][0], v[nb][0])} | {f(med([x for x in v[na][1] if x]))} | {f(med([x for x in v[nb][1] if x]))} | "
+                     f"{ratio(v[na][1], v[nb][1])} | {pr} | {max(v[na][2], default=0)} / {max(v[nb][2], default=0)} |")
+        L += ["", "TPC-H n/a = not all 22 queries answered correctly in a round (see 'queries not ok', max over rounds).", ""]
     if not any(m["setting"] == "zstd" for m, _, _ in jobs):
         L += ["Not in this run: up-native with its ZSTD Flight compression on the netem path (job `new-vs-native-zstd-netem`).", ""]
     if not any(" TLS" in c for c in cols):
