@@ -38,8 +38,8 @@ jobs:
           for d in "$RUNNER_TEMP"/art/ab-*; do for j in "$d"/*/; do cp -r "$j" "$RUNNER_TEMP/jobs/"; done; done
           R="results/$WAVE-$RUN"; mkdir -p "$R"
           python3 ci/speed_report.py "$RUNNER_TEMP/jobs" "$R/speed.md" "$RUN" > /dev/null
-          case $WAVE in *load*) python3 ci/load_report.py "$RUNNER_TEMP/jobs" "$R/load.md" "$RUN";; esac
-          case $WAVE in *robust*|*threads*) python3 ci/robust_report.py "$RUNNER_TEMP/jobs" "$R/robust.md" "$RUN";; esac
+          case $WAVE in *load*|track-*) python3 ci/load_report.py "$RUNNER_TEMP/jobs" "$R/load.md" "$RUN" || true;; esac
+          case $WAVE in *robust*|*threads*|track-*) python3 ci/robust_report.py "$RUNNER_TEMP/jobs" "$R/robust.md" "$RUN" || true;; esac
           git config user.name C0fuge
           git config user.email 189659128+C0fuge@users.noreply.github.com
           git add results

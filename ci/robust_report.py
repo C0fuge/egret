@@ -5,7 +5,9 @@
 - cold start: 5 starts on SF10: port answers, server log "started", first query (connect + SELECT version()), idle RSS;
 - cancel: SF10 q18 / q21 / lagg (single-table lineitem aggregation) cancelled from the client after 1 s: client return time and the time until the server process
   CPU falls below 0.1 core for 1 s (server-side evidence the work stopped);
-- threads: ours-new duckDbThreads 4 (A) vs 1 / 2 / 8 (B) on the same runner: TPC-H SF1 / SF10 ADBC sums, small c1 / c32 p50.
+- threads: ours-new duckDbThreads 4 (A) vs 1 / 2 / 8 (B) on the same runner: TPC-H SF1 / SF10 ADBC sums, small c1 / c32 p50;
+- cluster: 3-node cluster on one runner, A and B sides of each job (flags may differ, e.g. distributedComplete off / on):
+  SF10 ADBC wall time and correct answers per check (all up, node 3 stopped, node 3 back, ...) and the event lines per round.
 """
 import collections
 import glob
@@ -142,6 +144,39 @@ def cancel(rounds, q):
     return out
 
 
+def cluster(src):
+    """Cluster tables straight from each round's result.txt (sides A / B kept apart: both may run the same build)."""
+    L = []
+    for job in sorted(glob.glob(os.path.join(src, "*"))):
+        if not os.path.exists(os.path.join(job, "job.json")):
+            continue
+        m = json.load(open(os.path.join(job, "job.json")))
+        if "cluster" not in m.get("workloads", ""):
+            continue
+        L += [f"## 3-node cluster: {m['variant']} ({m.get('storage', '?')})", ""]
+        for s in "AB":
+            lab = f"{m.get(f'name_{s.lower()}') or m.get(f'server_{s.lower()}')} `{m.get(f'flags_{s.lower()}') or '-'}`"
+            checks, events = collections.OrderedDict(), []
+            rounds = sorted(glob.glob(os.path.join(job, s, "r*")))
+            for r in rounds:
+                rp = os.path.join(r, "result.txt")
+                lines = open(rp).read().splitlines() if os.path.exists(rp) else []
+                rn = os.path.basename(r)
+                for ln in lines:
+                    mm = re.match(r"cluster ([\w-]+): wall_s=([\d.]+) queries=(\d+) ok=(\d+) correct=(\d+) failed=\[(.*)\]", ln)
+                    if mm:
+                        checks.setdefault(mm.group(1), []).append((rn, float(mm.group(2)), mm.group(3), mm.group(4), mm.group(5), mm.group(6).strip()))
+                    elif ln.startswith("cluster"):
+                        events.append(f"{rn}: {ln[:220]}")
+            L += [f"Side {s} = {lab}, rounds with data: {len(rounds)}", "",
+                  "| check | wall s median | per round wall s | correct / queries per round | failed |", "|---|---|---|---|---|"]
+            for k, v in checks.items():
+                L.append(f"| {k} | {f(med([x[1] for x in v]), 1)} | " + " ".join(f"{x[0]}={x[1]:.1f}" for x in v)
+                         + " | " + " ".join(f"{x[4]}/{x[2]}" for x in v) + " | " + (" ".join(sorted({x[5] for x in v if x[5]})) or "-") + " |")
+            L += [""] + [f"- {e}" for e in events] + [""]
+    return L
+
+
 def main():
     src, dst, run = sys.argv[1], sys.argv[2], sys.argv[3]
     jobs = load(src)
@@ -215,8 +250,12 @@ def main():
                     row.append(f(med(p), 1) if p else "n/a")
                 L.append(f"| small {cl.upper()} c{c}: median of class p50 ms | " + " | ".join(row) + " |")
         L.append("")
-    L += ["Not in this run (ours only, next session): 3-node cluster on one runner (node stopped before / killed during a query),",
-          "Trino SF1 through our plugin, stock Flight SQL JDBC driver TPC-H SF1 (see Report 1 JDBC tables: upstream fails there).", ""]
+    cj = [m for m, _, _ in jobs if "cluster" in m.get("workloads", "")]
+    if cj:
+        L += cluster(src)
+    else:
+        L += ["Not in this run (ours only, next session): 3-node cluster on one runner (node stopped before / killed during a query),",
+              "Trino SF1 through our plugin, stock Flight SQL JDBC driver TPC-H SF1 (see Report 1 JDBC tables: upstream fails there).", ""]
     open(dst, "w").write("\n".join(L) + "\n")
     print("\n".join(L))
 
