@@ -121,8 +121,12 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       `9044653` item 18 D3 steps 1-2b (no wait for a crashed cluster member), `9efe670` 19b thread floor 4, Hive views,
       Iceberg time travel via Hive; skipped as contained: `a110a2279437`, `0f8eb5e5f65c` (catalog CI probe only),
       `936b2d7c366c`): **running**, waves `track-9044653333cd` (core + `i19b-memnone-vs-sized` + `i21-load`) and
-      `track-9044653333cd-cluster` (`rounds=2`): core 40772221252, cluster 40772225000 (dispatched 21:28 UTC).
-    - Next step: wait for both runs, write `results/track-9044653333cd/summary.md` + BUILDS.md row; re-check local
+      `track-9044653333cd-cluster` (`rounds=2`): core 40772221252, cluster 40772225000 (dispatched 21:28 UTC). At 22:41 UTC 6/8 core jobs green, `core-def-lat-s3`
+      and `i21-load-local` plus the cluster job still running. Early read from the job log (not yet aggregated): local
+      TPC-H 22/22 both sides every round, checksums equal, no OOM; local SF10 ADBC 1.04 (1.04 1.05 1.04), JDBC 1.05
+      (1.03 1.05 1.06) - under the rule, down from 1.07-1.10 in build 5.
+    - Next step (next session): if the aggregate commits `results/track-9044653333cd-40772221252` and
+      `results/track-9044653333cd-cluster-40772225000` are in, write `results/track-9044653333cd/summary.md` + BUILDS.md row; re-check local
       SF10 trend (1.10 in build 5) and S3 SF1 JDBC 1.14; then the newest untracked pre-release after `9044653333cd`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
