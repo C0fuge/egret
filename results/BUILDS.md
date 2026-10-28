@@ -24,6 +24,10 @@ cold sums, SF1 ADBC (1.04) and S3 SF10 JDBC (0.82) not affected. Local SF10 1.07
 1.02-1.04 in `94ad61021d93`. The `94ad61021d93` S3 ADBC c1 p95 flag is not seen (1.01). Details:
 [track-2cfa23eb62f9](track-2cfa23eb62f9/summary.md).**
 
+**Regression `9044653333cd` (small): S3 TPC-H SF10 ADBC total 1.10 (rounds 1.06 1.10 1.21; 260.5 -> 285.7 s, warm medians);
+S3 SF10 JDBC (0.97) and S3 SF1 not affected. The `2cfa23eb62f9` S3 SF1 JDBC flag is gone (0.97); local SF10 back to
+1.04. Details: [track-9044653333cd](track-9044653333cd/summary.md).**
+
 ## Key builds
 
 - `d22cdaccb4e1` (item 20 LZ4/ZSTD Flight streams): on a 1 Gbit/s 10 ms link, the full lineitem export over ADBC rises from 104 MB/s
@@ -48,6 +52,7 @@ cold sums, SF1 ADBC (1.04) and S3 SF10 JDBC (0.82) not affected. Local SF10 1.07
 | 2026-10-28 | `e70d80bb7995` | 22 (c) producing streams + 22 (d) zero-copy (opt-in), 17 (e) cache memory + reuse admission (opt-in); Ranger groups | 0.99 (S3 0.67, noisy) | 0.99 (S3 0.67, noisy) | ADBC 0.87 (**S3 1.25**), JDBC 0.96 (S3 1.13) | ADBC 0.99 (S3 1.01), JDBC 0.91 (S3 1.04) | not run | 1.22 (S3 0.95); zero-copy 1.06, prodstreams=2 1.04; zero-copy vs up-native x4 1.00 | not run | 22/22 | 0.94-1.07; cache on 0.92 vs 4e77 | better; **S3 ADBC c1 p50 1.25 (noisy job)** | [summary](track-e70d80bb7995/summary.md), run 40664667021 |
 | 2026-10-28 | `94ad61021d93` | 19b threads + memory limit by host size (+ opt-in idle threads), 18 step 3 counters + backup fail-over, 17 (a) opt-in disk tier | 1.04 (S3 0.64, noisy) | 1.02 (S3 0.66, noisy) | ADBC 0.97 (S3 1.14 noisy; **S3 p95 1.08**), JDBC 0.90 (S3 0.99) | ADBC 0.87 (S3 0.69), JDBC 0.90 (S3 0.96) | peak 1.07 JDBC / 1.06 ADBC; c128 1.18-1.23; sat. c1 both | 1.18 (S3 1.00) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.87-1.06; memnone vs sized 0.88 | better; **S3 ADBC c1 p95 1.08**; dc on not faster | [summary](track-94ad61021d93/summary.md), run 40699820075 (cluster 2 of 3 rounds) |
 | 2026-10-28 | `2cfa23eb62f9` | 18 / D2 (c) part 1 two-process distributed complete (TLS + token, opt-in `dataDirShared`), 13 (c) file cache bound, 3 (c) Iceberg time travel, Hive Avro | 1.10 (S3 0.88, noisy) | 1.07 (S3 0.82, noisy) | ADBC 0.92 (S3 1.03), JDBC 0.93 (S3 1.00) | ADBC 0.91 (S3 1.02), JDBC 0.88 (S3 0.93) | not run | 1.15 (S3 0.99) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.92-1.03 | better locally; **S3 SF1 JDBC 1.14**; local SF10 1.07-1.10 (under rule); dc on not faster | [summary](track-2cfa23eb62f9/summary.md), runs 40736482953 + 40736487295 (cluster 2 rounds) |
+| 2026-10-28 | `9044653333cd` | 21 `duckDbThreadsUnderLoad` fix, 18 D3 steps 1-2b (no wait for a crashed member), 19b thread floor 4, Hive views | 1.04 (**S3 1.10**) | 1.04 (S3 0.97) | ADBC 0.92 (S3 0.92), JDBC 0.85 (S3 0.95) | ADBC 0.98 (S3 0.97), JDBC 0.94 (S3 1.03) | peak 0.98 JDBC / 1.00 ADBC; c128 1.03 / 0.97; sat. c1 both | 1.02 (S3 0.96) | not run | 22/22 (cluster: pending) | 0.89-0.99; sized vs none 1.03 | same; **S3 SF10 ADBC 1.10**; load gain of builds 2/4 not seen | [summary](track-9044653333cd/summary.md), run 40772221252 (cluster 40772225000 pending) |
 
 Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9edbf` `752e272b3ab6` `04e558056068`
 `4e77c6bda59a` `b7be8d166498` `85aaf4604d9a`.
@@ -57,3 +62,5 @@ Skipped as contained in `4bb6441569be`: `881b7c62b373` `e9f0fd3` `ba4139a2eb93` 
 Skipped as contained in `e70d80bb7995`: `9506620bb170` `99113c98c1c3` `7f308a6cdb4d` `36b2177d51b4`.
 
 Skipped as contained in `94ad61021d93`: `a9e43ca5e296` `177dfe3e5716` `f73de96b8773` `c258adf27dc9` `1b3a7bbad4bc`.
+
+Skipped as contained in `9044653333cd`: `a110a2279437` `0f8eb5e5f65c` `936b2d7c366c`.

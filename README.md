@@ -120,14 +120,15 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
     - Build 6 `9044653333cd` (contains `936b2d7` item 21 `duckDbThreadsUnderLoad` fix, `a110a22` / `aef0a7a` /
       `9044653` item 18 D3 steps 1-2b (no wait for a crashed cluster member), `9efe670` 19b thread floor 4, Hive views,
       Iceberg time travel via Hive; skipped as contained: `a110a2279437`, `0f8eb5e5f65c` (catalog CI probe only),
-      `936b2d7c366c`): **running**, waves `track-9044653333cd` (core + `i19b-memnone-vs-sized` + `i21-load`) and
-      `track-9044653333cd-cluster` (`rounds=2`): core 40772221252, cluster 40772225000 (dispatched 21:28 UTC). At 22:41 UTC 6/8 core jobs green, `core-def-lat-s3`
-      and `i21-load-local` plus the cluster job still running. Early read from the job log (not yet aggregated): local
-      TPC-H 22/22 both sides every round, checksums equal, no OOM; local SF10 ADBC 1.04 (1.04 1.05 1.04), JDBC 1.05
-      (1.03 1.05 1.06) - under the rule, down from 1.07-1.10 in build 5.
-    - Next step (next session): if the aggregate commits `results/track-9044653333cd-40772221252` and
-      `results/track-9044653333cd-cluster-40772225000` are in, write `results/track-9044653333cd/summary.md` + BUILDS.md row; re-check local
-      SF10 trend (1.10 in build 5) and S3 SF1 JDBC 1.14; then the newest untracked pre-release after `9044653333cd`.
+      `936b2d7c366c`): **core done**, [`results/track-9044653333cd/summary.md`](results/track-9044653333cd/summary.md)
+      (core 40772221252, 8/8 green); cluster 40772225000 (`rounds=2`) **still running** at 23:30 UTC. Core: 22/22
+      everywhere, local SF10 back to 1.04 (from 1.07-1.10), build-5 S3 SF1 JDBC flag gone (0.97). **Small regression:
+      S3 TPC-H SF10 ADBC total 1.10 in all 3 rounds (1.06 1.10 1.21); S3 SF10 JDBC 0.97.** Item 21 load level with
+      the baseline (the +5-7 % peak gain of builds 2/4 is not seen); 19b sized memory no longer lowers peak RSS (1.03).
+    - Next step (next session): when `results/track-9044653333cd-cluster-40772225000` is in, add the item-18 table to
+      the build-6 summary and the BUILDS.md row; then build 7 = `e75119218df7` (item 22 shared DuckDB (a), opt-in
+      `duckDbSharedDatabase`; contains `80aa61a15557` D3 step 3 local-disk plans + item 22 step 1, Hive P4 (d)) -
+      core + item 22 scan x4/x8 with peak RSS (shared DuckDB on vs off) + item 18 cluster wave; re-check S3 SF10 ADBC.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
@@ -292,8 +293,9 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md) (latest of its wave)
-- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md) (latest of its wave)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
 - [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
