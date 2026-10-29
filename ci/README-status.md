@@ -108,9 +108,16 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       3-node cluster with node loss (dc on and off), no regression by the rule, peak RSS 0.88-1.01. Build-7 S3 JDBC c8
       p50 flag not confirmed (1.04). Local SF10 ADBC 1.06 (rounds 1.03 1.06 1.07, under the rule; watch). Cluster: dc on
       1.06 of off all-up, 1.54-1.61 after node changes, recovery 90-103 s vs 59 s; still not faster.
-    - Next step (next session): measure the newest untracked pre-release `85a790826156` (2026-10-29 06:36 UTC; contains
-      `2a2b8e08191f` opt-in `shutdownDrainSeconds` (D8), `786782219b1a` LZ4 codec module for Java Flight clients (item 20
-      follow-up)): core waves; item 20 slow-link pair if the client codec module changes what the clients request.
+    - Build 9 `b3bbcce19996` (contains `16edbb7` item 18 D9 node-load leak fix under concurrent identical queries,
+      `d4a136f` D11 `shutdownDrainSeconds` default 20 s, `ab8cc3d` D10 distributed complete merges plain `avg`,
+      `b3bbcce` subquery/CTE/UNION tables checked under authorization providers (no change without a provider),
+      `786782219b1a` LZ4 codec module for Java Flight clients (separate jar, our clients do not load it: no slow-link
+      pair); skipped as contained: `85a790826156`, `7b988c720821`, `2a2b8e08191f`, `786782219b1a`): **running** since
+      09:27 UTC, core 40849716676 (6 jobs, wave `track-b3bbcce19996`), cluster 40849719732 (`rounds=2`, wave
+      `track-b3bbcce19996-cluster`).
+    - Next step (next session): when both runs are green, commit their results (aggregate job), write
+      `results/track-b3bbcce19996/summary.md` + the BUILDS.md row; watch local SF10 ADBC (1.06 in build 8); fix and
+      re-run failed jobs with `only=`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
