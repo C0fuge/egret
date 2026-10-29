@@ -131,8 +131,11 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       opt-in `duckDbSharedDatabase`, Hive P4 (d), opt-in `plainFlightCommands` (P5), Hive insert-only tables (C4);
       skipped as contained: `e75119218df7`, `80aa61a15557`): **running** since 01:28 UTC 2026-10-29, core 40800578035
       (11 jobs: core + shared DuckDB off vs on for scans x1/4/8, SF10, load, shared vs up-native, item-21 load) and
-      cluster 40800581040 (`rounds=2`, own wave).
-    - Next step: when both runs are green (the aggregate commits `results/track-881bbf73e946*-<run>/`), write
+      cluster 40800581040 (`rounds=2`, own wave). At 02:45 UTC: 8/11 core jobs green; still running
+      `core-def-lat-s3`, `i22-shared-off-vs-on-load-local`, `i21-load-local` and the cluster job. Early read (job log of
+      `i22-shared-off-vs-on-local`, not yet aggregated): shared DuckDB on vs off scan x8 567 vs 410 MB/s (+38 %), x4
+      +15 %, x1 and ADBC scan level, all 3 rounds, no OOM.
+    - Next step (next session): when both runs are green (the aggregate commits `results/track-881bbf73e946*-<run>/`), write
       `results/track-881bbf73e946/summary.md` + the BUILDS.md row; re-check S3 SF10 ADBC (1.10 in build 6) and the
       item-21 load. A failed job: fix and re-run with `only=<job id>` + `merge-run`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
