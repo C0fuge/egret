@@ -113,7 +113,8 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       `b3bbcce` subquery/CTE/UNION tables checked under authorization providers (no change without a provider),
       `786782219b1a` LZ4 codec module for Java Flight clients (separate jar, our clients do not load it: no slow-link
       pair); skipped as contained: `85a790826156`, `7b988c720821`, `2a2b8e08191f`, `786782219b1a`): **running** since
-      09:27 UTC, core 40849716676 (6 jobs, wave `track-b3bbcce19996`), cluster 40849719732 (`rounds=2`, wave
+      09:27 UTC, core 40849716676 (6 jobs, wave `track-b3bbcce19996`; 5/6 green at 11:08 UTC, S3 latency job still
+      running), cluster 40849719732 (`rounds=2`, wave
       `track-b3bbcce19996-cluster`).
     - Next step (next session): when both runs are green, commit their results (aggregate job), write
       `results/track-b3bbcce19996/summary.md` + the BUILDS.md row; watch local SF10 ADBC (1.06 in build 8); fix and
