@@ -6,13 +6,14 @@
   `786782219b1a` LZ4 codec module for Java Flight clients (separate jar, our clients do not load it: no slow-link
   pair)). Skipped as contained: `85a790826156`, `7b988c720821`, `2a2b8e08191f`, `786782219b1a`.
 - Runs: core compare 40849716676 (wave `track-b3bbcce19996`, 6 jobs, 3 rounds, all green); item-18 cluster compare
-  40849719732 (wave `track-b3bbcce19996-cluster`, `distributedComplete` off vs on, `rounds=2` in its own wave):
-  **pending**. Full tables: [run summary](../track-b3bbcce19996-40849716676/summary.md),
-  [speed](../track-b3bbcce19996-40849716676/speed.md).
+  40849719732 (wave `track-b3bbcce19996-cluster`, `distributedComplete` off vs on, `rounds=2` in its own wave, job
+  green, both rounds complete). Full tables: [run summary](../track-b3bbcce19996-40849716676/summary.md),
+  [speed](../track-b3bbcce19996-40849716676/speed.md),
+  [cluster](../track-b3bbcce19996-cluster-40849719732/robust.md).
 - Pairs: A = baseline, B = candidate, same runner, 3 rounds (A B, B A, A B), containers as `COMPARE-TASK.md`.
   Ratio = B / A of the medians; times < 1 = candidate faster, MB/s > 1 = candidate faster.
 - Correctness: TPC-H SF1 + SF10, ADBC + JDBC, local + S3: 22/22 for both sides in every round, no job disqualified,
-  no OOM.
+  no OOM. 3-node cluster: 22/22 in every check, both modes.
 
 ## Regression check (rule: > 5 % slower on a core metric in all 3 rounds)
 
@@ -60,9 +61,31 @@ S3 JDBC 1764 -> 1589); S3 SF1 +5 % (710 -> 747 MB, rounds 1.00 1.06 1.09).
 
 ## Item 18: 3-node cluster on S3, `distributedComplete` off (A) vs on (B), same build
 
-Pending: run 40849719732 still running.
+| check (SF10 ADBC through node 1) | off: wall s (r1 r2) | on: wall s (r1 r2) | on / off | answers |
+|---|---|---|---|---|
+| all 3 nodes up | 297 441 (369) | 309 460 (385) | 1.04 (1.04 1.04) | 22/22 both |
+| node 3 stopped | 298 461 (380) | 437 494 (466) | 1.23 (1.46 1.07) | 22/22 both |
+| node 3 back | 299 467 (383) | 482 483 (483) | 1.26 (1.61 1.04) | 22/22 both |
+| node 2 killed mid-query, dead | 298 476 (387) | 494 475 (485) | 1.25 (1.66 1.00) | 22/22 both |
+| node 2 back | 297 402 (350) | 476 481 (479) | 1.37 (1.60 1.20) | 22/22 both |
+| kill node 2 during q18 / q21 | ok / ok | ok / ok | | |
+| first correct q06 after the kill, s | 59, 93 | 91, 104 | | |
+| cluster start / node rejoin s | 20-22 / 5-7 | 19-20 / 6 | | |
+| `docker stop` of node 3, s | 0.8-0.9 | 1.1 | | |
+
+22/22 in every check in both modes and q18 / q21 survive the kill mid-query. With D10 (distributed complete merges
+plain `avg`) the on side answers the `avg` queries (q01, q17, q22 among them) correctly in every check. With all nodes
+up, on is 4 % slower than off in both rounds (build 8: 1.06, build 7: 1.01). After node changes on settles at
+~475-495 s in both rounds; off is ~300 s in r1 but ~400-475 s in r2 (a slower second round for both sides, as in
+build 7), so on / off is 1.46-1.66 in r1 and 1.00-1.20 in r2 (build 8: 1.54-1.61 in both). Recovery with on after the
+kill is 91-104 s (build 8: 90-103 s; off 59-93 s). D11 (`shutdownDrainSeconds` default 20 s): `docker stop` of an
+idle node takes ~1 s, so the drain does not delay a stop without queries in flight. `distributedComplete=true` is
+still not faster on this setup (2 CPUs per node, one runner).
 
 ## Verdict
 
-Pending the cluster run. Core: **same** (no core metric > 5 % slower in all 3 rounds, 22/22, build-8 local SF10 ADBC
-watch item back to 1.03).
+**Same.** Default path level with the baseline, 22/22 everywhere incl. the 3-node cluster with node loss (dc on and
+off), no core metric > 5 % slower in all 3 rounds, peak RSS 0.90-1.05 (SF10 jobs -6-10 %). The build-8 watch item
+local TPC-H SF10 ADBC is back to 1.03 (rounds 1.11 1.03 1.00). Watch: local small JDBC c8 p95 / p99 1.07 / 1.10
+(p95 rounds 1.09 1.09 1.03; p50 0.93). Cluster: `distributedComplete=true` 1.04 of off with all nodes up, 1.23-1.37
+after node changes (r2 1.00-1.20), recovery 91-104 s vs 59-93 s; still not faster.
