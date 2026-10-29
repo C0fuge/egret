@@ -23,6 +23,8 @@
 
 ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition published).
 
+EGRET FINAL DONE 2026-10-29 (final build `1e7b43a4e0c7`: [results/FINAL-1e7b43a4e0c7.md](results/FINAL-1e7b43a4e0c7.md); no further builds).
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
@@ -118,19 +120,13 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       3-node cluster with node loss (dc on and off), no regression by the rule, peak RSS 0.90-1.05. Build-8 local SF10
       ADBC watch back to 1.03. Watch: local small JDBC c8 p95 / p99 1.07 / 1.10 (p95 rounds 1.09 1.09 1.03, p50 0.93).
       Cluster: dc on 1.04 of off all-up, 1.23-1.37 after node changes, recovery 91-104 s vs 59-93 s; still not faster.
-    - FINAL build `1e7b43a4e0c7` (finish mode; `ci/BUILD-TRACK-TASK.md` "FINAL"): **running**, wave
-      `track-1e7b43a4e0c7`, three-way on one runner per job (side A `7562a5bdb7b9`, B final, C upstream native; rounds
-      A B C / C B A / A B C): core local + S3 (S3 latency split into small / scan jobs for the 170-min limit) and the
-      slow link with ZSTD (final CZSTD vs baseline plain vs native ZSTD). Run 40876778493 (40875293905 failed at Assets: upstream build not downloaded for side C, fixed in `26b0a8e`; upstream native pinned to Report 1's `9fb08d9dd24d`). `fin-sf1-s3` done at 13:15: final and baseline 22/22 (JDBC +
-      ADBC), upstream native 0-1/22 as in Report 1 (multi-table prepare rejected, q06 decimal vs float64): its TPC-H
-      columns are n/a, final/upstream ratios come from small queries, scans and the slow link.
-      Status 14:45: 6/8 ab jobs green (`fin-tpch-local`, `fin-zstd-netem-local`, `fin-sf1-s3`, `fin-scan-s3`,
-      `fin-sf10jdbc-s3`, `fin-sf10adbc-s3`); `fin-small-s3` and `fin-lat-local` still measuring (started 12:55,
-      170-min job limit ~15:45); the aggregate commits `results/track-1e7b43a4e0c7-40876778493/` when they end.
-      If one times out: re-run only that job's variant (`only` input) with `merge-run=40876778493` and `merge-prefix` = the 7 other job ids.
-    - Next step (next session): when the run is done, write `results/FINAL-1e7b43a4e0c7.md` (Key builds list at the
-      top, one table per area with final/7562 and final/upstream ratios, correctness, peak RSS, verdict), add the
-      BUILDS.md row, then write "EGRET FINAL DONE" here and stop; no further builds.
+    - FINAL build `1e7b43a4e0c7` (finish mode; `ci/BUILD-TRACK-TASK.md` "FINAL"): **done**,
+      [`results/FINAL-1e7b43a4e0c7.md`](results/FINAL-1e7b43a4e0c7.md) (run 40876778493, three-way on one runner per job:
+      `7562a5bdb7b9` / final / upstream native `9fb08d9dd24d`, 8/8 jobs green). Vs baseline: same on the default path,
+      no regression by the rule (closest local SF10 ADBC 1.04, S3 small ADBC c1 p50 1.08, neither in all rounds), 22/22
+      everywhere, peak RSS 0.88-1.02, slow-link export with client ZSTD 2.40x (104 -> 250 MB/s). Vs upstream native:
+      upstream 0-1/22 on TPC-H, small-query errors and a server death, 8-stream scan error; where it answers it scans
+      20-25 % faster at 4 streams at 2-3x our RSS, single stream and slow link with ZSTD level (0.93-0.97).
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
