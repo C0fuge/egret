@@ -121,7 +121,9 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
     - FINAL build `1e7b43a4e0c7` (finish mode; `ci/BUILD-TRACK-TASK.md` "FINAL"): **running**, wave
       `track-1e7b43a4e0c7`, three-way on one runner per job (side A `7562a5bdb7b9`, B final, C upstream native; rounds
       A B C / C B A / A B C): core local + S3 (S3 latency split into small / scan jobs for the 170-min limit) and the
-      slow link with ZSTD (final CZSTD vs baseline plain vs native ZSTD). Run 40876778493 (40875293905 failed at Assets: upstream build not downloaded for side C, fixed in `26b0a8e`; upstream native pinned to Report 1's `9fb08d9dd24d`).
+      slow link with ZSTD (final CZSTD vs baseline plain vs native ZSTD). Run 40876778493 (40875293905 failed at Assets: upstream build not downloaded for side C, fixed in `26b0a8e`; upstream native pinned to Report 1's `9fb08d9dd24d`). `fin-sf1-s3` done at 13:15: final and baseline 22/22 (JDBC +
+      ADBC), upstream native 0-1/22 as in Report 1 (multi-table prepare rejected, q06 decimal vs float64): its TPC-H
+      columns are n/a, final/upstream ratios come from small queries, scans and the slow link.
     - Next step (next session): when the run is done, write `results/FINAL-1e7b43a4e0c7.md` (Key builds list at the
       top, one table per area with final/7562 and final/upstream ratios, correctness, peak RSS, verdict), add the
       BUILDS.md row, then write "EGRET FINAL DONE" here and stop; no further builds.
