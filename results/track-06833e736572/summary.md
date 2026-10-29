@@ -4,13 +4,14 @@
   distributed complete answer fails as UNAVAILABLE; Ranger Hive policies P6 steps 1-3a (custom auth providers only);
   C4 step 3 Hive insert-only tables through the server). Skipped as contained: `01884e287668`.
 - Runs: core compare 40823526868 (wave `track-06833e736572`, 6 jobs, 3 rounds, all green); item-18 cluster compare
-  40823529991 (wave `track-06833e736572-cluster`, `distributedComplete` off vs on, `rounds=2` in its own wave).
-  Full core tables: [run summary](../track-06833e736572-40823526868/summary.md),
-  [speed](../track-06833e736572-40823526868/speed.md).
+  40823529991 (wave `track-06833e736572-cluster`, `distributedComplete` off vs on, `rounds=2` in its own wave, job
+  green, both rounds complete). Full tables: [run summary](../track-06833e736572-40823526868/summary.md),
+  [speed](../track-06833e736572-40823526868/speed.md),
+  [cluster](../track-06833e736572-cluster-40823529991/robust.md).
 - Pairs: A = baseline, B = candidate, same runner, 3 rounds (A B, B A, A B), containers as `COMPARE-TASK.md`.
   Ratio = B / A of the medians; times < 1 = candidate faster, MB/s > 1 = candidate faster.
 - Correctness: TPC-H SF1 + SF10, ADBC + JDBC, local + S3: 22/22 for both sides in every round, no job disqualified,
-  no OOM.
+  no OOM. 3-node cluster: 22/22 in every check, both modes.
 
 ## Regression check (rule: > 5 % slower on a core metric in all 3 rounds)
 
@@ -58,8 +59,28 @@ scans 0.95-0.99. Peak RSS is 12 % lower in the local TPC-H job (1733 -> 1528 MB,
 
 ## Item 18: 3-node cluster on S3, `distributedComplete` off (A) vs on (B), same build
 
-CLUSTER_PENDING
+| check (SF10 ADBC through node 1) | off: wall s (r1 r2) | on: wall s (r1 r2) | on / off | answers |
+|---|---|---|---|---|
+| all 3 nodes up | 320 459 (390) | 351 478 (414) | 1.06 (1.10 1.04) | 22/22 both |
+| node 3 stopped | 314 327 (321) | 505 502 (504) | 1.57 (1.61 1.53) | 22/22 both |
+| node 3 back | 318 319 (318) | 489 489 (489) | 1.54 (1.54 1.53) | 22/22 both |
+| node 2 killed mid-query, dead | 311 314 (313) | 507 502 (505) | 1.61 (1.63 1.60) | 22/22 both |
+| node 2 back | 309 313 (311) | 489 502 (496) | 1.59 (1.58 1.60) | 22/22 both |
+| kill node 2 during q18 / q21 | ok / ok | ok / ok | | |
+| first correct q06 after the kill, s | 59, 59 | 90, 103 | | |
+| cluster start / node rejoin s | 20-21 / 6 | 20-21 / 5-6 | | |
+
+22/22 in every check in both modes and q18 / q21 survive the kill mid-query; the D6 change (peer lost after the first
+batch fails as UNAVAILABLE) shows no wrong or partial answer. With all nodes up, on is 6 % slower than off in both
+rounds (1.10 1.04; build 7: 1.01, build 6: 1.03). After any node change the on side settles at ~490-505 s in both
+rounds while off now stays at ~310-330 s in both rounds (build 7: off ~300 s r1 / ~475 s r2), so the on / off gap is
+1.54-1.61 here. Recovery with on after the kill is 90-103 s (build 7: 96 s; off 59 s). `distributedComplete=true` is
+still not faster on this setup (2 CPUs per node, one runner).
 
 ## Verdict
 
-VERDICT_PENDING
+**Same.** Default path level with the baseline, 22/22 everywhere incl. the 3-node cluster with node loss (dc on and
+off), no core metric > 5 % slower in all 3 rounds, peak RSS 0.88-1.01 (local TPC-H -12 %). The build-7 flag S3 small
+JDBC c8 p50 1.10 is not confirmed (1.04, rounds 0.99 1.04 1.34). Local TPC-H SF10 ADBC 1.06 (1.03 1.06 1.07) is under
+the rule but the highest since build 5; watch in the next build. Cluster: `distributedComplete=true` 1.06 of off with
+all nodes up and 1.54-1.61 after node changes; recovery 90-103 s vs 59 s; still not faster.

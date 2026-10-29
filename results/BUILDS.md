@@ -30,7 +30,8 @@ S3 SF10 JDBC (0.97) and S3 SF1 not affected. The `2cfa23eb62f9` S3 SF1 JDBC flag
 
 **Regression `881bbf73e946` (small): S3 small JDBC queries at 8 clients, p50 1.10 (rounds 1.07 1.11 1.10; 245 -> 268 ms)
 while p95 / p99 are 0.94 / 0.95; ADBC c8 p50 1.12 not in all rounds (as in `9044653333cd`); local not affected. The
-`9044653333cd` S3 SF10 ADBC flag is gone (0.96). Details: [track-881bbf73e946](track-881bbf73e946/summary.md).**
+`9044653333cd` S3 SF10 ADBC flag is gone (0.96). Details: [track-881bbf73e946](track-881bbf73e946/summary.md).** Not
+confirmed in `06833e736572` (S3 JDBC c8 p50 1.04, rounds 0.99 1.04 1.34).
 
 ## Key builds
 
@@ -61,6 +62,7 @@ while p95 / p99 are 0.94 / 0.95; ADBC c8 p50 1.12 not in all rounds (as in `9044
 | 2026-10-28 | `2cfa23eb62f9` | 18 / D2 (c) part 1 two-process distributed complete (TLS + token, opt-in `dataDirShared`), 13 (c) file cache bound, 3 (c) Iceberg time travel, Hive Avro | 1.10 (S3 0.88, noisy) | 1.07 (S3 0.82, noisy) | ADBC 0.92 (S3 1.03), JDBC 0.93 (S3 1.00) | ADBC 0.91 (S3 1.02), JDBC 0.88 (S3 0.93) | not run | 1.15 (S3 0.99) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.92-1.03 | better locally; **S3 SF1 JDBC 1.14**; local SF10 1.07-1.10 (under rule); dc on not faster | [summary](track-2cfa23eb62f9/summary.md), runs 40736482953 + 40736487295 (cluster 2 rounds) |
 | 2026-10-28 | `9044653333cd` | 21 `duckDbThreadsUnderLoad` fix, 18 D3 steps 1-2b (no wait for a crashed member), 19b thread floor 4, Hive views | 1.04 (**S3 1.10**) | 1.04 (S3 0.97) | ADBC 0.92 (S3 0.92), JDBC 0.85 (S3 0.95) | ADBC 0.98 (S3 0.97), JDBC 0.94 (S3 1.03) | peak 0.98 JDBC / 1.00 ADBC; c128 1.03 / 0.97; sat. c1 both | 1.02 (S3 0.96) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.89-0.99; sized vs none 1.03 | same; **S3 SF10 ADBC 1.10**; load gain of builds 2/4 not seen; dc on all-up 1.03, recovery 90-96 s (was 104-109) | [summary](track-9044653333cd/summary.md), runs 40772221252 + 40772225000 (cluster 2 rounds) |
 | 2026-10-29 | `881bbf73e946` | 22 shared DuckDB (c) streaming buffer, 22 (a) one describe DuckDB per node, 18 D3 step 3 local-disk plans, 22 step 1 opt-in `duckDbSharedDatabase`, Hive P4 (d) / C4, opt-in `plainFlightCommands` | 1.04 (S3 0.96) | 1.03 (S3 0.83, noisy) | ADBC 0.86 (S3 0.99), JDBC 0.92 (S3 0.95) | ADBC 1.01 (S3 1.01), JDBC 0.97 (S3 0.98) | peak 1.00 JDBC / 1.00 ADBC; c128 1.00; sat. c1 both; shared on: peak 1.16, c128 1.37-1.41 | 1.01 (S3 1.01); shared on 1.39; shared vs up-native x4 0.98 | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.90-1.02; shared on +17-19 % scans/SF10, -14 % load | better (opt-in shared DuckDB); default same; **S3 JDBC c8 p50 1.10**; dc on all-up 1.01, still not faster | [summary](track-881bbf73e946/summary.md), runs 40800578035 + 40800581040 (cluster 2 rounds) |
+| 2026-10-29 | `06833e736572` | 18 D6 peer lost after first batch fails as UNAVAILABLE, Ranger Hive policies P6 steps 1-3a, C4 step 3 Hive insert-only tables | 1.06 (S3 0.65, noisy) | 1.03 (S3 1.03) | ADBC 0.94 (S3 0.99), JDBC 1.01 (S3 1.06) | ADBC 0.99 (S3 0.99), JDBC 0.97 (S3 1.02) | not run | 0.99 (S3 0.98) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.88-1.01 | same; build-7 S3 JDBC c8 p50 flag not confirmed (1.04); local SF10 ADBC 1.06 (under rule); dc on all-up 1.06, after node changes 1.54-1.61 | [summary](track-06833e736572/summary.md), runs 40823526868 + 40823529991 (cluster 2 rounds) |
 
 Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9edbf` `752e272b3ab6` `04e558056068`
 `4e77c6bda59a` `b7be8d166498` `85aaf4604d9a`.
@@ -74,3 +76,5 @@ Skipped as contained in `94ad61021d93`: `a9e43ca5e296` `177dfe3e5716` `f73de96b8
 Skipped as contained in `9044653333cd`: `a110a2279437` `0f8eb5e5f65c` `936b2d7c366c`.
 
 Skipped as contained in `881bbf73e946`: `e75119218df7` `80aa61a15557`.
+
+Skipped as contained in `06833e736572`: `01884e287668`.
