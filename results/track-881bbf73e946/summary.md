@@ -6,13 +6,15 @@
   tables (C4)). Skipped as contained: `e75119218df7`, `80aa61a15557`.
 - Runs: core compare 40800578035 (wave `track-881bbf73e946`, 11 jobs: core, item 22 shared DuckDB off vs on for scans,
   SF10 and load, shared vs upstream native, item-21 load; 3 rounds, all green); item-18 cluster compare 40800581040
-  (wave `track-881bbf73e946-cluster`, `distributedComplete` off vs on, `rounds=2` in its own wave). Full core tables:
-  [run summary](../track-881bbf73e946-40800578035/summary.md), [speed](../track-881bbf73e946-40800578035/speed.md),
-  [load](../track-881bbf73e946-40800578035/load.md).
+  (wave `track-881bbf73e946-cluster`, `distributedComplete` off vs on, `rounds=2` in its own wave, job green, both
+  rounds complete). Full core tables: [run summary](../track-881bbf73e946-40800578035/summary.md),
+  [speed](../track-881bbf73e946-40800578035/speed.md), [load](../track-881bbf73e946-40800578035/load.md),
+  [cluster](../track-881bbf73e946-cluster-40800581040/robust.md).
 - Pairs: A = baseline (or the named reference), B = candidate, same runner, 3 rounds (A B, B A, A B), containers as
   `COMPARE-TASK.md`. Ratio = B / A of the medians; times < 1 = candidate faster, MB/s and q/s > 1 = candidate faster.
 - Correctness: TPC-H SF1 + SF10, ADBC + JDBC, local + S3: 22/22 for both sides in every round, no candidate job
-  disqualified, no OOM, also with `duckDbSharedDatabase=true` (SF10 ADBC + JDBC). Only upstream native failed a gate
+  disqualified, no OOM, also with `duckDbSharedDatabase=true` (SF10 ADBC + JDBC). 3-node cluster: 22/22 in every
+  check, both modes. Only upstream native failed a gate
   (scan with 8 streams, 2 errors, in `i22-shared-vs-native`); it is the reference there, not a tracked build.
 
 ## Regression check (rule: > 5 % slower on a core metric in all 3 rounds)
@@ -112,8 +114,29 @@ where native failed its gate in this job and measured 807-823 MB/s in Report 2) 
 
 ## Item 18: 3-node cluster on S3, `distributedComplete` off (A) vs on (B), same build
 
-Pending: cluster run 40800581040 still running.
+| check (SF10 ADBC through node 1) | off: wall s (r1 r2) | on: wall s (r1 r2) | on / off | answers |
+|---|---|---|---|---|
+| all 3 nodes up | 302 450 (376) | 306 454 (380) | 1.01 (1.01 1.01) | 22/22 both |
+| node 3 stopped | 301 472 (386) | 451 496 (473) | 1.23 (1.50 1.05) | 22/22 both |
+| node 3 back | 303 475 (389) | 484 481 (483) | 1.24 (1.60 1.01) | 22/22 both |
+| node 2 killed mid-query, dead | 305 479 (392) | 495 479 (487) | 1.24 (1.62 1.00) | 22/22 both |
+| node 2 back | 297 477 (387) | 483 483 (483) | 1.25 (1.63 1.01) | 22/22 both |
+| kill node 2 during q18 / q21 | ok / ok | ok / ok | | |
+| first correct q06 after the kill, s | 60, 95 | 96, 96 | | |
+| cluster start / node rejoin s | 20-21 / 6 | 20-21 / 6 | | |
+
+Same picture as build 6: 22/22 in every check in both modes, q18 / q21 survive the kill, all-up on is level with off
+(1.01; build 6: 1.03). After any node change the on side settles at ~480-495 s in both rounds while off stays at
+~300 s (r1) / ~475 s (r2), so on is still not faster on this setup (2 CPUs per node, one runner). Recovery with on
+after the kill is 96 s (build 6: 90-96 s; off 60-95 s). The D3 step-3 local-disk plans in this build do not change
+the S3 cluster numbers.
 
 ## Verdict
 
-Pending until the cluster run is in.
+**Better (opt-in shared DuckDB); default path same, with one small S3 point.** 22/22 everywhere incl. the 3-node
+cluster with node loss, peak RSS -10 % to +2 %, the build-6 S3 SF10 ADBC flag gone (0.96), local SF10 1.03-1.04,
+local small c1 p50 8-14 % faster. **Small regression: S3 small JDBC c8 p50 1.10 in all 3 rounds (1.07 1.11 1.10;
+p95 0.94).** Opt-in `duckDbSharedDatabase=true`: scans x8 +39 % / x4 +15 % in every round, closed-loop load +16 % at
+the peak and +37-41 % at 128 clients with 14 % less RSS under load, SF10 level; it reaches upstream native's scan speed
+(x4 0.98, x1 1.04) at 38 % of native's RSS, for +17-19 % RSS on scans / SF10. Item 21 load level with the baseline.
+Cluster: `distributedComplete=true` level with off when all nodes are up, still not faster after node changes.

@@ -92,15 +92,16 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
     - Build 7 `881bbf73e946` (item 22 shared DuckDB step (c) `duckDbStreamingBufferSize` in shared mode; contains
       `e75119218df7` item 22 (a) one describe DuckDB per node, `80aa61a15557` D3 step 3 local-disk plans + item 22 step 1
       opt-in `duckDbSharedDatabase`, Hive P4 (d), opt-in `plainFlightCommands` (P5), Hive insert-only tables (C4);
-      skipped as contained: `e75119218df7`, `80aa61a15557`): **running** since 01:28 UTC 2026-10-29, core 40800578035
-      (11 jobs: core + shared DuckDB off vs on for scans x1/4/8, SF10, load, shared vs up-native, item-21 load) and
-      cluster 40800581040 (`rounds=2`, own wave). At 02:45 UTC: 8/11 core jobs green; still running
-      `core-def-lat-s3`, `i22-shared-off-vs-on-load-local`, `i21-load-local` and the cluster job. Early read (job log of
-      `i22-shared-off-vs-on-local`, not yet aggregated): shared DuckDB on vs off scan x8 567 vs 410 MB/s (+38 %), x4
-      +15 %, x1 and ADBC scan level, all 3 rounds, no OOM.
-    - Next step (next session): when both runs are green (the aggregate commits `results/track-881bbf73e946*-<run>/`), write
-      `results/track-881bbf73e946/summary.md` + the BUILDS.md row; re-check S3 SF10 ADBC (1.10 in build 6) and the
-      item-21 load. A failed job: fix and re-run with `only=<job id>` + `merge-run`.
+      skipped as contained: `e75119218df7`, `80aa61a15557`): **done**,
+      [`results/track-881bbf73e946/summary.md`](results/track-881bbf73e946/summary.md) (core 40800578035, 11/11 green;
+      cluster 40800581040, `rounds=2`, green). 22/22 everywhere incl. the 3-node cluster with node loss (dc on level with
+      off all-up, 1.01; still not faster after node changes, recovery 96 s). Build-6 S3 SF10 ADBC flag gone (0.96).
+      Opt-in shared DuckDB: scans x8 +39 % / x4 +15 % in every round, load +16 % at the peak and +37-41 % at 128
+      clients with 14 % less RSS under load, upstream native's scan speed at 38 % of its RSS (+17-19 % RSS on scans /
+      SF10). Item 21 load level with the baseline. **Small regression: S3 small JDBC c8 p50 1.10 in all 3 rounds
+      (1.07 1.11 1.10; p95 0.94); re-check in the next build's S3 latency job.**
+    - Next step (next session): look for a server pre-release newer than `881bbf73e946` and track it per
+      `ci/BUILD-TRACK-TASK.md`; re-check S3 small c8 p50 (JDBC 1.10 / ADBC 1.12 in build 7). No CI running.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).

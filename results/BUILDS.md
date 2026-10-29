@@ -28,6 +28,10 @@ cold sums, SF1 ADBC (1.04) and S3 SF10 JDBC (0.82) not affected. Local SF10 1.07
 S3 SF10 JDBC (0.97) and S3 SF1 not affected. The `2cfa23eb62f9` S3 SF1 JDBC flag is gone (0.97); local SF10 back to
 1.04. Details: [track-9044653333cd](track-9044653333cd/summary.md).**
 
+**Regression `881bbf73e946` (small): S3 small JDBC queries at 8 clients, p50 1.10 (rounds 1.07 1.11 1.10; 245 -> 268 ms)
+while p95 / p99 are 0.94 / 0.95; ADBC c8 p50 1.12 not in all rounds (as in `9044653333cd`); local not affected. The
+`9044653333cd` S3 SF10 ADBC flag is gone (0.96). Details: [track-881bbf73e946](track-881bbf73e946/summary.md).**
+
 ## Key builds
 
 - `d22cdaccb4e1` (item 20 LZ4/ZSTD Flight streams): on a 1 Gbit/s 10 ms link, the full lineitem export over ADBC rises from 104 MB/s
@@ -42,6 +46,9 @@ S3 SF10 JDBC (0.97) and S3 SF1 not affected. The `2cfa23eb62f9` S3 SF1 JDBC flag
 - `94ad61021d93` (item 19b threads + memory by host size, item 18 step 3): closed-loop load +6-7 % at the peak and
   +18-23 % at 128 clients (48 -> 59 q/s JDBC), sized DuckDB memory cuts peak RSS 12 % for a 2-3 % SF10 cost; 3-node
   cluster answers 22/22 with a node stopped or killed mid-query in both `distributedComplete` modes (on is not faster).
+- `881bbf73e946` (item 22 shared DuckDB, opt-in `duckDbSharedDatabase=true`): scans with 8 streams +39 % and 4 streams
+  +15 % in every round, closed-loop load +16 % at the peak and +37-41 % at 128 clients (35 -> 48 q/s) with 14 % less
+  RSS under load; reaches upstream native's scan speed (x4 0.98, x1 1.04, ~900 MB/s at 8) at 38 % of its RSS.
 
 ## Builds
 
@@ -53,6 +60,7 @@ S3 SF10 JDBC (0.97) and S3 SF1 not affected. The `2cfa23eb62f9` S3 SF1 JDBC flag
 | 2026-10-28 | `94ad61021d93` | 19b threads + memory limit by host size (+ opt-in idle threads), 18 step 3 counters + backup fail-over, 17 (a) opt-in disk tier | 1.04 (S3 0.64, noisy) | 1.02 (S3 0.66, noisy) | ADBC 0.97 (S3 1.14 noisy; **S3 p95 1.08**), JDBC 0.90 (S3 0.99) | ADBC 0.87 (S3 0.69), JDBC 0.90 (S3 0.96) | peak 1.07 JDBC / 1.06 ADBC; c128 1.18-1.23; sat. c1 both | 1.18 (S3 1.00) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.87-1.06; memnone vs sized 0.88 | better; **S3 ADBC c1 p95 1.08**; dc on not faster | [summary](track-94ad61021d93/summary.md), run 40699820075 (cluster 2 of 3 rounds) |
 | 2026-10-28 | `2cfa23eb62f9` | 18 / D2 (c) part 1 two-process distributed complete (TLS + token, opt-in `dataDirShared`), 13 (c) file cache bound, 3 (c) Iceberg time travel, Hive Avro | 1.10 (S3 0.88, noisy) | 1.07 (S3 0.82, noisy) | ADBC 0.92 (S3 1.03), JDBC 0.93 (S3 1.00) | ADBC 0.91 (S3 1.02), JDBC 0.88 (S3 0.93) | not run | 1.15 (S3 0.99) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.92-1.03 | better locally; **S3 SF1 JDBC 1.14**; local SF10 1.07-1.10 (under rule); dc on not faster | [summary](track-2cfa23eb62f9/summary.md), runs 40736482953 + 40736487295 (cluster 2 rounds) |
 | 2026-10-28 | `9044653333cd` | 21 `duckDbThreadsUnderLoad` fix, 18 D3 steps 1-2b (no wait for a crashed member), 19b thread floor 4, Hive views | 1.04 (**S3 1.10**) | 1.04 (S3 0.97) | ADBC 0.92 (S3 0.92), JDBC 0.85 (S3 0.95) | ADBC 0.98 (S3 0.97), JDBC 0.94 (S3 1.03) | peak 0.98 JDBC / 1.00 ADBC; c128 1.03 / 0.97; sat. c1 both | 1.02 (S3 0.96) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.89-0.99; sized vs none 1.03 | same; **S3 SF10 ADBC 1.10**; load gain of builds 2/4 not seen; dc on all-up 1.03, recovery 90-96 s (was 104-109) | [summary](track-9044653333cd/summary.md), runs 40772221252 + 40772225000 (cluster 2 rounds) |
+| 2026-10-29 | `881bbf73e946` | 22 shared DuckDB (c) streaming buffer, 22 (a) one describe DuckDB per node, 18 D3 step 3 local-disk plans, 22 step 1 opt-in `duckDbSharedDatabase`, Hive P4 (d) / C4, opt-in `plainFlightCommands` | 1.04 (S3 0.96) | 1.03 (S3 0.83, noisy) | ADBC 0.86 (S3 0.99), JDBC 0.92 (S3 0.95) | ADBC 1.01 (S3 1.01), JDBC 0.97 (S3 0.98) | peak 1.00 JDBC / 1.00 ADBC; c128 1.00; sat. c1 both; shared on: peak 1.16, c128 1.37-1.41 | 1.01 (S3 1.01); shared on 1.39; shared vs up-native x4 0.98 | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.90-1.02; shared on +17-19 % scans/SF10, -14 % load | better (opt-in shared DuckDB); default same; **S3 JDBC c8 p50 1.10**; dc on all-up 1.01, still not faster | [summary](track-881bbf73e946/summary.md), runs 40800578035 + 40800581040 (cluster 2 rounds) |
 
 Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9edbf` `752e272b3ab6` `04e558056068`
 `4e77c6bda59a` `b7be8d166498` `85aaf4604d9a`.
@@ -64,3 +72,5 @@ Skipped as contained in `e70d80bb7995`: `9506620bb170` `99113c98c1c3` `7f308a6cd
 Skipped as contained in `94ad61021d93`: `a9e43ca5e296` `177dfe3e5716` `f73de96b8773` `c258adf27dc9` `1b3a7bbad4bc`.
 
 Skipped as contained in `9044653333cd`: `a110a2279437` `0f8eb5e5f65c` `936b2d7c366c`.
+
+Skipped as contained in `881bbf73e946`: `e75119218df7` `80aa61a15557`.
