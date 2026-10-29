@@ -1,0 +1,8 @@
+[
+ {"variant": "core-def-tpch", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "b3bbcce19996", "b_flags": "", "workloads": "sf10 adbc10 sf1 adbc1", "small_classes": ""},
+ {"variant": "core-def-lat", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "b3bbcce19996", "b_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "core-def-lat", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "b3bbcce19996", "b_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "core-def-sf10jdbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "b3bbcce19996", "b_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "core-def-sf10adbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "b3bbcce19996", "b_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "core-def-sf1", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "b3bbcce19996", "b_flags": "", "workloads": "sf1 adbc1", "small_classes": ""}
+]
