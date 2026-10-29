@@ -137,8 +137,14 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       clients with 14 % less RSS under load, upstream native's scan speed at 38 % of its RSS (+17-19 % RSS on scans /
       SF10). Item 21 load level with the baseline. **Small regression: S3 small JDBC c8 p50 1.10 in all 3 rounds
       (1.07 1.11 1.10; p95 0.94); re-check in the next build's S3 latency job.**
-    - Next step (next session): look for a server pre-release newer than `881bbf73e946` and track it per
-      `ci/BUILD-TRACK-TASK.md`; re-check S3 small c8 p50 (JDBC 1.10 / ADBC 1.12 in build 7). No CI running.
+    - Build 8 `06833e736572` (contains `fd6084f` item 18 D6: peer lost after the first batch of a distributed complete
+      answer fails as UNAVAILABLE; Ranger Hive policies P6 steps 1-3a (custom auth providers only), C4 step 3 Hive
+      insert-only tables through the server; skipped as contained: `01884e287668`): **running** since 05:27 UTC,
+      core 40823526868 (6 jobs, wave `track-06833e736572`), cluster 40823529991 (`rounds=2`, wave
+      `track-06833e736572-cluster`).
+    - Next step (next session): when both runs are green, commit their results (aggregate job), write
+      `results/track-06833e736572/summary.md` + the BUILDS.md row; re-check S3 small c8 p50 (JDBC 1.10 / ADBC 1.12 in
+      build 7) in the S3 latency job; fix and re-run failed jobs with `only=`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
