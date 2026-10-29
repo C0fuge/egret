@@ -149,13 +149,13 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       `d4a136f` D11 `shutdownDrainSeconds` default 20 s, `ab8cc3d` D10 distributed complete merges plain `avg`,
       `b3bbcce` subquery/CTE/UNION tables checked under authorization providers (no change without a provider),
       `786782219b1a` LZ4 codec module for Java Flight clients (separate jar, our clients do not load it: no slow-link
-      pair); skipped as contained: `85a790826156`, `7b988c720821`, `2a2b8e08191f`, `786782219b1a`): **running** since
-      09:27 UTC, core 40849716676 (6 jobs, wave `track-b3bbcce19996`; 5/6 green at 11:08 UTC, S3 latency job still
-      running), cluster 40849719732 (`rounds=2`, wave
-      `track-b3bbcce19996-cluster`).
-    - Next step (next session): when both runs are green, commit their results (aggregate job), write
-      `results/track-b3bbcce19996/summary.md` + the BUILDS.md row; watch local SF10 ADBC (1.06 in build 8); fix and
-      re-run failed jobs with `only=`.
+      pair); skipped as contained: `85a790826156`, `7b988c720821`, `2a2b8e08191f`, `786782219b1a`): **core done, cluster
+      running**: core 40849716676 (6/6 green, results committed; draft
+      [`results/track-b3bbcce19996/summary.md`](results/track-b3bbcce19996/summary.md): same, 22/22, no core metric
+      > 5 % slower in all 3 rounds, local SF10 ADBC 1.03 (build 8: 1.06), local JDBC c8 p95 1.07 / p99 1.10 tail, watch);
+      cluster 40849719732 (`rounds=2`, wave `track-b3bbcce19996-cluster`) running since 09:27 UTC.
+    - Next step (next session): when the cluster run is green, commit its results (aggregate job), add the cluster
+      table + verdict to `results/track-b3bbcce19996/summary.md` and the BUILDS.md row; if it fails, fix and re-run.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
