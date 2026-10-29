@@ -139,12 +139,13 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       (1.07 1.11 1.10; p95 0.94); re-check in the next build's S3 latency job.**
     - Build 8 `06833e736572` (contains `fd6084f` item 18 D6: peer lost after the first batch of a distributed complete
       answer fails as UNAVAILABLE; Ranger Hive policies P6 steps 1-3a (custom auth providers only), C4 step 3 Hive
-      insert-only tables through the server; skipped as contained: `01884e287668`): **running** since 05:27 UTC,
-      core 40823526868 (6 jobs, wave `track-06833e736572`; 5/6 green at 06:48 UTC, `core-def-sf10adbc-s3` still
-      running), cluster 40823529991 (`rounds=2`, wave `track-06833e736572-cluster`; still running at 06:48 UTC).
-    - Next step (next session): when both runs are green, commit their results (aggregate job), write
-      `results/track-06833e736572/summary.md` + the BUILDS.md row; re-check S3 small c8 p50 (JDBC 1.10 / ADBC 1.12 in
-      build 7) in the S3 latency job; fix and re-run failed jobs with `only=`.
+      insert-only tables through the server; skipped as contained: `01884e287668`): core 40823526868 **done**, 6/6 green,
+      22/22, no regression by the rule (local SF10 ADBC 1.06, rounds 1.03 1.06 1.07; build-7 S3 JDBC c8 p50 flag not
+      confirmed, 1.04); draft [`results/track-06833e736572/summary.md`](results/track-06833e736572/summary.md).
+      Cluster 40823529991 (`rounds=2`, wave `track-06833e736572-cluster`) still running at 07:40 UTC.
+    - Next step: when 40823529991 is green, fill the cluster table + verdict in the build-8 summary and add the BUILDS.md
+      row. Then the next build: newest untracked pre-release `85a790826156` (06:36 UTC; contains `2a2b8e08191f` opt-in
+      `shutdownDrainSeconds` D8, `786782219b1a` LZ4 codec module for Java Flight clients (item 20 follow-up)).
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
