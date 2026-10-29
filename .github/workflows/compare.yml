@@ -215,7 +215,7 @@ jobs:
           path: ${{ runner.temp }}/data/default
           key: tpch-default-sf1-sf10-v1
           fail-on-cache-miss: true
-      - if: startsWith(matrix.a_server, 'up-') || startsWith(matrix.b_server, 'up-')
+      - if: startsWith(matrix.a_server, 'up-') || startsWith(matrix.b_server, 'up-') || startsWith(matrix.c_server || '', 'up-')
         uses: actions/download-artifact@v4
         with:
           pattern: upstream-up-*
