@@ -275,6 +275,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [track-881bbf73e946-cluster-40800581040](results/track-881bbf73e946-cluster-40800581040/summary.md) (latest of its wave)
 - [track-881bbf73e946-40800578035](results/track-881bbf73e946-40800578035/summary.md) (latest of its wave)
 - [track-9044653333cd-cluster-40772225000](results/track-9044653333cd-cluster-40772225000/summary.md) (latest of its wave)
 - [track-9044653333cd-40772221252](results/track-9044653333cd-40772221252/summary.md) (latest of its wave)
@@ -307,6 +308,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [track-9044653333cd](results/track-9044653333cd/summary.md) (latest of its wave)
 - [track-4bb6441569be](results/track-4bb6441569be/summary.md)
 - [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
 - [track-94ad61021d93](results/track-94ad61021d93/summary.md)
 - [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
 - [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
