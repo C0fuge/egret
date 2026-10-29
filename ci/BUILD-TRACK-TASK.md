@@ -39,3 +39,11 @@ per session, README 'In progress' updated with running CI ids and the next step 
 the noreply address, never personal data, host names or internal names, never push to the upstream repository. If no
 untracked build is waiting, write one line "idle <UTC time>, newest tracked <sha12>" in README 'In progress' (replace the
 previous idle line) and stop immediately.
+
+## FINAL (maintainer, 2026-10-29 15:30) - one last build, then stop
+The final server pre-release is **`server-1.0.0-1e7b43a4e0c7`** (finish mode; contains every item since 7562a5bdb7b9).
+Track it as usual, but as a **three-way** run on the same runner: final build vs `7562a5bdb7b9` vs **upstream native**
+(the upstream build used in Reports 1-3). Core set (section 1) plus slow-link with ZSTD (item 20) and scan 4/8 streams
+(item 22); 3 rounds, alternate order, answers checked. Output: `results/FINAL-1e7b43a4e0c7.md` - one table per area
+with final/7562 and final/upstream ratios, correctness, peak RSS, a short verdict, and the "Key builds" list from
+BUILDS.md copied at the top. Then write "EGRET FINAL DONE" in README 'In progress' and stop; no further builds.
