@@ -1,0 +1,10 @@
+[
+ {"variant": "fin-tpch", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "sf10 adbc10 sf1 adbc1", "small_classes": ""},
+ {"variant": "fin-lat", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "small scan adbcscan", "small_classes": ""},
+ {"variant": "fin-small", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "fin-scan", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "fin-sf10jdbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "fin-sf10adbc", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "fin-sf1", "storage": "s3", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "", "c_server": "up-native", "c_flags": "", "workloads": "sf1 adbc1", "small_classes": ""},
+ {"variant": "fin-zstd-netem", "storage": "local", "a_server": "ours-new", "a_flags": "", "b_server": "1e7b43a4e0c7", "b_flags": "CZSTD", "c_server": "up-native", "c_flags": "-DflightCompression=zstd", "workloads": "netem", "small_classes": ""}
+]

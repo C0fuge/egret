@@ -97,13 +97,15 @@ jobs:
           up = {"up-native": os.environ["UP_NATIVE_SHA"], "up-main": os.environ["UP_MAIN_SHA"]}
           for j in w:
               j["id"] = f"{j['variant']}-{j['storage']}".replace("+", "_")
-              for s in "ab":
+              for s in "abc":
+                  if s == "c" and not j.get("c_server"):
+                      continue
                   j[f"{s}_name"] = j[f"{s}_server"]
                   j[f"{s}_server"] = alias.get(j[f"{s}_server"], j[f"{s}_server"])
           only = [x for x in os.environ.get("ONLY", "").split(",") if x]
           if only:
               w = [j for j in w if j["id"] in only or j["variant"] in only]
-          used = sorted({j[f"{s}_server"] for j in w for s in "ab"} & set(up))
+          used = sorted({j.get(f"{s}_server", "") for j in w for s in "abc"} & set(up))
           print("matrix=" + json.dumps({"include": w}))
           print("upstream=" + str(bool(used)).lower())
           print("upbuilds=" + json.dumps([{"name": n, "ref": up[n]} for n in used] or [{"name": "none", "ref": ""}]))
@@ -225,7 +227,7 @@ jobs:
           path: ${{ runner.temp }}/assets/trino
       - name: Assets
         env:
-          SERVERS: ${{ matrix.a_server }} ${{ matrix.b_server }}
+          SERVERS: ${{ matrix.a_server }} ${{ matrix.b_server }} ${{ matrix.c_server }}
           UPSTREAM_DIR: ${{ runner.temp }}/upstream
         run: bash ci/setup-compare.sh "$RUNNER_TEMP/assets"
       - name: Reference answers (in-process DuckDB on the same Parquet files)
@@ -235,13 +237,16 @@ jobs:
             "$RUNNER_TEMP/assets/venv/bin/python" clients/tpch_adbc.py "duckdb:$RUNNER_TEMP/data/default/$sf" queries/tpch-schema 1 "$OUT/ref/adbc${sf#sf}" > /dev/null
             cut -f1-4 "$OUT/ref/adbc${sf#sf}/summary.tsv"
           done
-      - name: A ${{ matrix.a_server }} vs B ${{ matrix.b_server }} (${{ matrix.storage }})
+      - name: A ${{ matrix.a_server }} vs B ${{ matrix.b_server }}${{ matrix.c_server && format(' vs C {0}', matrix.c_server) || '' }} (${{ matrix.storage }})
         env:
           VARIANT: ${{ matrix.variant }}
           SERVER_A: ${{ matrix.a_server }}
           SERVER_B: ${{ matrix.b_server }}
           NAME_A: ${{ matrix.a_name }}
           NAME_B: ${{ matrix.b_name }}
+          SERVER_C: ${{ matrix.c_server }}
+          NAME_C: ${{ matrix.c_name }}
+          FLAGS_C: ${{ matrix.c_flags }}
           SERVERS_JSON: ${{ needs.plan.outputs.servers }}
           FLAGS_A: ${{ matrix.a_flags }}
           FLAGS_B: ${{ matrix.b_flags }}
@@ -254,7 +259,7 @@ jobs:
           OUT="$RUNNER_TEMP/out/${{ matrix.id }}"; mkdir -p "$OUT"
           python3 - "$OUT/job.json" <<'EOF'
           import json, os, sys
-          keys = ["VARIANT", "SERVER_A", "SERVER_B", "NAME_A", "NAME_B", "FLAGS_A", "FLAGS_B", "STORAGE", "ROUNDS", "WORKLOADS", "SMALL_CLASSES"]
+          keys = ["VARIANT", "SERVER_A", "SERVER_B", "SERVER_C", "NAME_A", "NAME_B", "NAME_C", "FLAGS_A", "FLAGS_B", "FLAGS_C", "STORAGE", "ROUNDS", "WORKLOADS", "SMALL_CLASSES"]
           cpu = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")), "")
           mem = next(int(l.split()[1]) // 1024 for l in open("/proc/meminfo") if l.startswith("MemTotal"))
           json.dump({k.lower(): os.environ.get(k, "") for k in keys} | {"servers": json.loads(os.environ["SERVERS_JSON"]), "kernel": os.uname().release,
@@ -263,8 +268,8 @@ jobs:
           EOF
           ASSETS="$RUNNER_TEMP/assets" DATA="$RUNNER_TEMP/data" OUT="$OUT" QUERIES="$PWD/queries/tpch-schema" bash ci/ab.sh
           # results in the job log too (artifacts are not readable from every environment)
-          for f in "$OUT"/[AB]/r*/result.txt; do echo "== $f"; cat "$f"; done
-          for f in "$OUT"/[AB]/r*/container.txt; do echo "== $f"; tail -3 "$f"; done
+          for f in "$OUT"/[ABC]/r*/result.txt; do echo "== $f"; cat "$f"; done
+          for f in "$OUT"/[ABC]/r*/container.txt; do echo "== $f"; tail -3 "$f"; done
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -308,6 +313,14 @@ jobs:
             for p in ${MERGE_PREFIX//,/ }; do
               case $n in "$p"*) [ -e "$RUNNER_TEMP/jobs/$n" ] || { cp -r "$j" "$RUNNER_TEMP/jobs/"; echo "merged $n"; };; esac
             done
+          done
+          # three-way jobs (side C): A/B stay as they are; <id>-vs-<c name> = C as side A against B (B / C ratios)
+          for j in "$RUNNER_TEMP"/jobs/*/; do
+            [ -d "$j/C" ] || continue; n=$(basename "$j")
+            t="$RUNNER_TEMP/jobs/$n-vs-$(jq -r .name_c "$j/job.json")"; mkdir -p "$t"
+            cp -r "$j/C" "$t/A"; cp -r "$j/B" "$t/B"; [ -d "$j/ref" ] && cp -r "$j/ref" "$t/ref"
+            jq '.server_a = .server_c | .name_a = .name_c | .flags_a = .flags_c | .variant += "-vs-" + .name_c' "$j/job.json" > "$t/job.json"
+            rm -rf "$j/C"; echo "split $n -> $(basename "$t")"
           done
           R="results/$WAVE-$GITHUB_RUN_ID"
           python3 ci/compare.py "$RUNNER_TEMP/jobs" "$R" "Wave $WAVE (server comparison), run $GITHUB_RUN_ID" > /dev/null

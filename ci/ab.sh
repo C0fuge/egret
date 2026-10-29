@@ -20,9 +20,11 @@ HERE=$(cd "$(dirname "$0")/.." && pwd)
 FLAGS_A=${FLAGS_A:-}; FLAGS_B=${FLAGS_B:-}; LAYOUT_B=${LAYOUT_B:-default}; STORAGE=${STORAGE:-local}
 ROUNDS=${ROUNDS:-3}; WORKLOADS=${WORKLOADS:-small sf1 sf10 scan}; NET=egret
 JDBC=$ASSETS/flight-sql-jdbc-driver-18.0.0.jar; SRV=$ASSETS/server; SERVER_A=${SERVER_A:-}; SERVER_B=${SERVER_B:-}
+# optional third side C (three-way runs, e.g. the final build): SERVER_C / FLAGS_C, default layout; rounds A B C, C B A, ...
+SERVER_C=${SERVER_C:-}; FLAGS_C=${FLAGS_C:-}
 QUERIES=${QUERIES:-$HERE/queries/tpch}; UPDUCK=${UPDUCK:-$ASSETS/duckdb-upstream}
 # Scan.java needs the Arrow Flight client classes: any kestrel server jar
-for x in $SERVER_A $SERVER_B; do case $x in upstream|up-*) continue;; esac; [ -f "$ASSETS/srv/$x/server.jar" ] && SRV=$ASSETS/srv/$x; done
+for x in $SERVER_A $SERVER_B $SERVER_C; do case $x in upstream|up-*) continue;; esac; [ -f "$ASSETS/srv/$x/server.jar" ] && SRV=$ASSETS/srv/$x; done
 SRV_IMAGE=eclipse-temurin:21-jre; CPU_CL=2,3
 LIMITS=(--cpus=2 --cpuset-cpus=0,1 --memory=6g --memory-swap=6g)
 PY=/venv/bin/python; LOAD_CLASSES=${LOAD_CLASSES:-point_orders,point_lineitem,count_filter}; pids=()
@@ -229,9 +231,10 @@ tpch_result() {
 alive() { [ "$(docker inspect -f '{{.State.Running}}' flight 2>/dev/null)" = true ] || { echo "SERVER DIED after $1: $(docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' flight)" >> "$O/result.txt"; docker logs flight > "$O/server-died-$1.log" 2>&1
   echo "  last server log: $(grep -iE 'exception|error|killed' "$O/server-died-$1.log" | tail -3 | cut -c1-300 | tr '\n' ' ')" >> "$O/result.txt"; return 1; }; }
 
-side() {  # side <A|B> <round>
+side() {  # side <A|B|C> <round>
   local s=$1 r=$2 flags layout
-  if [ "$s" = A ]; then flags=$FLAGS_A; layout=default; SERVER=$SERVER_A; else flags=$FLAGS_B; layout=$LAYOUT_B; SERVER=$SERVER_B; fi
+  case $s in A) flags=$FLAGS_A; layout=default; SERVER=$SERVER_A;; C) flags=$FLAGS_C; layout=default; SERVER=$SERVER_C;;
+    *) flags=$FLAGS_B; layout=$LAYOUT_B; SERVER=$SERVER_B;; esac
   SECURE=; ADBC_URI=grpc://localhost:32010; JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false"; CL_TOKEN=; CL_CA=
   case " $flags " in *" TLS "*)
     flags=$(echo " $flags " | sed 's/ TLS / /'); SECURE=1; ADBC_URI=grpc+tls://localhost:32010; CL_TOKEN=$TOKEN; CL_CA=$OUT/tls/cert.pem
@@ -462,7 +465,9 @@ except Exception as e:
 }
 
 for r in $(seq 1 "$ROUNDS"); do
-  if [ $((r % 2)) = 1 ]; then side A "$r"; side B "$r"; else side B "$r"; side A "$r"; fi
+  if [ -n "$SERVER_C" ]; then
+    if [ $((r % 2)) = 1 ]; then side A "$r"; side B "$r"; side C "$r"; else side C "$r"; side B "$r"; side A "$r"; fi
+  elif [ $((r % 2)) = 1 ]; then side A "$r"; side B "$r"; else side B "$r"; side A "$r"; fi
 done
 docker rm -f client s3 >/dev/null 2>&1
 log "done"
