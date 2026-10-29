@@ -47,3 +47,11 @@ Track it as usual, but as a **three-way** run on the same runner: final build vs
 (item 22); 3 rounds, alternate order, answers checked. Output: `results/FINAL-1e7b43a4e0c7.md` - one table per area
 with final/7562 and final/upstream ratios, correctness, peak RSS, a short verdict, and the "Key builds" list from
 BUILDS.md copied at the top. Then write "EGRET FINAL DONE" in README 'In progress' and stop; no further builds.
+
+## ITEM 23 (maintainer, 2026-10-29 22:10) - after "EGRET FINAL DONE"
+When a server pre-release newer than `1e7b43a4e0c7` whose STATUS Log names item 23 (`resourceProfile=speed`) exists:
+one three-way run on the same runner: that build with `-DresourceProfile=speed` vs the same build default (balanced)
+vs upstream native `9fb08d9dd24d`. Same containers and core set as FINAL (TPC-H SF1/SF10 ADBC+JDBC local+S3, small
+queries 1/8/32, scans 1/4/8 + export, slow link with ZSTD) plus closed-loop load 1-128 clients; peak RSS and CPU for
+every job. Output `results/ITEM23-<sha12>.md`: speed/balanced and speed/upstream ratios, memory cost per area, verdict
+(where speed reaches or passes upstream, and at what memory). Then "EGRET ITEM 23 DONE" in README 'In progress' and stop.
