@@ -1,0 +1,3 @@
+[
+ {"variant": "i18-dc-off-vs-on", "storage": "s3", "a_server": "06833e736572", "a_flags": "-DdistributedComplete=false", "b_server": "06833e736572", "b_flags": "-DdistributedComplete=true", "workloads": "cluster", "small_classes": ""}
+]
