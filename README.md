@@ -126,10 +126,15 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
       still not faster). Local SF10 back to 1.04, build-5 S3 SF1 JDBC flag gone (0.97). **Small regression: S3 TPC-H
       SF10 ADBC total 1.10 in all 3 rounds (1.06 1.10 1.21); S3 SF10 JDBC 0.97.** Item 21 load level with the
       baseline (the +5-7 % peak gain of builds 2/4 is not seen); 19b sized memory no longer lowers peak RSS (1.03).
-    - Next step (next session): build 7 = `e75119218df7` (item 22 shared DuckDB (a), opt-in `duckDbSharedDatabase`;
-      contains `80aa61a15557` D3 step 3 local-disk plans + item 22 step 1, Hive P4 (d)): core + item 22 scan x4/x8 with
-      peak RSS (shared DuckDB on vs off) + item 18 cluster in its own wave (`rounds=2`); re-check S3 SF10 ADBC (1.10 in
-      build 6) and the item-21 load.
+    - Build 7 `881bbf73e946` (item 22 shared DuckDB step (c) `duckDbStreamingBufferSize` in shared mode; contains
+      `e75119218df7` item 22 (a) one describe DuckDB per node, `80aa61a15557` D3 step 3 local-disk plans + item 22 step 1
+      opt-in `duckDbSharedDatabase`, Hive P4 (d), opt-in `plainFlightCommands` (P5), Hive insert-only tables (C4);
+      skipped as contained: `e75119218df7`, `80aa61a15557`): **running** since 01:28 UTC 2026-10-29, core 40800578035
+      (11 jobs: core + shared DuckDB off vs on for scans x1/4/8, SF10, load, shared vs up-native, item-21 load) and
+      cluster 40800581040 (`rounds=2`, own wave).
+    - Next step: when both runs are green (the aggregate commits `results/track-881bbf73e946*-<run>/`), write
+      `results/track-881bbf73e946/summary.md` + the BUILDS.md row; re-check S3 SF10 ADBC (1.10 in build 6) and the
+      item-21 load. A failed job: fix and re-run with `only=<job id>` + `merge-run`.
     Note: the aggregate job rebuilds README from `ci/README-status.md`: edit 'In progress' THERE, not only in README.
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
