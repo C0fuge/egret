@@ -33,6 +33,11 @@ while p95 / p99 are 0.94 / 0.95; ADBC c8 p50 1.12 not in all rounds (as in `9044
 `9044653333cd` S3 SF10 ADBC flag is gone (0.96). Details: [track-881bbf73e946](track-881bbf73e946/summary.md).** Not
 confirmed in `06833e736572` (S3 JDBC c8 p50 1.04, rounds 0.99 1.04 1.34).
 
+**Flag `843e4ad5b610` ITEM 23b (`resourceProfile=speed` vs balanced): the ITEM 23 S3 c32 errors are fixed (0 in all 3
+rounds), but S3 small-query tails at 8/32 clients stay longer: p95 1.33-1.54 in every round (c32 p95 ~26 s vs ~17-18 s),
+JDBC p99 1.37-1.40, total S3 c32 wall time 5-15 % longer, while p50 is 0.50. Local ADBC c8 p95 1.13. Details:
+[ITEM23b](ITEM23b-843e4ad5b610.md).**
+
 ## Key builds
 
 - `d22cdaccb4e1` (item 20 LZ4/ZSTD Flight streams): on a 1 Gbit/s 10 ms link, the full lineitem export over ADBC rises from 104 MB/s
@@ -50,6 +55,9 @@ confirmed in `06833e736572` (S3 JDBC c8 p50 1.04, rounds 0.99 1.04 1.34).
 - `881bbf73e946` (item 22 shared DuckDB, opt-in `duckDbSharedDatabase=true`): scans with 8 streams +39 % and 4 streams
   +15 % in every round, closed-loop load +16 % at the peak and +37-41 % at 128 clients (35 -> 48 q/s) with 14 % less
   RSS under load; reaches upstream native's scan speed (x4 0.98, x1 1.04, ~900 MB/s at 8) at 38 % of its RSS.
+- `843e4ad5b610` (item 23b, with `-DresourceProfile=speed`): passes the correctness gate on S3 at 32 clients; closed-loop
+  load +19-22 % at 128 clients over balanced (within 4-6 % of upstream native) at 823 MB peak RSS vs 4432 balanced and
+  4928 upstream; concurrent small-query p50 halved (S3 tails at 8/32 clients still 1.33-1.54x).
 
 ## Builds
 
@@ -66,6 +74,7 @@ confirmed in `06833e736572` (S3 JDBC c8 p50 1.04, rounds 0.99 1.04 1.34).
 | 2026-10-29 | `b3bbcce19996` | 18 D9 node-load leak fix, D10 distributed complete merges plain `avg`, D11 `shutdownDrainSeconds` default 20 s; subquery/CTE/UNION tables under auth providers; LZ4 codec module for Java clients | 1.03 (S3 1.02) | 1.06 (S3 0.85, noisy) | ADBC 0.89 (S3 0.85), JDBC 0.93 (S3 1.04) | ADBC 1.05 (S3 0.69, noisy), JDBC 1.01 (S3 1.06) | not run | 1.00 (S3 1.01) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.90-1.05 | same; build-8 local SF10 ADBC watch back to 1.03; local JDBC c8 p95 1.07 / p99 1.10 (watch); dc on all-up 1.04, after node changes 1.23-1.37, recovery 91-104 s | [summary](track-b3bbcce19996/summary.md), runs 40849716676 + 40849719732 (cluster 2 rounds) |
 | 2026-10-29 | `1e7b43a4e0c7` FINAL | finish mode, all items since `7562a5bdb7b9`; three-way with upstream native | 1.04 (S3 0.65, noisy) | 1.02 (S3 1.01) | ADBC 1.00 (S3 1.08), JDBC 1.00 (S3 1.04) | ADBC 0.99 (S3 0.99), JDBC 0.97 (S3 1.06) | not run | 1.01 (S3 1.04); vs up-native x4 0.80 (S3 0.75) | CZSTD 2.40 (250) vs 104; vs up-native ZSTD 0.96 | 22/22 (up-native 0-1/22) | 0.88-1.02; vs up-native scans 0.30-0.47 | same on default path, better on slow link, no regression by the rule | [FINAL](FINAL-1e7b43a4e0c7.md), run 40876778493 |
 | 2026-10-30 | `d752a7358a65` ITEM 23 | 23 (a)-(d) `resourceProfile=speed`; ratios here are **speed / balanced on the same build** (three-way with upstream native) | 0.97 (S3 0.81, noisy) | 0.98 (S3 0.81, noisy) | ADBC 1.06 (S3 0.97), JDBC 1.13 (S3 1.07) | ADBC 0.91 (**S3 errors**), JDBC 0.87 (**S3 errors**) | QPS at 128 clients +22 % JDBC, +16 % ADBC; vs up-native 0.96 / 0.90 | 1.43 (S3 1.36); vs up-native x4 1.06 (S3 0.70) | CZSTD 1.00 (260); vs up-native ZSTD 1.01 | 22/22; **S3 small c32 ADBC 702-753 / JDBC 66-91 of 1280 errors, all rounds** (up-native 0-1/22) | 0.67-1.25 (+20-25 % on SF10); vs up-native scans 0.19-0.24 | faster where correct; **correctness failure S3 c32, S3 c8 p95 1.42-1.44** | [ITEM23](ITEM23-d752a7358a65.md), run 41029626461 |
+| 2026-10-30 | `843e4ad5b610` ITEM 23b | 23b node-wide budget for cached prepared statements; ratios here are **speed / balanced on the same build** (three-way with upstream native; small S3 + local, load only) | not run | not run | ADBC 0.98 (S3 0.91), JDBC 0.97 (S3 1.04) | ADBC 0.93 (**S3 1.46**), JDBC 0.86 (**S3 1.54**) | QPS at 128 clients +19 % JDBC, +22 % ADBC; vs up-native 0.96 / 0.94 | not run | not run | small + load 0 errors everywhere incl. **S3 c32 (ITEM 23 failure fixed)**; up-native OOM-killed on small every round | load 0.19 (823 vs 4432 MB; vs up-native 0.17), small 0.39-0.47 | correct now, faster p50 and load, far less memory; **S3 c8/c32 p95 1.33-1.54 every round** | [ITEM23b](ITEM23b-843e4ad5b610.md), run 41082368785 |
 
 Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9edbf` `752e272b3ab6` `04e558056068`
 `4e77c6bda59a` `b7be8d166498` `85aaf4604d9a`.
