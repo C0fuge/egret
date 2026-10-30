@@ -62,6 +62,8 @@ ALL DONE 2026-10-27 (compare task: Reports 1-3, fix list, later addition publish
 
 EGRET FINAL DONE 2026-10-29 (final build `1e7b43a4e0c7`: [results/FINAL-1e7b43a4e0c7.md](results/FINAL-1e7b43a4e0c7.md); no further builds).
 
+ITEM 23 (`ci/BUILD-TRACK-TASK.md` "ITEM 23"): build `d752a7358a65` (STATUS: ITEM 23 DONE; contains `1a25c7e13802` item 23 (a)-(d) and `0e457de30f25` JWT null-tolerant sets, skipped as contained). Three-way run **41029626461** (wave `track-d752a7358a65`, 10 jobs, 3 rounds): A = d752 balanced (default), B = d752 `-DresourceProfile=speed`, C = upstream native `9fb08d9dd24d`; core set local + S3, small 1/8/32, scans + export, slow link with ZSTD, closed-loop load 1-128. Next: when green (load job ~2 h), write `results/ITEM23-d752a7358a65.md` (speed/balanced, speed/upstream, memory + CPU from docker-stats), BUILDS.md row, then "EGRET ITEM 23 DONE".
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
