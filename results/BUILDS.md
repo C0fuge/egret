@@ -65,6 +65,7 @@ confirmed in `06833e736572` (S3 JDBC c8 p50 1.04, rounds 0.99 1.04 1.34).
 | 2026-10-29 | `06833e736572` | 18 D6 peer lost after first batch fails as UNAVAILABLE, Ranger Hive policies P6 steps 1-3a, C4 step 3 Hive insert-only tables | 1.06 (S3 0.65, noisy) | 1.03 (S3 1.03) | ADBC 0.94 (S3 0.99), JDBC 1.01 (S3 1.06) | ADBC 0.99 (S3 0.99), JDBC 0.97 (S3 1.02) | not run | 0.99 (S3 0.98) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.88-1.01 | same; build-7 S3 JDBC c8 p50 flag not confirmed (1.04); local SF10 ADBC 1.06 (under rule); dc on all-up 1.06, after node changes 1.54-1.61 | [summary](track-06833e736572/summary.md), runs 40823526868 + 40823529991 (cluster 2 rounds) |
 | 2026-10-29 | `b3bbcce19996` | 18 D9 node-load leak fix, D10 distributed complete merges plain `avg`, D11 `shutdownDrainSeconds` default 20 s; subquery/CTE/UNION tables under auth providers; LZ4 codec module for Java clients | 1.03 (S3 1.02) | 1.06 (S3 0.85, noisy) | ADBC 0.89 (S3 0.85), JDBC 0.93 (S3 1.04) | ADBC 1.05 (S3 0.69, noisy), JDBC 1.01 (S3 1.06) | not run | 1.00 (S3 1.01) | not run | 22/22 (cluster 22/22 with node loss, dc on and off) | 0.90-1.05 | same; build-8 local SF10 ADBC watch back to 1.03; local JDBC c8 p95 1.07 / p99 1.10 (watch); dc on all-up 1.04, after node changes 1.23-1.37, recovery 91-104 s | [summary](track-b3bbcce19996/summary.md), runs 40849716676 + 40849719732 (cluster 2 rounds) |
 | 2026-10-29 | `1e7b43a4e0c7` FINAL | finish mode, all items since `7562a5bdb7b9`; three-way with upstream native | 1.04 (S3 0.65, noisy) | 1.02 (S3 1.01) | ADBC 1.00 (S3 1.08), JDBC 1.00 (S3 1.04) | ADBC 0.99 (S3 0.99), JDBC 0.97 (S3 1.06) | not run | 1.01 (S3 1.04); vs up-native x4 0.80 (S3 0.75) | CZSTD 2.40 (250) vs 104; vs up-native ZSTD 0.96 | 22/22 (up-native 0-1/22) | 0.88-1.02; vs up-native scans 0.30-0.47 | same on default path, better on slow link, no regression by the rule | [FINAL](FINAL-1e7b43a4e0c7.md), run 40876778493 |
+| 2026-10-30 | `d752a7358a65` ITEM 23 | 23 (a)-(d) `resourceProfile=speed`; ratios here are **speed / balanced on the same build** (three-way with upstream native) | 0.97 (S3 0.81, noisy) | 0.98 (S3 0.81, noisy) | ADBC 1.06 (S3 0.97), JDBC 1.13 (S3 1.07) | ADBC 0.91 (**S3 errors**), JDBC 0.87 (**S3 errors**) | QPS at 128 clients +22 % JDBC, +16 % ADBC; vs up-native 0.96 / 0.90 | 1.43 (S3 1.36); vs up-native x4 1.06 (S3 0.70) | CZSTD 1.00 (260); vs up-native ZSTD 1.01 | 22/22; **S3 small c32 ADBC 702-753 / JDBC 66-91 of 1280 errors, all rounds** (up-native 0-1/22) | 0.67-1.25 (+20-25 % on SF10); vs up-native scans 0.19-0.24 | faster where correct; **correctness failure S3 c32, S3 c8 p95 1.42-1.44** | [ITEM23](ITEM23-d752a7358a65.md), run 41029626461 |
 
 Skipped as contained in `d22cdaccb4e1`: `84fec772ec50` `8625e28f08cd` `b28fedf9edbf` `752e272b3ab6` `04e558056068`
 `4e77c6bda59a` `b7be8d166498` `85aaf4604d9a`.
@@ -78,6 +79,8 @@ Skipped as contained in `94ad61021d93`: `a9e43ca5e296` `177dfe3e5716` `f73de96b8
 Skipped as contained in `9044653333cd`: `a110a2279437` `0f8eb5e5f65c` `936b2d7c366c`.
 
 Skipped as contained in `881bbf73e946`: `e75119218df7` `80aa61a15557`.
+
+Skipped as contained in `d752a7358a65`: `1a25c7e13802` `0e457de30f25`.
 
 Skipped as contained in `06833e736572`: `01884e287668`.
 
