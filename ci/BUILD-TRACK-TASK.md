@@ -55,3 +55,9 @@ vs upstream native `9fb08d9dd24d`. Same containers and core set as FINAL (TPC-H 
 queries 1/8/32, scans 1/4/8 + export, slow link with ZSTD) plus closed-loop load 1-128 clients; peak RSS and CPU for
 every job. Output `results/ITEM23-<sha12>.md`: speed/balanced and speed/upstream ratios, memory cost per area, verdict
 (where speed reaches or passes upstream, and at what memory). Then "EGRET ITEM 23 DONE" in README 'In progress' and stop.
+
+## ITEM 23b (maintainer, 2026-10-30 14:40) - after "EGRET ITEM 23 DONE"
+When a server pre-release newer than `d752a7358a65` whose STATUS names item 23b exists: re-run `i23-small` (S3 and
+local as a control) and `i23-load` three-way as in ITEM 23 on that build. Output `results/ITEM23b-<sha12>.md`: errors
+per concurrency (speed must have 0 at 32 clients on S3), speed/balanced and speed/upstream ratios, peak RSS. If no such
+build exists yet, write the idle line and stop. Then "EGRET ITEM 23b DONE" in README 'In progress' and stop.
