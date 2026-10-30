@@ -64,6 +64,8 @@ EGRET FINAL DONE 2026-10-29 (final build `1e7b43a4e0c7`: [results/FINAL-1e7b43a4
 
 EGRET ITEM 23 DONE 2026-10-30 (build `d752a7358a65`, `-DresourceProfile=speed` vs balanced vs upstream native, run 41029626461: [results/ITEM23-d752a7358a65.md](results/ITEM23-d752a7358a65.md); BUILDS.md row added). Speed is faster where correct (load +11-22 %, scan x8 +36-43 %, small p50 at 8/32 clients 37-50 % lower; near upstream native on load 0.90-0.96 and above it on local scans at 24 % of its RSS) but **fails the correctness gate on S3 small queries at 32 clients in all 3 rounds** (ADBC 702-753, JDBC 66-91 of 1280 errors; balanced 0) and has S3 c8 p95 1.42-1.44. Nothing running. Next: none until a newer pre-release with a fix for the speed-profile S3 c32 errors; then re-run `i23-small` on S3 + local.
 
+ITEM 23b (`ci/BUILD-TRACK-TASK.md` "ITEM 23b"): build `843e4ad5b610` (STATUS: item 23b done, shared DuckDB node-wide budget for cached prepared statements; contains `eb1f15d`). Wave `track-843e4ad5b610` (3 three-way jobs: i23b-small S3 + local, i23b-load local; A = 843e balanced, B = 843e `-DresourceProfile=speed`, C = upstream native `9fb08d9dd24d`; 3 rounds). Run **41082368785** (dispatched 2026-10-30 15:37 UTC). Next: when green, write `results/ITEM23b-843e4ad5b610.md` (errors per concurrency, speed must have 0 at S3 c32; speed/balanced, speed/upstream, peak RSS), BUILDS.md row, then "EGRET ITEM 23b DONE".
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
@@ -339,12 +341,12 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-9044653333cd](results/track-9044653333cd/summary.md) (latest of its wave)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md) (latest of its wave)
 - [track-06833e736572](results/track-06833e736572/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
 - [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
