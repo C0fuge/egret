@@ -1,0 +1,5 @@
+[
+ {"variant": "i23b-small", "storage": "s3", "a_server": "843e4ad5b610", "a_flags": "", "b_server": "843e4ad5b610", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "i23b-small", "storage": "local", "a_server": "843e4ad5b610", "a_flags": "", "b_server": "843e4ad5b610", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "i23b-load", "storage": "local", "a_server": "843e4ad5b610", "a_flags": "", "b_server": "843e4ad5b610", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "load", "small_classes": ""}
+]
