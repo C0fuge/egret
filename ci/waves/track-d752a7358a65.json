@@ -1,0 +1,12 @@
+[
+ {"variant": "i23-tpch", "storage": "local", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "sf10 adbc10 sf1 adbc1", "small_classes": ""},
+ {"variant": "i23-small", "storage": "local", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "i23-scan", "storage": "local", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "i23-small", "storage": "s3", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "i23-scan", "storage": "s3", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "i23-sf10jdbc", "storage": "s3", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "i23-sf10adbc", "storage": "s3", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "i23-sf1", "storage": "s3", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "sf1 adbc1", "small_classes": ""},
+ {"variant": "i23-load", "storage": "local", "a_server": "d752a7358a65", "a_flags": "", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "load", "small_classes": ""},
+ {"variant": "i23-zstd-netem", "storage": "local", "a_server": "d752a7358a65", "a_flags": "CZSTD", "b_server": "d752a7358a65", "b_flags": "-DresourceProfile=speed CZSTD", "c_server": "up-native", "c_flags": "-DflightCompression=zstd", "workloads": "netem", "small_classes": ""}
+]
