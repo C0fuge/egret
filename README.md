@@ -66,7 +66,7 @@ EGRET ITEM 23 DONE 2026-10-30 (build `d752a7358a65`, `-DresourceProfile=speed` v
 
 EGRET ITEM 23b DONE 2026-10-30 (build `843e4ad5b610`, `-DresourceProfile=speed` vs balanced vs upstream native, run 41082368785: [results/ITEM23b-843e4ad5b610.md](results/ITEM23b-843e4ad5b610.md); BUILDS.md row, flag and key-build line added). **The ITEM 23 S3 c32 errors are fixed: speed has 0 errors at every step (S3 and local, 1/8/32 clients, load 1-128) in all 3 rounds.** Speed vs balanced: small p50 at 8/32 clients 0.50-0.63, load +19-22 % at 128 clients (vs upstream native 0.96 / 0.94), peak RSS under load 823 MB vs 4432 balanced / 4928 upstream, local c1 p50 penalty gone (0.97-0.98). **Flag: S3 small p95 at 8/32 clients 1.33-1.54 every round (c32 p95 ~26 s vs ~17-18 s), S3 c32 wall time 5-15 % longer; local ADBC c8 p95 1.13.** Nothing running. Next: none (ITEM 23b done; stop).
 
-idle 2026-10-30 19:27 UTC, newest tracked 843e4ad5b610
+BUILD f06b5834e76e (`ci/BUILD-TRACK-TASK.md` Phase B, newest untracked pre-release, published 2026-10-30 16:03 UTC): item 23b follow-up, runtime fix in `resourceProfile=speed` only (`duckDbThreads` = all cores but at least balanced's 4 per query; aimed at the ITEM 23b flag S3 small p95 at 8/32 clients 1.33-1.54); no other runtime change since `843e4ad5b610` (STATUS, CI workflow and lock commits only). Wave `track-f06b5834e76e` (the ITEM 23b set, 3 three-way jobs: i23b-small S3 + local, i23b-load local; A = f06b balanced, B = f06b `-DresourceProfile=speed`, C = upstream native `9fb08d9dd24d`; 3 rounds). Run **41131188139** (dispatched 2026-10-30 21:27 UTC; the 843e run of this set took ~2h20). Artifacts are not downloadable from the session environment: take numbers from the aggregate results (`results/track-f06b5834e76e-41131188139/`) and the job logs. Next: when green, write `results/track-f06b5834e76e/summary.md` (errors per concurrency, speed/balanced and speed/upstream, S3 c8/c32 p95 vs the 843e flag, peak RSS) and the BUILDS.md row.
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
@@ -344,12 +344,12 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-9044653333cd](results/track-9044653333cd/summary.md) (latest of its wave)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md) (latest of its wave)
 - [track-06833e736572](results/track-06833e736572/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
 - [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
