@@ -66,6 +66,8 @@ EGRET ITEM 23 DONE 2026-10-30 (build `d752a7358a65`, `-DresourceProfile=speed` v
 
 EGRET ITEM 23b DONE 2026-10-30 (build `843e4ad5b610`, `-DresourceProfile=speed` vs balanced vs upstream native, run 41082368785: [results/ITEM23b-843e4ad5b610.md](results/ITEM23b-843e4ad5b610.md); BUILDS.md row, flag and key-build line added). **The ITEM 23 S3 c32 errors are fixed: speed has 0 errors at every step (S3 and local, 1/8/32 clients, load 1-128) in all 3 rounds.** Speed vs balanced: small p50 at 8/32 clients 0.50-0.63, load +19-22 % at 128 clients (vs upstream native 0.96 / 0.94), peak RSS under load 823 MB vs 4432 balanced / 4928 upstream, local c1 p50 penalty gone (0.97-0.98). **Flag: S3 small p95 at 8/32 clients 1.33-1.54 every round (c32 p95 ~26 s vs ~17-18 s), S3 c32 wall time 5-15 % longer; local ADBC c8 p95 1.13.** Nothing running. Next: none (ITEM 23b done; stop).
 
+idle 2026-10-30 19:27 UTC, newest tracked 843e4ad5b610
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
