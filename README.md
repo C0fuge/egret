@@ -68,6 +68,8 @@ EGRET ITEM 23b DONE 2026-10-30 (build `843e4ad5b610`, `-DresourceProfile=speed` 
 
 EGRET BUILD f06b5834e76e DONE 2026-10-30 (`ci/BUILD-TRACK-TASK.md` Phase B, item 23b follow-up: speed `duckDbThreads` = all cores, at least 4; run 41132125972, 3/3 jobs green: [results/track-f06b5834e76e/summary.md](results/track-f06b5834e76e/summary.md); BUILDS.md row and flag added). Speed 0 errors everywhere (S3 c32 included). **Flag: the fix does not remove the S3 c32 tail: S3 small c32 p95 1.50 / 1.59 of balanced every round (843e 1.46 / 1.54), S3 c32 wall 11-25 % longer, new S3 ADBC c8 p99 1.58 all rounds;** S3 c8 p95 improved (0.96-1.10, was 1.33-1.36), local ADBC c8 p95 flag gone (1.03). Load +17-19 % at 128 clients (0.94 of upstream native) at 823 MB vs 4577 MB. Nothing running. Next: Phase B on the next untracked pre-release newer than `f06b5834e76e`.
 
+idle 2026-10-31 01:28 UTC, newest tracked f06b5834e76e
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
