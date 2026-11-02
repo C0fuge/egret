@@ -68,8 +68,6 @@ EGRET ITEM 23b DONE 2026-10-30 (build `843e4ad5b610`, `-DresourceProfile=speed` 
 
 EGRET BUILD f06b5834e76e DONE 2026-10-30 (`ci/BUILD-TRACK-TASK.md` Phase B, item 23b follow-up: speed `duckDbThreads` = all cores, at least 4; run 41132125972, 3/3 jobs green: [results/track-f06b5834e76e/summary.md](results/track-f06b5834e76e/summary.md); BUILDS.md row and flag added). Speed 0 errors everywhere (S3 c32 included). **Flag: the fix does not remove the S3 c32 tail: S3 small c32 p95 1.50 / 1.59 of balanced every round (843e 1.46 / 1.54), S3 c32 wall 11-25 % longer, new S3 ADBC c8 p99 1.58 all rounds;** S3 c8 p95 improved (0.96-1.10, was 1.33-1.36), local ADBC c8 p95 flag gone (1.03). Load +17-19 % at 128 clients (0.94 of upstream native) at 823 MB vs 4577 MB. Nothing running. Next: Phase B on the next untracked pre-release newer than `f06b5834e76e`.
 
-idle 2026-10-31 17:26 UTC, newest tracked f06b5834e76e
-
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
@@ -309,6 +307,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fc-s3-f06b5834e76e-41437523179](results/fc-s3-f06b5834e76e-41437523179/summary.md) (latest of its wave)
 - [track-f06b5834e76e-41132125972](results/track-f06b5834e76e-41132125972/summary.md) (latest of its wave)
 - [track-843e4ad5b610-41082368785](results/track-843e4ad5b610-41082368785/summary.md) (latest of its wave)
 - [track-d752a7358a65-41029626461](results/track-d752a7358a65-41029626461/summary.md) (latest of its wave)
@@ -347,12 +346,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-9044653333cd](results/track-9044653333cd/summary.md) (latest of its wave)
+- [track-06833e736572](results/track-06833e736572/summary.md) (latest of its wave)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
 - [track-4bb6441569be](results/track-4bb6441569be/summary.md)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
 - [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
 - [track-881bbf73e946](results/track-881bbf73e946/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
-- [track-06833e736572](results/track-06833e736572/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
