@@ -61,3 +61,11 @@ When a server pre-release newer than `d752a7358a65` whose STATUS names item 23b 
 local as a control) and `i23-load` three-way as in ITEM 23 on that build. Output `results/ITEM23b-<sha12>.md`: errors
 per concurrency (speed must have 0 at 32 clients on S3), speed/balanced and speed/upstream ratios, peak RSS. If no such
 build exists yet, write the idle line and stop. Then "EGRET ITEM 23b DONE" in README 'In progress' and stop.
+
+## FRESH UPSTREAM TRACKING (maintainer, 2026-11-03) - replaces the idle rule
+For every new kestrel pre-release (newer than `57e054887f7a`) whose STATUS Log names item 26 or 27 or a connector-
+relevant change: one three-way run like wave `fresh-up-fc-f06b5834e76e` (copy it as `fresh-up-<id>.json`): A = the
+pre-release default, B = the pre-release `-DresourceProfile=speed` (file cache is in the profile since 57e054887f7a, no
+extra flag), C = upstream native at the head of `feat/starrocks-native-integration` resolved at dispatch (input
+`upstream-ref`). Output `results/FRESH-<id>.md`: per area speed/balanced, speed/upstream, balanced/upstream, memory,
+correctness, and the upstream commit measured. If nothing new is waiting, write the idle line and stop.
