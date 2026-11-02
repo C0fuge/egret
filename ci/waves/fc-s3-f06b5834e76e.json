@@ -1,0 +1,5 @@
+[
+ {"variant": "fc-scan", "storage": "s3", "a_server": "f06b5834e76e", "a_flags": "-DresourceProfile=speed", "b_server": "f06b5834e76e", "b_flags": "-DresourceProfile=speed -DduckDbExternalFileCache=true", "c_server": "up-native", "c_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "fc-small", "storage": "s3", "a_server": "f06b5834e76e", "a_flags": "-DresourceProfile=speed", "b_server": "f06b5834e76e", "b_flags": "-DresourceProfile=speed -DduckDbExternalFileCache=true", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "fc-sf10adbc", "storage": "s3", "a_server": "f06b5834e76e", "a_flags": "-DresourceProfile=speed", "b_server": "f06b5834e76e", "b_flags": "-DresourceProfile=speed -DduckDbExternalFileCache=true", "c_server": "up-native", "c_flags": "", "workloads": "adbc10", "small_classes": ""}
+]
