@@ -69,3 +69,6 @@ pre-release default, B = the pre-release `-DresourceProfile=speed` (file cache i
 extra flag), C = upstream native at the head of `feat/starrocks-native-integration` resolved at dispatch (input
 `upstream-ref`). Output `results/FRESH-<id>.md`: per area speed/balanced, speed/upstream, balanced/upstream, memory,
 correctness, and the upstream commit measured. If nothing new is waiting, write the idle line and stop.
+Note (maintainer, 2026-11-03): items 29 and 30 change only the HDFS path with protected DataNodes (SASL), which these
+waves do not exercise (local disk and S3). Do NOT start a FRESH wave for a pre-release whose new Log entries are only
+items 29/30; write the idle line instead. `FRESH-413485ba80fd` stays the current measurement for local and S3.
