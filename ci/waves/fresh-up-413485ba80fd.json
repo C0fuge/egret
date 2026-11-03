@@ -1,0 +1,12 @@
+[
+ {"variant": "fu-tpch", "storage": "local", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "sf10 adbc10 sf1 adbc1", "small_classes": ""},
+ {"variant": "fu-small", "storage": "local", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "fu-scan", "storage": "local", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "fu-small", "storage": "s3", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "small", "small_classes": ""},
+ {"variant": "fu-scan", "storage": "s3", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "scan adbcscan", "small_classes": ""},
+ {"variant": "fu-sf10jdbc", "storage": "s3", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "sf10", "small_classes": ""},
+ {"variant": "fu-sf10adbc", "storage": "s3", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "adbc10", "small_classes": ""},
+ {"variant": "fu-sf1", "storage": "s3", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "sf1 adbc1", "small_classes": ""},
+ {"variant": "fu-load", "storage": "local", "a_server": "413485ba80fd", "a_flags": "", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed", "c_server": "up-native", "c_flags": "", "workloads": "load", "small_classes": ""},
+ {"variant": "fu-zstd-netem", "storage": "local", "a_server": "413485ba80fd", "a_flags": "CZSTD", "b_server": "413485ba80fd", "b_flags": "-DresourceProfile=speed CZSTD", "c_server": "up-native", "c_flags": "-DflightCompression=zstd", "workloads": "netem", "small_classes": ""}
+]
