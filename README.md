@@ -70,7 +70,7 @@ EGRET BUILD f06b5834e76e DONE 2026-10-30 (`ci/BUILD-TRACK-TASK.md` Phase B, item
 
 EGRET FRESH 25aa7eec0f0f DONE 2026-11-03 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", run 41584018828, 10/10 jobs green: [results/FRESH-25aa7eec0f0f.md](results/FRESH-25aa7eec0f0f.md); BUILDS.md row added). Speed (file cache in profile) vs balanced: S3 TPC-H 0.16-0.19, S3 small p95 0.04-0.06 at 1/8/32 clients (the `f06b5834e76e` S3 c32 tail flag is gone), load +50-52 % at 128 clients, scan x8 +25 %, slow-link ZSTD +16 %, local TPC-H 0.96-1.02; 0 errors, 22/22; no regression by the rule. Memory: speed 1.9x balanced on S3 SF10/scans (~3.1 GB), 0.19-0.61 on load/small. Upstream native `6e264c10f403` (unchanged since the last fresh run) still fails TPC-H/small answers (no `tpch` schema, decimal typing); on scans/load speed is at 0.88-0.97 of it. Nothing running. Next: FRESH UPSTREAM TRACKING on the next kestrel pre-release newer than `25aa7eec0f0f`.
 
-EGRET FRESH 413485ba80fd RUN GREEN, REPORT PENDING (2026-11-03; `ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING": pre-release `server-1.0.0-413485ba80fd`, STATUS: item 27 done (speed profile offers duckDbPreserveInsertionOrder=false)). Compare run 41604206524, wave `fresh-up-413485ba80fd` (A = 413485ba80fd balanced, B = `-DresourceProfile=speed`, C = upstream native `6e264c10f403`), finished 10:53 UTC with all 10 ab jobs + aggregate green; results committed by the workflow in [results/fresh-up-413485ba80fd-41604206524/summary.md](results/fresh-up-413485ba80fd-41604206524/summary.md). Nothing running. Next: write `results/FRESH-413485ba80fd.md` from that summary, speed.md and the job logs (load and slow-link numbers come from the logs via the jobs API), in the same layout as FRESH-25aa7eec0f0f (per area speed/balanced, speed/upstream, balanced/upstream, memory, correctness). Compare it with FRESH-25aa7eec0f0f, especially S3 scan x1/x4/x8 + ADBC export for item 27, and note row order under speed. Then add the BUILDS.md row and mark DONE here. Per the 2026-11-03 task note, items 29/30 (HDFS SASL only) need no FRESH wave.
+EGRET FRESH 413485ba80fd DONE 2026-11-03 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", item 27 speed profile `duckDbPreserveInsertionOrder=false`; run 41604206524, 10/10 jobs green: [results/FRESH-413485ba80fd.md](results/FRESH-413485ba80fd.md); BUILDS.md row, regression line and key-build line added). Speed vs balanced: scans x4/x8 1.30-1.46 local and S3 (was 1.07-1.26 in `25aa7eec0f0f`; speed now 1.00-1.04 of upstream native at 4 streams), S3 TPC-H 0.14-0.19, S3 small p95 0.04-0.07, load +41-48 % at 128 clients, 22/22, 0 errors. **Regression by the rule: local small c1 p50 speed/balanced 1.18 JDBC / 1.19 ADBC in all 3 rounds (23.5 -> 27.7 ms JDBC), local ADBC c8 p99 1.14; S3 c1 and 8/32 clients not affected.** Row order without ORDER BY is not checked by the harness (answer checks are order-insensitive). Upstream native `6e264c10f403` unchanged, still fails TPC-H/small, new stream errors at 8 scan streams. Nothing running. Next: FRESH UPSTREAM TRACKING on the next kestrel pre-release newer than `413485ba80fd` (not for items 29/30 only).
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
@@ -354,13 +354,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-06833e736572](results/track-06833e736572/summary.md) (latest of its wave)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md) (latest of its wave)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
+- [track-06833e736572](results/track-06833e736572/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
 - [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
 - [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
 - [track-9044653333cd](results/track-9044653333cd/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
