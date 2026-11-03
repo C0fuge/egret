@@ -309,6 +309,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fresh-up-25aa7eec0f0f-41584018828](results/fresh-up-25aa7eec0f0f-41584018828/summary.md) (latest of its wave)
 - [fresh-up-fc-f06b5834e76e-41437982824](results/fresh-up-fc-f06b5834e76e-41437982824/summary.md) (latest of its wave)
 - [fc-s3-f06b5834e76e-41437523179](results/fc-s3-f06b5834e76e-41437523179/summary.md) (latest of its wave)
 - [fresh-up-f06b5834e76e-41437099791](results/fresh-up-f06b5834e76e-41437099791/summary.md) (latest of its wave)
