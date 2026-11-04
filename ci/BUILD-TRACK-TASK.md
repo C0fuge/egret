@@ -72,3 +72,4 @@ correctness, and the upstream commit measured. If nothing new is waiting, write 
 Note (maintainer, 2026-11-03): items 29 and 30 change only the HDFS path with protected DataNodes (SASL), which these
 waves do not exercise (local disk and S3). Do NOT start a FRESH wave for a pre-release whose new Log entries are only
 items 29/30; write the idle line instead. `FRESH-413485ba80fd` stays the current measurement for local and S3.
+Maintainer, 2026-11-04: `FRESH-413485ba80fd` is accepted as the final FRESH result for item 30 (`d2313a9eb651`).
