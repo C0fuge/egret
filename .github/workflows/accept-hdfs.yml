@@ -13,6 +13,9 @@ on:
       only:
         description: 'Comma-separated cells <sasl|open>-<default|speed>-<1|3> (empty = all 8)'
         default: ''
+      base-run:
+        description: 'With only: run id of the full run whose other cell-* artifacts the report merges (empty = none)'
+        default: ''
 
 permissions:
   contents: read
@@ -174,10 +177,24 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - name: Cells of the base run (only reruns)
+        if: ${{ inputs.base-run != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cell-*
+          path: ${{ runner.temp }}/cells
+          run-id: ${{ inputs.base-run }}
+          github-token: ${{ github.token }}
+      - name: Drop base cells rerun here
+        if: ${{ inputs.base-run != '' }}
+        env:
+          ONLY: ${{ inputs.only }}
+        run: for c in ${ONLY//,/ }; do rm -rf "$RUNNER_TEMP/cells/cell-$c"; done
       - uses: actions/download-artifact@v4
         with:
           pattern: cell-*

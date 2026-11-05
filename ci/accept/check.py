@@ -21,6 +21,7 @@ import base64
 import decimal
 import json
 import os
+import re
 import sys
 import time
 import traceback
@@ -94,6 +95,24 @@ def run(conn, sql):
 
 def error_text(e):
     return f"{type(e).__name__}: {str(e).strip()}"[:400].replace("\n", " ")
+
+
+GRPC_CODES = ["Canceled", "Cancelled", "Unknown", "InvalidArgument", "DeadlineExceeded", "NotFound", "AlreadyExists",
+              "PermissionDenied", "ResourceExhausted", "FailedPrecondition", "Aborted", "OutOfRange", "Unimplemented",
+              "Internal", "Unavailable", "DataLoss", "Unauthenticated", "RESOURCE_EXHAUSTED", "INVALID_ARGUMENT",
+              "DEADLINE_EXCEEDED", "NOT_FOUND", "PERMISSION_DENIED", "FAILED_PRECONDITION", "UNAUTHENTICATED"]
+
+
+def grpc_status(e):
+    """The gRPC status of a failed call, read from the FULL error text, not the driver's prefix: the ADBC driver
+    prints a wire RESOURCE_EXHAUSTED as `INTERNAL: ... (ResourceExhausted; DoGet: ...)` past the 400 chars kept."""
+    full = str(e)
+    codes = "|".join(GRPC_CODES)
+    for pat in (rf"\(({codes}); ", rf"code = ({codes})\b", rf"\b({codes}):"):
+        m = re.findall(pat, full, re.IGNORECASE)
+        if m:
+            return m[-1].replace("_", "").lower()
+    return type(e).__name__.lower()
 
 
 def answer(conn, q, log):
@@ -193,13 +212,14 @@ def main(stage, servers, base, out):
                 try:
                     tab = run(conn, q.sql)
                 except Exception as e:  # noqa: BLE001
-                    txt = error_text(e)
+                    txt, status = error_text(e), grpc_status(e)
+                    if status == "resourceexhausted" and "resourceexhausted" not in txt.lower().replace("_", ""):
+                        txt = "[gRPC ResourceExhausted] " + txt
                     log(f"err  {key} {time.time() - t0:.1f}s {txt}")
                     res["answers"][key] = {"error": txt}
                     # the join may be refused with RESOURCE_EXHAUSTED (gRPC code, also as "ResourceExhausted" inside the
                     # driver's wrapper of a failed DoGet); a server-side INTERNAL refusal is not allowed
-                    norm = txt.lower().replace("_", "").replace(" ", "")
-                    if stage == "smalldisk" and q.id == "sp-join-lineitem" and "resourceexhausted" in norm:
+                    if stage == "smalldisk" and q.id == "sp-join-lineitem" and status == "resourceexhausted":
                         log(f"ok   {key} refused with RESOURCE_EXHAUSTED (allowed)")
                         res["answers"][key]["refused"] = True
                     else:
