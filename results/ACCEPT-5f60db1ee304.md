@@ -4,6 +4,8 @@ Run [42027069331](https://github.com/C0fuge/egret/actions/runs/42027069331), wor
 
 **Verdict: DO NOT SHIP**
 
+Cells: sasl from the `only` rerun 42027069331 (harness a5a0469: check 4 reads the gRPC status from the full error text), reference cells from the full run [42018218548](https://github.com/C0fuge/egret/actions/runs/42018218548). Check 4 detail: the over-size join (`sp-join-lineitem`, 13 copies, 212 MB) is refused with RESOURCE_EXHAUSTED (allowed) in every cell; the remaining failures are complete `sp-group` and `sp-distinct` (9 copies, 156 MB > 64 MiB disk), refused outright ("Nothing was copied") instead of running in copy batches. Smaller complete copies, partial mode and the complete spread scan are exact; tmpfs never full. Item 32's small-disk reserve (6710880 bytes = 10 %) applies, so `-DhdfsLocalCopyMinFreeBytes=8m` was not needed.
+
 Cluster: Hadoop 3.1.3, 2 NameNodes HA (ZooKeeper + ZKFC), Kerberos KDC, 3 DataNodes with `dfs.data.transfer.protection=authentication`, short-circuit socket, one Flight server per DataNode in its network namespace, Flight with Kerberos auth + TLS. Answers compared with the same build on DataNodes without data-transfer protection and with in-process DuckDB over the same files.
 
 | check | default x 1 | default x 3 | speed x 1 | speed x 3 |

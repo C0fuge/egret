@@ -118,3 +118,4 @@ count that as RESOURCE_EXHAUSTED (match the gRPC status, not the driver's prefix
 pre-release (copy reserve on small disks, `hdfs=reads` on the complete path) as soon as it exists; if it still sets no
 lower reserve for small disks, run check 4 with `-DhdfsLocalCopyMinFreeBytes=8m` and report the default separately.
 Maintainer, 2026-11-05 14:22: ACCEPT on `server-1.0.0-5f60db1ee304` (item 32) dispatched by the maintainer: run 42018218548 - do not dispatch another; read its report, fix harness false fails (check 4 status reading) with `only` reruns, then write the verdict.
+- EGRET ACCEPT 5f60db1ee304 DONE 2026-11-05: runs 42018218548 + 42027069331 (only rerun, harness a5a0469), `results/ACCEPT-5f60db1ee304.md`, verdict DO NOT SHIP (check 4 only: complete sp-group/sp-distinct, 9 copies 156 MB > 64 MiB disk, refused instead of copy batches; the join refusal is an allowed RESOURCE_EXHAUSTED); checks 1, 2, 3, 5, 6 pass in every cell.
