@@ -117,3 +117,4 @@ Maintainer, 2026-11-05 13:10: check 4 - the ADBC driver prints a wire RESOURCE_E
 count that as RESOURCE_EXHAUSTED (match the gRPC status, not the driver's prefix). Next ACCEPT: the kestrel item 32
 pre-release (copy reserve on small disks, `hdfs=reads` on the complete path) as soon as it exists; if it still sets no
 lower reserve for small disks, run check 4 with `-DhdfsLocalCopyMinFreeBytes=8m` and report the default separately.
+Maintainer, 2026-11-05 14:22: ACCEPT on `server-1.0.0-5f60db1ee304` (item 32) dispatched by the maintainer: run 42018218548 - do not dispatch another; read its report, fix harness false fails (check 4 status reading) with `only` reruns, then write the verdict.
