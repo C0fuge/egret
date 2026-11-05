@@ -280,7 +280,10 @@ netex=$(cat "$work"/srv*.log | grep -c 'HdfsNetworkException' || true)
 sleep 2; fds1=$(fdRequests)
 note "queries sent $qcount, hdfs=reads lines $reads, HdfsNetworkException $netex, DataNode short-circuit fd requests $fds0 -> $fds1"
 d6=""
-[ "$reads" -ge "$qcount" ] || d6="$d6 hdfs=reads lines $reads < queries $qcount;"
+# per query (qid, ci/accept/logcheck.py): every query the servers ran has an hdfs=reads line
+lc=$("$py" -I "$here/logcheck.py" "$work"/srv*.log); note "hdfs=reads by qid (main + partial): $lc"
+[[ $lc == *" missing=0"* ]] || d6="$d6 queries without an hdfs=reads line: $lc;"
+[ "$reads" -ge "$qcount" ] || d6="$d6 hdfs=reads lines $reads < queries sent $qcount;"
 [ "$netex" -eq 0 ] || d6="$d6 HdfsNetworkException x$netex: $(cat "$work"/srv*.log | grep -m 1 'HdfsNetworkException' | cut -c1-250);"
 [ "$fds1" -gt "$fds0" ] || d6="$d6 short-circuit fd counters did not grow ($fds0 -> $fds1);"
 stop srv
@@ -337,7 +340,7 @@ fi
 
 # check 6: server logs and DataNode counters
 [ "$netex" -eq 0 ] || d6="$d6 HdfsNetworkException (copy disk / low direct stages);"
-if [ -z "$d6" ]; then setc 6-logs pass "hdfs=reads lines $reads for $qcount queries, short-circuit fd requests +$(( fds1 - fds0 )), no HdfsNetworkException"
+if [ -z "$d6" ]; then setc 6-logs pass "hdfs=reads lines $reads for $qcount queries ($lc), short-circuit fd requests +$(( fds1 - fds0 )), no HdfsNetworkException"
 else setc 6-logs fail "${d6# }"; fi
 setc setup pass ""
 logs; dump
