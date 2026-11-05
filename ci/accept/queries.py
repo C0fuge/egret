@@ -64,13 +64,14 @@ SCAN = {
     "scan-lineitem-sp": "SELECT * FROM lineitem_sp",
     "scan-lineitem": "SELECT * FROM tpch.lineitem",
 }
-# partial mode (check 3): additive answers, summed over the per-node parts
+# partial mode (check 3): additive answers, summed over the per-node parts; the server requires
+# schema-qualified names for partial results (INVALID_ARGUMENT otherwise, by design)
 PARTIAL = {
-    "part-lineitem-sp": "SELECT count(*) AS n, sum(l_quantity) AS q FROM lineitem_sp",
-    "part-orders-sp": "SELECT count(*) AS n, sum(o_totalprice) AS t FROM orders_sp",
+    "part-lineitem-sp": "SELECT count(*) AS n, sum(l_quantity) AS q FROM spread.lineitem_sp",
+    "part-orders-sp": "SELECT count(*) AS n, sum(o_totalprice) AS t FROM spread.orders_sp",
     "part-lineitem": "SELECT count(*) AS n, sum(l_quantity) AS q FROM tpch.lineitem",
     "part-group-sp": ("SELECT l_returnflag, l_linestatus, count(*) AS n, sum(l_quantity) AS q"
-                      " FROM lineitem_sp GROUP BY l_returnflag, l_linestatus"),
+                      " FROM spread.lineitem_sp GROUP BY l_returnflag, l_linestatus"),
 }
 
 

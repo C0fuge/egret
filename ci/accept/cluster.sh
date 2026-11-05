@@ -65,7 +65,7 @@ hdfs=(dfs.nameservices ns1 dfs.ha.namenodes.ns1 nn1,nn2
   dfs.namenode.kerberos.principal "$(P nn hdfs.ci)" dfs.namenode.keytab.file /hd/krb/hdfs.keytab
   dfs.namenode.kerberos.internal.spnego.principal "$(P HTTP hdfs.ci)"
   dfs.datanode.kerberos.principal "$(P dn hdfs.ci)" dfs.datanode.keytab.file /hd/krb/hdfs.keytab
-  dfs.web.authentication.kerberos.principal "$(P HTTP hdfs.ci)" dfs.web.authentication.kerberos.keytab /hd/krb/hdfs.keytab
+  dfs.web.authentication.kerberos.principal '*' dfs.web.authentication.kerberos.keytab /hd/krb/hdfs.keytab
   ignore.secure.ports.for.testing true
   dfs.namenode.heartbeat.recheck-interval 15000)
 [ "$prot" = sasl ] && hdfs+=(dfs.data.transfer.protection authentication)
@@ -101,8 +101,9 @@ cp /conf/krb5.conf /etc/krb5.conf; mkdir -p /etc/krb5kdc
 printf '%s\n' '[realms]' ' CI.TEST = {' '  master_key_type = aes256-cts-hmac-sha1-96' \
   '  supported_enctypes = aes256-cts-hmac-sha1-96:normal aes128-cts-hmac-sha1-96:normal' ' }' > /etc/krb5kdc/kdc.conf
 kdb5_util create -s -r CI.TEST -P "$KPASS" > /dev/null
-for p in nn dn HTTP; do kadmin.local -q "addprinc -randkey $p/hdfs.ci@CI.TEST" > /dev/null; done
-kadmin.local -q "ktadd -k /krb/hdfs.keytab nn/hdfs.ci@CI.TEST dn/hdfs.ci@CI.TEST HTTP/hdfs.ci@CI.TEST" > /dev/null
+for p in nn/hdfs.ci dn/hdfs.ci HTTP/hdfs.ci HTTP/172.31.0.10 HTTP/172.31.0.11; do kadmin.local -q "addprinc -randkey $p@CI.TEST" > /dev/null; done
+# fsck and the other web calls go to http://<NameNode IP>:9870 (SPNEGO for HTTP/<IP>); the NameNodes accept every HTTP/ principal of the keytab
+kadmin.local -q "ktadd -k /krb/hdfs.keytab nn/hdfs.ci@CI.TEST dn/hdfs.ci@CI.TEST HTTP/hdfs.ci@CI.TEST HTTP/172.31.0.10@CI.TEST HTTP/172.31.0.11@CI.TEST" > /dev/null
 for i in 1 2 3; do ip=172.31.0.$((11 + i)); kadmin.local -q "addprinc -randkey flight/$ip@CI.TEST" > /dev/null
   kadmin.local -q "ktadd -k /krb/flight$i.keytab flight/$ip@CI.TEST" > /dev/null; done
 kadmin.local -q "addprinc -randkey tester@CI.TEST" > /dev/null
@@ -164,7 +165,8 @@ docker exec "$active" bash -c 'set -e; hdfs dfs -mkdir -p /data/tpch /data/sprea
 # writer-local placement: a put from dn3 with replication 1 keeps the block on dn3
 docker exec dn3 hdfs dfs -D dfs.replication=1 -put /tmp/far0.parquet /data/spread/part_far/0.parquet > "$work/upload-far.log" 2>&1 \
   || abort "HDFS upload of part_far/0.parquet from dn3 failed: $(grep -m 1 -E 'Exception|rror' "$work/upload-far.log" | cut -c1-250)"
-docker exec "$active" hdfs fsck /data/spread -files -blocks -locations > "$work/fsck-spread.log" 2>&1
+docker exec "$active" hdfs fsck /data/spread -files -blocks -locations > "$work/fsck-spread.log" 2>&1 \
+  || abort "fsck failed: $(grep -m 1 -E 'Exception|rror' "$work/fsck-spread.log" | cut -c1-250)"
 python3 - "$work/fsck-spread.log" > "$work/layout.txt" <<'EOF' || abort "layout: $(tail -n 1 "$work/layout.txt")"
 import re, sys
 files, cur = {}, None
@@ -186,6 +188,7 @@ for f, blocks in sorted(files.items()):
 print("layout ok" if not bad else "layout FAIL: " + "; ".join(bad))
 sys.exit(1 if bad else 0)
 EOF
+[ "$(grep -c ' blocks ' "$work/layout.txt")" -ge 18 ] || abort "layout: fsck listed $(grep -c ' blocks ' "$work/layout.txt") spread files, want 19"
 note "layout: $(grep -c ' blocks ' "$work/layout.txt") spread files, $(tail -n 1 "$work/layout.txt")"
 if [ "$prot" = sasl ]; then
   probe=$(docker exec "$active" hdfs dfs -ls /data/tpch/region 2>/dev/null | awk '$1 ~ /^-/ {print $NF}' | head -n 1)
