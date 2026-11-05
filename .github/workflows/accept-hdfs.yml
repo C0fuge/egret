@@ -1,0 +1,190 @@
+name: accept-hdfs
+
+# Independent HDFS acceptance check of a kestrel server pre-release (ci/BUILD-TRACK-TASK.md "SASL HDFS ACCEPTANCE"):
+# Hadoop 3.1.3 HA (ZooKeeper + ZKFC) with Kerberos and SASL-protected DataNodes, one Flight server per DataNode
+# (Kerberos + TLS). Correctness only. Queries, data layout and checks are this repo's (ci/accept/); the cell script
+# follows the shape of kestrel's public service-hdfs infrastructure. Report: results/ACCEPT-<id>.md.
+on:
+  workflow_dispatch:
+    inputs:
+      server-ref:
+        description: 'kestrel pre-release tag (server-1.0.0-<sha12>) or <sha12>'
+        required: true
+      only:
+        description: 'Comma-separated cells <sasl|open>-<default|speed>-<1|3> (empty = all 8)'
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  HADOOP_VERSION: 3.1.3
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      id: ${{ steps.s.outputs.id }}
+      cells: ${{ steps.s.outputs.cells }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: s
+        env:
+          REF: ${{ inputs.server-ref }}
+          ONLY: ${{ inputs.only }}
+        run: |
+          id=${REF#server-1.0.0-}
+          [[ $id =~ ^[0-9a-f]{12}$ ]] || { echo "bad server-ref $REF"; exit 1; }
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          python3 - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json, os
+          cells = [f"{p}-{f}-{n}" for p in ("sasl", "open") for f in ("default", "speed") for n in (1, 3)]
+          only = [x for x in os.environ.get("ONLY", "").split(",") if x]
+          print("cells=" + json.dumps([c for c in cells if not only or c in only]))
+          EOF
+      - name: Server pre-release, hadoopfs extension directory
+        env:
+          ID: ${{ steps.s.outputs.id }}
+        run: |
+          set -euo pipefail
+          K=https://github.com/C0fuge/kestrel/releases/download; I="$RUNNER_TEMP/in"; mkdir -p "$I/app" dl
+          for f in SHA256SUMS arrow-flight-server-1.0.0-$ID-linux.jar flight-server-libs-1.0.0-$ID.tar.zst flight-plugins-1.0.0-$ID.tar.zst; do
+            curl -fsSL --retry 3 -o "dl/$f" "$K/server-1.0.0-$ID/$f"
+          done
+          (cd dl && sha256sum --check --ignore-missing SHA256SUMS)
+          cp "dl/arrow-flight-server-1.0.0-$ID-linux.jar" "$I/app/arrow-flight-server.jar"
+          tar --zstd -xf "dl/flight-server-libs-1.0.0-$ID.tar.zst" -C "$I/app"
+          tar --zstd -xf "dl/flight-plugins-1.0.0-$ID.tar.zst" -C "$I/app"
+          echo "server-1.0.0-$ID" > "$I/SERVER.txt"
+          ls "$I/app"; ls "$I/app/libs" | grep -E '^hadoop-(common|hdfs-client)' || true
+          curl -fsSL --retry 3 -o dl/ci-SHA256SUMS "$K/ci-assets/SHA256SUMS"
+          curl -fsSL --retry 3 -o dl/ext.tar.zst "$K/ci-assets/duckdb-extensions-v1.5.6.tar.zst"
+          (cd dl && grep ' duckdb-extensions-v1.5.6.tar.zst$' ci-SHA256SUMS | sed 's/duckdb-extensions-v1.5.6.tar.zst/ext.tar.zst/' | sha256sum -c)
+          mkdir -p dl/ext "$I/extdir/v1.5.6/linux_amd64" && tar --zstd -xf dl/ext.tar.zst -C dl/ext
+          f=$(find dl/ext -path '*v1.5.6/linux_amd64/hadoopfs.duckdb_extension' | head -n 1); test -n "$f"
+          cp "$f" "$I/extdir/v1.5.6/linux_amd64/"
+          # native Hadoop library for the server's own Java HDFS client (short-circuit), matching its client jars
+          v=$(ls "$I/app/libs" | sed -n 's/^hadoop-common-\([0-9.]*\)\.jar$/\1/p' | head -n 1)
+          img=apache/hadoop:${v:-3.4.1}; docker pull -q "$img" || img=apache/hadoop:3.4.1
+          docker create --name hlib "$img" > /dev/null && docker cp hlib:/opt/hadoop/lib/native "$I/hnative" && docker rm hlib > /dev/null
+          echo "server Hadoop client ${v:-?}, native library from $img"; ls "$I/hnative"
+      - id: hcache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/hadoop-dist
+          key: hadoop-${{ env.HADOOP_VERSION }}-dist-v1
+      - name: Hadoop ${{ env.HADOOP_VERSION }} (Apache archive, checksum verified)
+        if: steps.hcache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          D="$RUNNER_TEMP/hadoop-dist"; mkdir -p "$D"; cd "$D"
+          U=https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
+          curl -fsSL --retry 5 -o hadoop.tar.gz "$U"; curl -fsSL --retry 5 -o hadoop.tar.gz.sha512 "$U.sha512"
+          want=$(tr -d ' \n' < hadoop.tar.gz.sha512 | sed -E 's/.*[=:]//' | tr 'A-F' 'a-f'); got=$(sha512sum hadoop.tar.gz | cut -d' ' -f1)
+          [ "$want" = "$got" ] || { echo "sha512 mismatch: $want vs $got"; cat hadoop.tar.gz.sha512; exit 1; }
+          ls -l
+      - name: TPC-H SF1 layout and DuckDB reference answers
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/py" && "$RUNNER_TEMP/py/bin/pip" install -q duckdb==1.4.1 pyarrow==26.0.0
+          "$RUNNER_TEMP/py/bin/python" -I ci/accept/data.py "$RUNNER_TEMP/in"
+          du -sh "$RUNNER_TEMP/in"/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: accept-input
+          path: ${{ runner.temp }}/in
+          compression-level: 0
+          retention-days: 3
+
+  cell:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: ${{ fromJSON(needs.prepare.outputs.cells) }}
+    name: cell ${{ matrix.cell }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: accept-input
+          path: ${{ runner.temp }}/in
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/hadoop-dist
+          key: hadoop-${{ env.HADOOP_VERSION }}-dist-v1
+          fail-on-cache-miss: true
+      - name: Images (Hadoop 3.1.3 on temurin 8, server base), client
+        run: |
+          set -euo pipefail
+          B="$RUNNER_TEMP/himg"; mkdir -p "$B"; tar -xzf "$RUNNER_TEMP/hadoop-dist/hadoop.tar.gz" -C "$B"
+          mv "$B/hadoop-$HADOOP_VERSION" "$B/hadoop"; rm -rf "$B/hadoop/share/doc"
+          printf '%s\n' 'FROM eclipse-temurin:8-jdk-focal' \
+            'RUN groupadd -g 1000 hadoop && useradd -u 1000 -g 1000 -m hadoop && apt-get update -qq && apt-get install -y -qq --no-install-recommends libsnappy1v5 zlib1g libssl1.1 > /dev/null && rm -rf /var/lib/apt/lists/*' \
+            'COPY --chown=1000:1000 hadoop /opt/hadoop' \
+            'ENV HADOOP_HOME=/opt/hadoop HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop PATH=/opt/hadoop/bin:/opt/hadoop/sbin:$PATH' \
+            'USER hadoop' 'WORKDIR /home/hadoop' > "$B/Dockerfile"
+          docker build -q -t accept-hadoop:3.1.3 "$B"
+          S="$RUNNER_TEMP/simg"; mkdir -p "$S"
+          printf '%s\n' 'FROM eclipse-temurin:17-jdk-focal' \
+            'RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends libxml2 libkrb5-3 libgssapi-krb5-2 libgsasl7 libuuid1 > /dev/null && rm -rf /var/lib/apt/lists/*' \
+            > "$S/Dockerfile"
+          docker build -q -t accept-server "$S"
+          docker pull -q ubuntu:24.04; docker pull -q zookeeper:3.8
+          sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends krb5-user libkrb5-dev > /dev/null
+          python3 -m venv "$RUNNER_TEMP/py"
+          "$RUNNER_TEMP/py/bin/pip" install -q pyarrow==26.0.0 adbc-driver-flightsql==1.12.0 adbc-driver-manager==1.12.0 duckdb==1.4.1 gssapi==1.9.0
+      - name: Cell ${{ matrix.cell }}
+        run: |
+          IFS=- read -r prot prof n <<< "${{ matrix.cell }}"
+          bash ci/accept/cluster.sh "$prot" "$prof" "$n" "$RUNNER_TEMP/in" "$RUNNER_TEMP/work"
+      - name: Cell summary
+        if: always()
+        run: |
+          w="$RUNNER_TEMP/work"; mkdir -p "$w"
+          { echo "### ${{ matrix.cell }}"; echo '```'; cat "$w/notes.txt" 2>/dev/null || echo "no notes"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          cat "$w/notes.txt" 2>/dev/null || true
+          for f in "$w"/*.log; do [ -f "$f" ] && { echo "== $f"; tail -n 15 "$f"; }; done 2>/dev/null | head -n 400
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cell-${{ matrix.cell }}
+          path: |
+            ${{ runner.temp }}/work/*.json
+            ${{ runner.temp }}/work/*.log
+            ${{ runner.temp }}/work/*.txt
+            ${{ runner.temp }}/work/conf/*-site.xml
+          retention-days: 14
+
+  report:
+    needs: [prepare, cell]
+    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cell-*
+          path: ${{ runner.temp }}/cells
+      - uses: actions/download-artifact@v4
+        with:
+          name: accept-input
+          path: ${{ runner.temp }}/in
+      - name: Report
+        env:
+          ID: ${{ needs.prepare.outputs.id }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/py" && "$RUNNER_TEMP/py/bin/pip" install -q duckdb==1.4.1 pyarrow==26.0.0
+          "$RUNNER_TEMP/py/bin/python" -I ci/accept/report.py "$RUNNER_TEMP/cells" "$RUNNER_TEMP/in" "$ID" "$GITHUB_RUN_ID" "results/ACCEPT-$ID.md" | tee -a "$GITHUB_STEP_SUMMARY"
+          git config user.name C0fuge
+          git config user.email 189659128+C0fuge@users.noreply.github.com
+          git add "results/ACCEPT-$ID.md"
+          git commit -m "[skip ci] Results: HDFS acceptance $ID (run $GITHUB_RUN_ID)" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
