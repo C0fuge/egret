@@ -4,6 +4,8 @@ Run [42055012677](https://github.com/C0fuge/egret/actions/runs/42055012677), wor
 
 **Verdict: DO NOT SHIP**
 
+Check 4 detail (kestrel item 33; harness unchanged since `5f60db1ee304`, a5a0469): copies are now batched for the scans and some aggregates (17-75 copy batches per cell, peak tmpfs use 56369152 of 67108864 bytes, never full, no "No space left"), and the over-size join (`sp-join-lineitem`, 13 copies, 212 MB) is an allowed RESOURCE_EXHAUSTED refusal. **Still failing in all 4 cells: complete `sp-group` and `sp-distinct` (9 copies, ~156 MB) are refused outright ("Nothing was copied") instead of running in copy batches.** New in this build: the refusal says "copies in use by running queries take 51955890 bytes" (about 3 lineitem_sp files) although the client sends one query at a time and every earlier stream was read to the end and closed; with `5f60db1ee304` the same refusal saw all 67108864 bytes free. So copies of finished queries stay pinned (likely the item 33 "reused copies pinned first" path). In the speed cells this also refuses the partial `part-lineitem-sp` and `part-group-sp` (1 copy, 17 MB, with ~15 MB free), which passed on `5f60db1ee304`. Checks 1, 2, 3, 5, 6 pass in every cell.
+
 Cluster: Hadoop 3.1.3, 2 NameNodes HA (ZooKeeper + ZKFC), Kerberos KDC, 3 DataNodes with `dfs.data.transfer.protection=authentication`, short-circuit socket, one Flight server per DataNode in its network namespace, Flight with Kerberos auth + TLS. Answers compared with the same build on DataNodes without data-transfer protection and with in-process DuckDB over the same files.
 
 | check | default x 1 | default x 3 | speed x 1 | speed x 3 |
