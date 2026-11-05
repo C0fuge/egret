@@ -63,7 +63,7 @@ hdfs=(dfs.nameservices ns1 dfs.ha.namenodes.ns1 nn1,nn2
   dfs.client.read.shortcircuit true dfs.domain.socket.path /var/run/hdfs-sockets/dn
   dfs.block.access.token.enable true
   dfs.namenode.kerberos.principal "$(P nn hdfs.ci)" dfs.namenode.keytab.file /hd/krb/hdfs.keytab
-  dfs.namenode.kerberos.internal.spnego.principal "$(P HTTP hdfs.ci)"
+  dfs.namenode.kerberos.internal.spnego.principal '*'
   dfs.datanode.kerberos.principal "$(P dn hdfs.ci)" dfs.datanode.keytab.file /hd/krb/hdfs.keytab
   dfs.web.authentication.kerberos.principal '*' dfs.web.authentication.kerberos.keytab /hd/krb/hdfs.keytab
   ignore.secure.ports.for.testing true
