@@ -73,3 +73,38 @@ Note (maintainer, 2026-11-03): items 29 and 30 change only the HDFS path with pr
 waves do not exercise (local disk and S3). Do NOT start a FRESH wave for a pre-release whose new Log entries are only
 items 29/30; write the idle line instead. `FRESH-413485ba80fd` stays the current measurement for local and S3.
 Maintainer, 2026-11-04: `FRESH-413485ba80fd` is accepted as the final FRESH result for item 30 (`d2313a9eb651`).
+
+## SASL HDFS ACCEPTANCE (maintainer, 2026-11-05 00:10) - first, before anything else
+The server lane's own CI cells passed builds that the maintainer's local stand then failed (they used schema-qualified
+names, 4-file tables, few endpoints). Build an **independent acceptance check in this repo**, written from the test
+list below, not from kestrel's cells, so it runs in the cloud on every server pre-release and the maintainer's laptop
+is no longer needed for it. Correctness only, not speed.
+- New workflow `.github/workflows/accept-hdfs.yml` (workflow_dispatch, input `server-ref` = pre-release tag). Infra may
+  reuse kestrel's service-hdfs images/scripts (check out kestrel at the pre-release commit for them), the queries,
+  data layout and checks must be this repo's (`ci/accept/`).
+- Cluster: Hadoop 3.1.3, 2 NameNodes HA (ZooKeeper + ZKFC), Kerberos (KDC), 3 DataNodes with
+  `dfs.data.transfer.protection=authentication`, short-circuit socket, one Flight server per DataNode in that node's
+  network namespace, Flight with Kerberos auth + TLS. Reference = the same build against the same data with
+  DataNodes WITHOUT data-transfer protection (privileged ports or protection off), answers hashed (order-insensitive
+  where the query has no ORDER BY).
+- Data: TPC-H SF1, lineitem split into 12+ files; a schema `spread` with lineitem/orders copies at 1 MiB block size
+  (replication 2 and 1) so no DataNode holds any of their files whole; also a layout where the FIRST file of a table
+  the query does not touch is on another node.
+- Checks, each in default profile and `-DresourceProfile=speed`, on 1 server and on 3 servers (cluster):
+  1. TPC-H 22/22 with PLAIN names and default schema (as clients send them) and again schema-qualified; every answer
+     equals the reference; no "refused" counts as pass.
+  2. spread set with plain names: count(*), full scan (row count + hash), GROUP BY, GROUP BY ORDER BY LIMIT, HAVING,
+     count(DISTINCT), comma join `FROM orders_sp o, customer c WHERE ...` and JOIN ... ON, TPC-H q03/q12 on the spread
+     tables. A 0-row answer where the reference has rows = FAIL (silent wrong answer).
+  3. partial mode (the partial-results header) on 3 servers: per-node sums equal the complete answer.
+  4. small copy disk: `-DhdfsLocalCopyDir` on a 64 MiB tmpfs: complete and partial count / GROUP BY / scans of the
+     spread tables finish and are exact (batched), tmpfs never full; a join that cannot fit is refused with
+     RESOURCE_EXHAUSTED, never INTERNAL or a wrong answer.
+  5. low direct memory: 3 servers `-XX:MaxDirectMemorySize=512m`, speed + `-DdistributedComplete=true`, 4 full scans
+     of the 12-file lineitem in a row: exact, no OutOfMemoryError.
+  6. server logs: every query has an `hdfs=reads` line; short-circuit fd counters on the DataNodes grow; no DuckDB
+     read of a non-local file through hadoopfs (no `HdfsNetworkException`).
+- Output `results/ACCEPT-<id>.md`: table check x profile x servers = pass/fail with the error text, verdict
+  "SHIP" only if all pass. Commit raw logs as a run artifact, not in git.
+- First run on `server-1.0.0-8060179bce0c` (kestrel item 31), then on every newer pre-release whose Log names an
+  HDFS item. Write "EGRET ACCEPT <id> DONE" in this file's Log when a report exists. Keep the FRESH rules as they are.
