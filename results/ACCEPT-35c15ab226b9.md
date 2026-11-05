@@ -31,3 +31,13 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
 
 Raw logs: run artifacts `cell-*`.
+
+## Note: check 4 without the item 33 room wait (session note, 2026-11-05)
+
+This run (dispatched by the maintainer's watcher, harness 66aed33) started the check 4 servers WITHOUT
+`-DhdfsLocalCopyRoomWaitMillis` (the harness had no way to pass it then). It therefore answers the maintainer's second
+question: **without the room wait the speed partial cells still fail** (`part-lineitem-sp` / `part-group-sp` refused
+with ResourceExhausted; the refusal counts ~52 MB "copies in use by other running queries"). In the default cells check 4
+now passes (complete `sp-group` / `sp-distinct` no longer refused, which failed on `5f60db1ee304` and `50fe065af50c`).
+The verdict above is provisional: check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000` on every server still needs one
+dispatch of `accept-hdfs.yml` with the new input `smalldisk-opts=-DhdfsLocalCopyRoomWaitMillis=30000`.
