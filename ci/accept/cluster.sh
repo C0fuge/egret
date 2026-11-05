@@ -294,7 +294,8 @@ for i in $(seq "$n"); do
 done
 ( while :; do for i in $(seq "$n"); do echo "$i $(df -B1 --output=used "$work/copies$i" | tail -n 1)"; done; sleep 0.2; done ) > "$work/smalldisk-used.txt" 2>/dev/null &
 sampler=$!
-if COPIES="$work/copies%d" start sd "-DhdfsLocalCopyDir=/copies" 1g; then
+note "check 4 server options: -DhdfsLocalCopyDir=/copies ${SMALLDISK_OPTS:-}"
+if COPIES="$work/copies%d" start sd "-DhdfsLocalCopyDir=/copies ${SMALLDISK_OPTS:-}" 1g; then
   "$py" -I "$here/check.py" smalldisk "$servers" "$in" "$work/smalldisk.json" > "$work/smalldisk.log" 2>&1
   tail -n 3 "$work/smalldisk.log"
   st=$(jq -r '.checks.smalldisk.status // "fail"' "$work/smalldisk.json" 2>/dev/null || echo fail)

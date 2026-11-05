@@ -16,6 +16,9 @@ on:
       base-run:
         description: 'With only: run id of the full run whose other cell-* artifacts the report merges (empty = none)'
         default: ''
+      smalldisk-opts:
+        description: 'Extra -D server options for check 4 only (e.g. -DhdfsLocalCopyRoomWaitMillis=30000; empty = none)'
+        default: ''
 
 permissions:
   contents: read
@@ -150,7 +153,10 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/py"
           "$RUNNER_TEMP/py/bin/pip" install -q pyarrow==26.0.0 adbc-driver-flightsql==1.12.0 adbc-driver-manager==1.12.0 duckdb==1.4.1 gssapi==1.9.0
       - name: Cell ${{ matrix.cell }}
+        env:
+          SMALLDISK_OPTS: ${{ inputs.smalldisk-opts }}
         run: |
+          [[ -z $SMALLDISK_OPTS || $SMALLDISK_OPTS =~ ^(-D[A-Za-z0-9_.]+=[A-Za-z0-9_.]+)(\ -D[A-Za-z0-9_.]+=[A-Za-z0-9_.]+)*$ ]] || { echo "bad smalldisk-opts"; exit 1; }
           IFS=- read -r prot prof n <<< "${{ matrix.cell }}"
           bash ci/accept/cluster.sh "$prot" "$prof" "$n" "$RUNNER_TEMP/in" "$RUNNER_TEMP/work"
       - name: Cell summary
