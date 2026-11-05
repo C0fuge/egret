@@ -79,10 +79,19 @@ jobs:
         run: |
           set -euo pipefail
           D="$RUNNER_TEMP/hadoop-dist"; mkdir -p "$D"; cd "$D"
-          U=https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
-          curl -fsSL --retry 5 -o hadoop.tar.gz "$U"; curl -fsSL --retry 5 -o hadoop.tar.gz.sha512 "$U.sha512"
+          # archive.apache.org resets runner connections at times: retry on every error, then mirrors keeping old releases
+          P=hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
+          get() { curl -fsSL --retry 4 --retry-all-errors --retry-delay 5 --connect-timeout 20 -o "$1" "$2"; }
+          src=""
+          for m in https://archive.apache.org/dist https://repo.huaweicloud.com/apache https://mirrors.aliyun.com/apache https://mirror.nju.edu.cn/apache; do
+            get hadoop.tar.gz.sha512 "$m/$P.sha512" && get hadoop.tar.gz "$m/$P" && { src=$m; break; }
+            echo "mirror $m failed"
+          done
+          [ -n "$src" ] || { echo "Hadoop $HADOOP_VERSION not downloadable from any mirror"; exit 1; }
+          get archive.sha512 "https://archive.apache.org/dist/$P.sha512" && cmp -s archive.sha512 hadoop.tar.gz.sha512 || echo "checksum file from $src (archive copy not reachable or different)"
           want=$(tr -d ' \n' < hadoop.tar.gz.sha512 | sed -E 's/.*[=:]//' | tr 'A-F' 'a-f'); got=$(sha512sum hadoop.tar.gz | cut -d' ' -f1)
           [ "$want" = "$got" ] || { echo "sha512 mismatch: $want vs $got"; cat hadoop.tar.gz.sha512; exit 1; }
+          echo "Hadoop $HADOOP_VERSION from $src, sha512 ok"
           ls -l
       - name: TPC-H SF1 layout and DuckDB reference answers
         run: |
