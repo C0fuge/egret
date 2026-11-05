@@ -113,3 +113,7 @@ is no longer needed for it. Correctness only, not speed.
 - EGRET ACCEPT 8060179bce0c DONE 2026-11-05: run 41995351608, `results/ACCEPT-8060179bce0c.md`, verdict DO NOT SHIP
   (check 4 small copy disk: every complete copy refused, INTERNAL not RESOURCE_EXHAUSTED; check 6: complete-answer
   queries without an `hdfs=reads` line); checks 1, 2, 3, 5 pass in every cell.
+Maintainer, 2026-11-05 13:10: check 4 - the ADBC driver prints a wire RESOURCE_EXHAUSTED as `INTERNAL: ... (ResourceExhausted; ...)`;
+count that as RESOURCE_EXHAUSTED (match the gRPC status, not the driver's prefix). Next ACCEPT: the kestrel item 32
+pre-release (copy reserve on small disks, `hdfs=reads` on the complete path) as soon as it exists; if it still sets no
+lower reserve for small disks, run check 4 with `-DhdfsLocalCopyMinFreeBytes=8m` and report the default separately.
