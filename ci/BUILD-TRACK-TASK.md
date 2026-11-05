@@ -108,3 +108,8 @@ is no longer needed for it. Correctness only, not speed.
   "SHIP" only if all pass. Commit raw logs as a run artifact, not in git.
 - First run on `server-1.0.0-8060179bce0c` (kestrel item 31), then on every newer pre-release whose Log names an
   HDFS item. Write "EGRET ACCEPT <id> DONE" in this file's Log when a report exists. Keep the FRESH rules as they are.
+
+## Log
+- EGRET ACCEPT 8060179bce0c DONE 2026-11-05: run 41995351608, `results/ACCEPT-8060179bce0c.md`, verdict DO NOT SHIP
+  (check 4 small copy disk: every complete copy refused, INTERNAL not RESOURCE_EXHAUSTED; check 6: complete-answer
+  queries without an `hdfs=reads` line); checks 1, 2, 3, 5 pass in every cell.
