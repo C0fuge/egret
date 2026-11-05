@@ -76,7 +76,7 @@ EGRET ACCEPT 8060179bce0c DONE 2026-11-05 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET ACCEPT 5f60db1ee304 DONE 2026-11-05 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 32; maintainer's full run 42018218548 + `only` rerun 42027069331 of the 4 sasl cells (harness a5a0469), both green: [results/ACCEPT-5f60db1ee304.md](results/ACCEPT-5f60db1ee304.md)). **Verdict: DO NOT SHIP (check 4 only).** Passes in all 4 profile x servers cells: TPC-H 22/22 plain and schema-qualified, spread set (17/17, 47/47), partial sums = complete, low direct memory 4 scans exact, **check 6 now passes** (the 8060179bce0c `hdfs=reads` gap is fixed). Item 32 sets a small-disk reserve (6710880 bytes = 10 % of the 64 MiB tmpfs), so the `-DhdfsLocalCopyMinFreeBytes=8m` fallback was not needed. With the status read from the full error text, the over-size join is now an allowed RESOURCE_EXHAUSTED refusal. **Fails (server): check 4: complete `sp-group` and `sp-distinct` (9 file copies, 156 MB > 64 MiB disk) are refused outright (ResourceExhausted, "Nothing was copied") instead of running in copy batches;** smaller copies, partial mode and the complete spread scan are exact, tmpfs never full. Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `5f60db1ee304` whose Log names an HDFS item (FRESH rules unchanged).
 
-idle 2026-11-05 09:50 UTC, newest tracked 8060179bce0c
+idle 2026-11-05 13:28 UTC, newest tracked 5f60db1ee304
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
