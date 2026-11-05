@@ -78,6 +78,8 @@ EGRET ACCEPT 5f60db1ee304 DONE 2026-11-05 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET ACCEPT 50fe065af50c DONE 2026-11-05 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 33; run 42055012677, 8 cells + report green, harness unchanged: [results/ACCEPT-50fe065af50c.md](results/ACCEPT-50fe065af50c.md)). **Verdict: DO NOT SHIP (check 4 only).** Checks 1, 2, 3, 5, 6 pass in all 4 profile x servers cells; tmpfs never full, scans batched, over-size join an allowed RESOURCE_EXHAUSTED. **Fails (server): complete `sp-group` / `sp-distinct` (9 copies, ~156 MB) still refused instead of copy batches, and now the refusal counts 51955890 bytes "in use by running queries" while no other query runs (5f60db1ee304: 0): copies of finished queries stay pinned; in the speed cells this also refuses partial `part-lineitem-sp` / `part-group-sp` (passed on 5f60db1ee304).** Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `50fe065af50c` whose Log names an HDFS item (FRESH rules unchanged).
 
+idle 2026-11-05 17:27 UTC, newest tracked 50fe065af50c
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
