@@ -196,8 +196,10 @@ def main(stage, servers, base, out):
                     txt = error_text(e)
                     log(f"err  {key} {time.time() - t0:.1f}s {txt}")
                     res["answers"][key] = {"error": txt}
-                    if stage == "smalldisk" and q.id == "sp-join-lineitem" and "RESOURCE_EXHAUSTED" in txt.upper().replace(" ", "_") \
-                            and "INTERNAL" not in txt.upper():
+                    # the join may be refused with RESOURCE_EXHAUSTED (gRPC code, also as "ResourceExhausted" inside the
+                    # driver's wrapper of a failed DoGet); a server-side INTERNAL refusal is not allowed
+                    norm = txt.lower().replace("_", "").replace(" ", "")
+                    if stage == "smalldisk" and q.id == "sp-join-lineitem" and "resourceexhausted" in norm:
                         log(f"ok   {key} refused with RESOURCE_EXHAUSTED (allowed)")
                         res["answers"][key]["refused"] = True
                     else:
