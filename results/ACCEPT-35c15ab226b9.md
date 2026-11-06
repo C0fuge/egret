@@ -2,7 +2,7 @@
 
 Run [42196478105](https://github.com/C0fuge/egret/actions/runs/42196478105), workflow `accept-hdfs.yml`, checks from `ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE" (this repo's queries, layout and checks, `ci/accept/`).
 
-**Verdict: SHIP**
+**Verdict: SHIP** (with `-DhdfsLocalCopyRoomWaitMillis=30000` on every check 4 server; see the note on the run without it)
 
 Cluster: Hadoop 3.1.3, 2 NameNodes HA (ZooKeeper + ZKFC), Kerberos KDC, 3 DataNodes with `dfs.data.transfer.protection=authentication`, short-circuit socket, one Flight server per DataNode in its network namespace, Flight with Kerberos auth + TLS. Answers compared with the same build on DataNodes without data-transfer protection and with in-process DuckDB over the same files.
 
@@ -26,3 +26,13 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
 
 Raw logs: run artifacts `cell-*`.
+
+## Note: check 4 with and without the item 33 room wait (session note, 2026-11-06)
+
+- This run (42196478105, harness a06ac49) started every check 4 server with `-DhdfsLocalCopyDir=/copies
+  -DhdfsLocalCopyRoomWaitMillis=30000` (input `smalldisk-opts`). All checks pass in all 4 cells: verdict SHIP.
+- The earlier watcher run [42113544966](https://github.com/C0fuge/egret/actions/runs/42113544966) (harness 66aed33)
+  started them WITHOUT the room wait: checks 1, 2, 3, 5, 6 passed everywhere and check 4 passed in both default cells,
+  but **failed in both speed cells**: partial `part-lineitem-sp` / `part-group-sp` refused with ResourceExhausted, the
+  refusal counting ~52 MB as "copies in use by other running queries". The room wait is opt-in in this build, so with
+  the shipped defaults the speed profile on a small copy disk still refuses these partial queries.
