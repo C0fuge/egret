@@ -26,3 +26,13 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
 
 Raw logs: run artifacts `cell-*`.
+
+## Note: check 4 options and coverage (session note, 2026-11-06)
+
+- This run (42261777686, harness unchanged since ea99fcf) started every check 4 server with `-DhdfsLocalCopyDir=/copies
+  -DhdfsLocalCopyRoomWaitMillis=30000` (input `smalldisk-opts`), as the SHIP runs of `35c15ab226b9` and `deafc861cce3`.
+  Verdict SHIP holds for that setting; check 4 without the room wait was not run on this build.
+- Build content: kestrel items 35 (distributedComplete merge admission, memory shortage = RESOURCE_EXHAUSTED) and
+  36 (1) part 1, (3), (5). Check 4 runs without `distributedComplete`, so the item 36 (1) stand case (speed +
+  `distributedComplete=true` on the 64 MiB copy disk, deleted-but-open copies) is **not** covered by this acceptance
+  check; check 5 (speed + `distributedComplete=true`, 512 MiB direct) passes, without a small copy disk.
