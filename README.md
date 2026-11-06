@@ -86,6 +86,8 @@ EGRET FRESH deafc861cce3 DONE 2026-11-06 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTRE
 
 EGRET ACCEPT 19efa29b1b57 DONE 2026-11-06 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel items 35 and 36 (1) part 1 / (3) / (5); run 42261777686, 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-19efa29b1b57.md](results/ACCEPT-19efa29b1b57.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: check 4 runs without `distributedComplete`, so the item 36 (1) stand case (speed + DC on the small copy disk) is not tested here; check 4 without the room wait not run. No FRESH wave (new code only on the DC / HDFS local-copy path and error statuses, not exercised by the local/S3 waves). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `19efa29b1b57` whose Log names an HDFS item (FRESH rules unchanged).
 
+EGRET ACCEPT 6384bc55b173 RUNNING 2026-11-06 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 36 (1) leak / (2) keytab start / (4) logs): run 42278048164 (dispatched 19:15Z by the release watcher; not re-dispatched), 8 cells running; its report job commits `results/ACCEPT-6384bc55b173.md`. Next: read that report, note whether check 4 ran with `-DhdfsLocalCopyRoomWaitMillis=30000`, write the verdict here and in the task Log.
+
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
   collected and tested only in a final run after Reports 1-3 (including the S3 read-cache pair). Every server runs in an identically limited
