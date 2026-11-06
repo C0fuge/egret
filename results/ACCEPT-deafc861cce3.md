@@ -26,3 +26,10 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
 
 Raw logs: run artifacts `cell-*`.
+
+## Note: check 4 options (session note, 2026-11-06)
+
+- This run (42223763930, harness ea99fcf) started every check 4 server with `-DhdfsLocalCopyDir=/copies
+  -DhdfsLocalCopyRoomWaitMillis=30000` (input `smalldisk-opts`), as the SHIP run of `35c15ab226b9`. Verdict SHIP holds
+  for that setting. Check 4 without the room wait was not run on this build, so whether the speed partial cells pass with
+  the shipped defaults (they failed on `35c15ab226b9`) is not measured here.
