@@ -88,7 +88,7 @@ EGRET ACCEPT 19efa29b1b57 DONE 2026-11-06 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET ACCEPT 6384bc55b173 DONE 2026-11-06 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 36 (1) / (2) / (4); run 42278048164 (release watcher), 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-6384bc55b173.md](results/ACCEPT-6384bc55b173.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: item 36 (1) stand case (speed + DC on the small copy disk), (2) keytab start, (4) log wording; check 4 without the room wait not run. No FRESH wave (no change on the local/S3 path). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `6384bc55b173` whose Log names an HDFS item (FRESH rules unchanged).
 
-idle 2026-11-06 21:28 UTC, newest tracked 6384bc55b173 (no kestrel pre-release newer than `6384bc55b173`; `5a8e831eade2` is older and contained; nothing running).
+idle 2026-11-07 03:26 UTC, newest tracked 6384bc55b173 (no kestrel pre-release newer than `6384bc55b173`; nothing running).
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
