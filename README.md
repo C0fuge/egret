@@ -198,7 +198,7 @@ EGRET ACCEPT 06c5adc7d7c9 RECHECK DONE 2026-11-07: run 42390647941 (dispatched 1
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
-ACCEPT b69660b9260a running 2026-11-07 19:28 UTC (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 38: ticket-cache hint, drain waits for late calls, one-line DC fallback reason): run 42406253240 (session-dispatched, all 8 cells, `smalldisk-opts=-DhdfsLocalCopyRoomWaitMillis=30000`, harness unchanged). Next: when green, the report it commits (`results/ACCEPT-b69660b9260a.md`) is the verdict; fix harness false fails with `only` reruns. No FRESH wave (no change on the local/S3 path).
+EGRET ACCEPT b69660b9260a DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 38: ticket-cache hint for non-FILE krb5 caches, drain waits for late DoGet calls, one-line DC fallback reason; run 42406253240 (session-dispatched), 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-b69660b9260a.md](results/ACCEPT-b69660b9260a.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: item 38 log/hint wording (KEYRING/KCM start hint, drain line, fallback reason); check 4 without the room wait not run. No FRESH wave (no change on the local/S3 path). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `b69660b9260a` whose Log names an HDFS item (FRESH rules unchanged).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
