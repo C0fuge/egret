@@ -90,7 +90,7 @@ EGRET ACCEPT 6384bc55b173 DONE 2026-11-06 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET ACCEPT 06c5adc7d7c9 DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 37 (a)-(d); run 42351380956 (session-dispatched), 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-06c5adc7d7c9.md](results/ACCEPT-06c5adc7d7c9.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: item 37 storage denial, stop under load, no-ticket-cache WARN; check 4 without the room wait not run. No FRESH wave (no change on the local/S3 path). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `06c5adc7d7c9` whose Log names an HDFS item (FRESH rules unchanged).
 
-idle 2026-11-07 15:30 UTC, newest tracked 06c5adc7d7c9 (no kestrel pre-release newer than `06c5adc7d7c9`; nothing running).
+RERUN 06c5adc7d7c9 running 2026-11-07 17:35 UTC: run 42390647941 (dispatched 16:18, not by a session) overwrote `results/ACCEPT-06c5adc7d7c9.md` with DO NOT SHIP, but its 3 failed cells (open-speed-1, sasl-speed-1, sasl-speed-3) failed only the harness layout setup check (random HDFS placement left one 17-block `lineitem_sp` file whole on one DataNode; no server query ran). Harness fix fcf1eb3 (re-put such files, at most 6 rounds); `only` rerun of those 3 cells 42396888303 (base-run 42390647941, room wait) running. Next: if green, the report it commits is the verdict for this build; no kestrel pre-release newer than `06c5adc7d7c9`.
 
 - Server comparison task `ci/COMPARE-TASK.md` (4 servers). `ours-new` is pinned to `7562a5bdb7b9`, the build of the
   first comparison run (workflow input default). Newer pre-releases (`84fec772ec50` and any later one) are
