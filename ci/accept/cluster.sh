@@ -165,9 +165,14 @@ docker exec "$active" bash -c 'set -e; hdfs dfs -mkdir -p /data/tpch /data/sprea
 # writer-local placement: a put from dn3 with replication 1 keeps the block on dn3
 docker exec dn3 hdfs dfs -D dfs.replication=1 -put /tmp/far0.parquet /data/spread/part_far/0.parquet > "$work/upload-far.log" 2>&1 \
   || abort "HDFS upload of part_far/0.parquet from dn3 failed: $(grep -m 1 -E 'Exception|rror' "$work/upload-far.log" | cut -c1-250)"
+# HDFS places replicas at random: a 17-block replication-2 file lands whole on one of the 3 DataNodes with ~0.1 % per
+# node (~4 % per cell over the 12 lineitem_sp files; run 42390647941 lost 3 cells to it). Such files are put again
+# (same source and options) and the layout is checked again, at most 6 rounds; the check itself is unchanged.
+layout_ok=""
+for round in 1 2 3 4 5 6; do
 docker exec "$active" hdfs fsck /data/spread -files -blocks -locations > "$work/fsck-spread.log" 2>&1 \
   || abort "fsck failed: $(grep -m 1 -E 'Exception|rror' "$work/fsck-spread.log" | cut -c1-250)"
-python3 - "$work/fsck-spread.log" > "$work/layout.txt" <<'EOF' || abort "layout: $(tail -n 1 "$work/layout.txt")"
+if python3 - "$work/fsck-spread.log" "$work/layout-redo.txt" > "$work/layout.txt" <<'EOF'; then layout_ok=1; break; fi
 import re, sys
 files, cur = {}, None
 for line in open(sys.argv[1]):
@@ -176,7 +181,7 @@ for line in open(sys.argv[1]):
         cur = m.group(1); files[cur] = []; continue
     if cur and re.match(r"^\d+\. BP-", line):
         files[cur].append(set(re.findall(r"172\.31\.0\.(1[234]):", line)))
-bad = []
+bad, redo = [], []
 for f, blocks in sorted(files.items()):
     held = {dn: sum(dn in b for b in blocks) for dn in ("12", "13", "14")}
     print(f, len(blocks), "blocks", " ".join(f"dn{int(k) - 11}={v}" for k, v in held.items()))
@@ -185,9 +190,26 @@ for f, blocks in sorted(files.items()):
             bad.append(f"{f} must be on dn3 only: {held}")
     elif "/part_far/" not in f and (len(blocks) < 2 or max(held.values()) >= len(blocks)):
         bad.append(f"{f}: a DataNode holds it whole ({len(blocks)} blocks, {held})")
+        if len(blocks) >= 2:
+            redo.append(f)
 print("layout ok" if not bad else "layout FAIL: " + "; ".join(bad))
+open(sys.argv[2], "w").write("".join(f + "\n" for f in redo if len(redo) == len(bad)))
 sys.exit(1 if bad else 0)
 EOF
+redo=$(cat "$work/layout-redo.txt")
+[ -n "$redo" ] && [ "$round" -lt 6 ] || break
+note "layout round $round: $(tail -n 1 "$work/layout.txt" | cut -c1-200); put again: $(echo $redo)"
+for f in $redo; do
+  case $f in
+    /data/spread/lineitem_sp/*) src=/tmp/upload/tpch/lineitem/${f##*/}; rep=2 ;;
+    /data/spread/orders_sp/*) src=/tmp/upload/tpch/orders/${f##*/}; rep=1 ;;
+    *) abort "layout: no source for $f" ;;
+  esac
+  docker exec "$active" bash -c "hdfs dfs -rm -f -skipTrash '$f' && hdfs dfs -D dfs.replication=$rep -D dfs.blocksize=1048576 -put '$src' '$f'" >> "$work/upload.log" 2>&1 \
+    || abort "HDFS re-put of $f failed: $(grep -m 1 -E 'Exception|rror' "$work/upload.log" | cut -c1-250)"
+done
+done
+[ -n "$layout_ok" ] || abort "layout: $(tail -n 1 "$work/layout.txt")"
 [ "$(grep -c ' blocks ' "$work/layout.txt")" -ge 18 ] || abort "layout: fsck listed $(grep -c ' blocks ' "$work/layout.txt") spread files, want 19"
 note "layout: $(grep -c ' blocks ' "$work/layout.txt") spread files, $(tail -n 1 "$work/layout.txt")"
 if [ "$prot" = sasl ]; then
