@@ -198,6 +198,8 @@ EGRET ACCEPT 06c5adc7d7c9 RECHECK DONE 2026-11-07: run 42390647941 (dispatched 1
   - `results/c2-speed-40481152975` is only a "no-container reference". `ci/ignored-runs.txt` blocks the aggregates of
     40483119136 (wrong `ours-new`), 40478832460 (old `c1-servers`) and 40539031628 (diagnostic).
 
+ACCEPT b69660b9260a running 2026-11-07 19:28 UTC (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 38: ticket-cache hint, drain waits for late calls, one-line DC fallback reason): run 42406253240 (session-dispatched, all 8 cells, `smalldisk-opts=-DhdfsLocalCopyRoomWaitMillis=30000`, harness unchanged). Next: when green, the report it commits (`results/ACCEPT-b69660b9260a.md`) is the verdict; fix harness false fails with `only` reruns. No FRESH wave (no change on the local/S3 path).
+
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
@@ -375,13 +377,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md) (latest of its wave)
-- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
-- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-9044653333cd](results/track-9044653333cd/summary.md)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md) (latest of its wave)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
 - [track-06833e736572](results/track-06833e736572/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
 - [track-94ad61021d93](results/track-94ad61021d93/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
 - [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
