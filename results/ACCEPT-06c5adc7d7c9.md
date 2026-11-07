@@ -26,3 +26,16 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
 
 Raw logs: run artifacts `cell-*`.
+
+## Note: check 4 options and coverage (session note, 2026-11-07)
+
+- Run 42351380956 was dispatched by a session (no release-watcher run existed for the tag ~25 min after publication);
+  harness unchanged since ea99fcf. Every check 4 server ran with `-DhdfsLocalCopyDir=/copies
+  -DhdfsLocalCopyRoomWaitMillis=30000` (input `smalldisk-opts`), as the SHIP runs since `35c15ab226b9`. Check 4 without
+  the room wait was not run on this build.
+- Build content: kestrel item 37 (a)-(d): storage refusals (HDFS/Ranger `Permission denied`) as PERMISSION_DENIED, a
+  table with unreadable footers no longer fails the server start, failed views retried; stop drain through `StopGate`
+  (new calls UNAVAILABLE while running calls finish); multi-table refusal reason without SQL; `hdfs=noTicketCache` WARN.
+  None of these is exercised by this harness (no denied table, no stop under load, no missing ticket cache): the result
+  shows that item 37 did not break checks 1-6. No FRESH wave: the new code is on the HDFS denial / stop path, not
+  exercised by the local/S3 waves.
