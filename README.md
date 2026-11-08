@@ -200,7 +200,7 @@ EGRET ACCEPT 06c5adc7d7c9 RECHECK DONE 2026-11-07: run 42390647941 (dispatched 1
 
 EGRET ACCEPT b69660b9260a DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 38: ticket-cache hint for non-FILE krb5 caches, drain waits for late DoGet calls, one-line DC fallback reason; run 42406253240 (session-dispatched), 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-b69660b9260a.md](results/ACCEPT-b69660b9260a.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: item 38 log/hint wording (KEYRING/KCM start hint, drain line, fallback reason); check 4 without the room wait not run. No FRESH wave (no change on the local/S3 path). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `b69660b9260a` whose Log names an HDFS item (FRESH rules unchanged).
 
-idle 2026-11-08 11:27 UTC, newest tracked b69660b9260a (no kestrel pre-release newer than it; nothing running).
+idle 2026-11-08 13:27 UTC, newest tracked b69660b9260a (no kestrel pre-release newer than it; nothing running).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
