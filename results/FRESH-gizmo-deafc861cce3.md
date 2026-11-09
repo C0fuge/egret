@@ -28,7 +28,7 @@ same runner. Ratios: for times, < 1 = first faster; for MB/s and q/s, > 1 = firs
 | small queries 1/8/32 clients, local + S3 | 0 errors | 0 errors | 0 errors, **gate fail: `meta_schemas` answer differs** (all 6 steps, both storages); all other classes equal |
 | slow link TPC-H SF10 ADBC | 22/22 (ZSTD) | 22/22 (ZSTD) | 22/22 (uncompressed, see below) |
 | scans: ADBC export, local + S3 | 0 errors | 0 errors | 0 errors, full row count |
-| scans: raw Flight 1/4/8 streams | 0 errors | 0 errors | run 42632367579: every stream failed at once (harness login, not gizmo); see "Raw Flight scans" |
+| scans: raw Flight 1/4/8 streams | 0 errors | 0 errors | 0 errors in rerun 42684180966 (42632367579: harness login bug, every stream failed; see "Raw Flight scans") |
 | closed-loop load 1-128, local | 0 errors | 0 errors | 0 errors |
 
 GizmoSQL is the first non-fork server that passes the TPC-H gate of this harness unchanged (upstream native still has
@@ -69,8 +69,8 @@ no `tpch` schema and different decimal typing, see `FRESH-deafc861cce3`).
 | small, whole mix (info) | S3 step time JDBC c1 / c8 / c32 (s) | 4.20 / 7.52 / 12.93 | 18.62 / 72.51 / 169.50 | 3.75 / 8.08 / 16.19 | 0.23 / 0.10 / 0.08 | 1.12 / **0.93 / 0.80** | 5.0 / 9.0 / 10.5 |
 | scan local | ADBC export (MB/s) | 497 | 474 | 490 | 1.05 | 1.02 (1.01 1.03 1.00) | 0.97 |
 | scan S3 | ADBC export (MB/s) | 799 | 713 | 672 | 1.12 | **1.19** (1.24 1.19 1.00) | 1.06 |
-| scan local | raw Flight x1 / x4 / x8 (MB/s) | 428 / 539 / 556 | 400 / 421 / 384 | RAWSCAN_LOCAL | 1.07 / 1.28 / **1.45** | RAWSCAN_LOCAL_R | RAWSCAN_LOCAL_A |
-| scan S3 | raw Flight x1 / x4 / x8 (MB/s) | 629 / 959 / 956 | 597 / 676 / 671 | RAWSCAN_S3 | 1.05 / 1.42 / **1.43** | RAWSCAN_S3_R | RAWSCAN_S3_A |
+| scan local | raw Flight x1 / x4 / x8 (MB/s), rerun 42684180966 | 465 / 616 / 625 | 457 / 490 / 424 | 460 / 622 / 632 | 1.02 / 1.26 / **1.47** | 1.01 / 0.99 / 0.99 (x8 0.99 1.00 0.99) | 0.99 / 0.79 / 0.67 |
+| scan S3 | raw Flight x1 / x4 / x8 (MB/s), rerun 42684180966 | 451 / 736 / 736 | 319 / 454 / 463 | 392 / 792 / 802 | 1.42 / 1.62 / **1.59** | 1.15 / **0.93 / 0.92** (x8 0.88 0.92 1.06) | 0.81 / 0.57 / 0.58 |
 | load local | JDBC q/s at 1 / 8 / 32 / 64 / 128 | 42.4 / 52.0 / 52.8 / 53.4 / 51.8 | 40.2 / 43.8 / 42.1 / 39.7 / 37.1 | 49.7 / 55.3 / 54.7 / 54.0 / 51.8 | 1.05 / 1.19 / 1.25 / 1.35 / **1.40** | **0.85** / 0.94 / 0.97 / 0.99 / 1.00 | 0.81 / 0.79 / 0.77 / 0.74 / 0.72 |
 | load local | ADBC q/s at 1 / 8 / 32 / 64 / 128 | 44.5 / 53.4 / 53.0 / 52.7 / 51.8 | 41.9 / 44.1 / 40.7 / 38.7 / 35.7 | 49.1 / 55.0 / 54.3 / 53.6 / 52.2 | 1.06 / 1.21 / 1.30 / 1.36 / **1.45** | **0.91** / 0.97 / 0.98 / 0.98 / 0.99 | 0.85 / 0.80 / 0.75 / 0.72 / 0.68 |
 | slow link (10 ms, 1 Gbit) | ADBC export (MB/s) | 420 (ZSTD) | 392 (ZSTD) | 106 (no compression) | 1.07 | 3.95 (3.95 3.81 4.03) | 3.69 |
@@ -109,14 +109,25 @@ balanced 41-48 q/s in `load.md` vs 35.7-46.2 in `result.txt`; speed and gizmo ag
 | TPC-H S3 SF10 JDBC | 3006 | 1585 | 3860 | 1.90 | **0.78** | 0.41 |
 | small local | 788 | 1470 | 425 | 0.54 | 1.85 | 3.46 |
 | small S3 | 1408 | 2216 | 1015 | 0.64 | 1.39 | 2.18 |
-| scan local | 1103 | 1110 | 230 (export only in 42632367579) | 0.99 | 4.80 | 4.83 |
-| scan S3 | 3092 | 1743 | 2348 (export only in 42632367579) | 1.77 | 1.32 | 0.74 |
+| scan local (rerun 42684180966, raw + export) | 1142 | 1127 | 474 | 1.01 | 2.41 | 2.38 |
+| scan S3 (rerun 42684180966, raw + export) | 3013 | 1675 | 2546 | 1.80 | 1.18 | 0.66 |
 | load local | 904 | 4537 | 565 | 0.20 | 1.60 | 8.03 |
 | slow link | 1635 | 1644 | 1478 | 0.99 | 1.11 | 1.11 |
 
 ## Raw Flight scans
 
-RAWSCAN_SECTION
+In run 42632367579 every raw Flight scan stream of gizmo failed within 0.4-0.8 s (rows=0, endpoints=0) while its ADBC
+export of the same table worked: the harness's `clients/Scan.java` sent an HTTP Basic header on every call, and GizmoSQL
+expects the Basic handshake followed by the bearer token it returns (what the JDBC and ADBC drivers do). Fix 76e7dfb:
+`Scan.java` does `authenticateBasicToken` per client and sends the bearer token (servers without a login unchanged); the
+compare job log now also prints the first client error lines. Rerun 42684180966 (`only=fu-scan-local,fu-scan-s3`, all
+three sides again, 3 rounds, green): gizmo 0 errors, full row count at 1/4/8 streams. Not a GizmoSQL defect.
+
+Same-runner ratios from the rerun: locally speed and gizmo are level on raw scans (0.99-1.01 at every stream count, every
+round) at 2.4x gizmo's RSS (1142 vs 474 MB), balanced falls to 0.67 of gizmo at 8 streams. On S3 gizmo is ahead at 4/8
+streams (speed 0.92-0.93; x8 rounds 0.88 0.92 1.06, so noisy) and behind at 1 stream (speed 1.15); speed uses 1.18x its
+RSS. ADBC export in the rerun: speed / gizmo 1.11 local, 0.93 S3 (run 42632367579: 1.02 / 1.19, so the S3 export is
+not decided either way). Speed / balanced in the rerun repeats the main run (local x8 1.47, S3 x4/x8 1.62/1.59).
 
 ## Speed vs balanced: repeat of `FRESH-deafc861cce3` (same build, other runners)
 
@@ -147,6 +158,8 @@ The local small-query c1 p50 regression of speed (> 5 % in all 3 rounds) is conf
   ~51 s) but at 1.25x speed's memory (3.8 vs 3.0 GB); SF1 level (1.03-1.07). Speed is ahead on concurrent small queries
   over S3 (whole-mix step time 0.76-0.93 at 8/32 clients) and on the S3 ADBC export (1.19). Balanced is 6-10x slower
   than gizmo on S3 TPC-H.
+- Raw Flight scans (rerun after the harness login fix): level locally (0.99-1.01), gizmo ahead on S3 at 4/8 streams
+  (speed 0.92-0.93, noisy) and behind at 1 stream (1.15).
 - Slow link: without compression gizmo's export is 3.7-4x slower than ours with ZSTD; TPC-H answers are small, so the
   slow-link TPC-H time is level (0.97).
 - Speed vs balanced repeats `FRESH-deafc861cce3`; **the local small c1 p50 regression is confirmed (1.16 JDBC / 1.18

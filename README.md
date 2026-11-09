@@ -200,7 +200,7 @@ EGRET ACCEPT 06c5adc7d7c9 RECHECK DONE 2026-11-07: run 42390647941 (dispatched 1
 
 EGRET ACCEPT b69660b9260a DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 38: ticket-cache hint for non-FILE krb5 caches, drain waits for late DoGet calls, one-line DC fallback reason; run 42406253240 (session-dispatched), 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-b69660b9260a.md](results/ACCEPT-b69660b9260a.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: item 38 log/hint wording (KEYRING/KCM start hint, drain line, fallback reason); check 4 without the room wait not run. No FRESH wave (no change on the local/S3 path). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `b69660b9260a` whose Log names an HDFS item (FRESH rules unchanged).
 
-EGRET GIZMO RUNNING 2026-11-09 (`ci/BUILD-TRACK-TASK.md` "GIZMOSQL AS A FOURTH SERVER"): full wave `fresh-gizmo-deafc861cce3` run 42632367579 done (10 jobs green; gizmo = GizmoSQL v1.42.2, DuckDB v1.5.6: TPC-H 22/22 everywhere, small set gate fail on `meta_schemas` only, no Flight compression), load tables via rereport 42683525682. Its raw Flight scans failed at login (harness: Scan.java sent Basic on every call); fix 76e7dfb (Basic handshake + bearer token). **Running: scan-only rerun 42684180966 (`only=fu-scan-local,fu-scan-s3`, dispatched 19:31 UTC).** Draft report `results/FRESH-gizmo-deafc861cce3.md` (placeholders RAWSCAN_* for the scan rerun). Next: when 42684180966 is done, fill the raw scan rows from its job logs, then "EGRET GIZMO DONE" in the task Log and here.
+EGRET GIZMO DONE 2026-11-09 (`ci/BUILD-TRACK-TASK.md` "GIZMOSQL AS A FOURTH SERVER"; run 42632367579, 10 jobs green, + rereport 42683525682 (load) + scan-only rerun 42684180966 after harness fix 76e7dfb: [results/FRESH-gizmo-deafc861cce3.md](results/FRESH-gizmo-deafc861cce3.md)). GizmoSQL v1.42.2 (DuckDB v1.5.6, schema `tpch` as init-SQL views, login required): **TPC-H 22/22 everywhere (reference md5), 0 errors in every workload; small-set gate fail on `meta_schemas` only** (other schema count at GetObjects schema depth; prepared statements, table metadata equal); no Flight result compression (slow-link export 106 vs 420 MB/s speed+ZSTD); cancel not tested. Speed / gizmo: local TPC-H 1.01-1.07, raw scans 0.99-1.01, load 0.85-0.91 at 1 client and 0.94-1.00 from 8 (gizmo lowest latency, 79-491 MiB vs speed 382-837); **S3 TPC-H SF10 1.48-1.51 (gizmo ~34 s vs ~51 s, at 1.25x speed's RSS)**, S3 scans x4/x8 0.92-0.93 (noisy), S3 small-mix steps at 8/32 clients 0.76-0.93 (speed ahead). Speed vs balanced repeats FRESH-deafc861cce3; **local small c1 p50 regression confirmed: 1.16 JDBC / 1.18 ADBC in all 3 rounds.** Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `b69660b9260a` (rules unchanged).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
@@ -382,13 +382,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md) (latest of its wave)
-- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
-- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-9044653333cd](results/track-9044653333cd/summary.md)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md) (latest of its wave)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
 - [track-06833e736572](results/track-06833e736572/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
 - [track-94ad61021d93](results/track-94ad61021d93/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
 - [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
