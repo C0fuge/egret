@@ -29,6 +29,9 @@ SRV_IMAGE=eclipse-temurin:21-jre; CPU_CL=2,3
 LIMITS=(--cpus=2 --cpuset-cpus=0,1 --memory=6g --memory-swap=6g)
 PY=/venv/bin/python; LOAD_CLASSES=${LOAD_CLASSES:-point_orders,point_lineitem,count_filter}; pids=()
 S3_KEY="ci$(openssl rand -hex 8)"; S3_SECRET="$(openssl rand -hex 24)"
+# gizmo (GizmoSQL, setup-compare.sh): login of the job (GizmoSQL always requires one); its init SQL (with the S3 key) is
+# written outside OUT (OUT is uploaded) and a copy without the secret is kept in OUT/<side>/r<N>/gizmo-init.sql
+GZ_USER=gizmosql_user; GZ_PASS="p$(openssl rand -hex 16)"; GZDIR=$(mktemp -d); GZHOME=${GZHOME:-$ASSETS/duckdb-gizmo}
 mkdir -p "$OUT"; log() { echo "== $(date -u +%T) $*" | tee -a "$OUT/job.log"; }
 
 # client container: JDK 21 + the same ADBC / pyarrow / duckdb versions as the host venv, host paths mounted 1:1
@@ -43,7 +46,8 @@ DOCKERFILE
 docker rm -f client > /dev/null 2>&1
 docker run -d --name client --network host --cpuset-cpus=$CPU_CL --memory=6g --memory-swap=6g --user "$(id -u):$(id -g)" -e HOME=/tmp -e LANG=C.UTF-8 \
   -v "$HERE":"$HERE":ro -v "$ASSETS":"$ASSETS":ro -v "$DATA":"$DATA":ro -v "$OUT":"$OUT" egret-client sleep infinity > /dev/null || exit 1
-cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" -e FLIGHT_COMPRESSION="${CL_COMP:-}" -e FLIGHT_TOKEN="${CL_TOKEN:-}" -e FLIGHT_CA="${CL_CA:-}" client "$@"; }
+cl() { docker exec -e SMALL_CLASSES="${SMALL_CLASSES:-}" -e FLIGHT_COMPRESSION="${CL_COMP:-}" -e FLIGHT_TOKEN="${CL_TOKEN:-}" -e FLIGHT_CA="${CL_CA:-}" \
+  -e FLIGHT_USER="${CL_USER:-}" -e FLIGHT_PASSWORD="${CL_PASS:-}" client "$@"; }
 # secured connection (Report 2, ours only): the word TLS in a side's flags starts the server with a self-signed TLS
 # certificate and a bearer token (FLIGHT_TLS_CERT / FLIGHT_TLS_KEY / FLIGHT_BEARER_TOKEN, no FLIGHT_ALLOW_INSECURE);
 # every client of that side then connects with grpc+tls:// and the token (JDBC: useEncryption=true, token, tlsRootCerts)
@@ -64,7 +68,8 @@ if [ "$STORAGE" = s3 ]; then
 fi
 
 data_dir() {  # data_dir <layout> <sf1|sf10>; upstream lists S3 through the Hadoop s3a filesystem (its S3Settings)
-  if [ "$STORAGE" != s3 ]; then echo "file:///data/$1/$2"
+  if [ "${SERVER:-}" = gizmo ]; then [ "$STORAGE" = s3 ] && echo "s3://$1/$2" || echo "/data/$1/$2"
+  elif [ "$STORAGE" != s3 ]; then echo "file:///data/$1/$2"
   elif [ "${SERVER#up-}" != "${SERVER:-}" ]; then echo "s3a://$1/$2"; else echo "s3://$1/$2"; fi
 }
 
@@ -80,7 +85,23 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
     -DnumServers=1 -Xmx3g -XX:MaxDirectMemorySize=2g -DdataDir="$dd")
   local args=(-cp "/app/server.jar:/app/libs/*" pro.surpin.data.arrowflight.server.HadoopArrowFlightServer
     --port 32010 --localhost localhost --hosts 127.0.0.1)
-  if [ "${SERVER:-}" = upstream ] || [ "${SERVER#up-}" != "${SERVER:-}" ]; then
+  if [ "${SERVER:-}" = gizmo ]; then
+    # GizmoSQL (DuckDB backend, in-memory database, setup-compare.sh): schema tpch = views over the job's Parquet files,
+    # created by its init SQL at start; S3 via DuckDB httpfs + a secret for the local S3 endpoint. Own DuckDB home (it
+    # INSTALLs icu/spatial/... at start; the official httpfs 1.5.6 is pre-placed). Flags of the side = extra gizmosql_server args.
+    local t
+    { case $dd in s3://*) echo "LOAD httpfs;"
+        echo "CREATE OR REPLACE SECRET egret_s3 (TYPE s3, KEY_ID '$S3_KEY', SECRET '$S3_SECRET', ENDPOINT '127.0.0.1:9000', URL_STYLE 'path', USE_SSL false, REGION 'us-east-1');";; esac
+      echo "CREATE SCHEMA IF NOT EXISTS tpch;"
+      for t in customer lineitem nation orders part partsupp region supplier; do
+        echo "CREATE OR REPLACE VIEW tpch.$t AS SELECT * FROM read_parquet('$dd/tpch/$t/*.parquet');"; done
+    } > "$GZDIR/init.sql"
+    grep -v SECRET "$GZDIR/init.sql" > "$O/gizmo-init.sql"
+    docker run -d --name flight --network host "${LIMITS[@]}" -e LANG=C.UTF-8 -e HOME=/duckhome \
+      -e GIZMOSQL_USERNAME="$GZ_USER" -e GIZMOSQL_PASSWORD="$GZ_PASS" \
+      -v "$ASSETS/srv/gizmo":/app:ro -v "$GZHOME":/duckhome/.duckdb -v "$GZDIR":/init:ro -v "$DATA":/data:ro -w /tmp $SRV_IMAGE \
+      /app/gizmosql_server --backend duckdb --port 32010 --init-sql-commands-file /init/init.sql "$@" >/dev/null
+  elif [ "${SERVER:-}" = upstream ] || [ "${SERVER#up-}" != "${SERVER:-}" ]; then
     # upstream: JVM options of its docker/bin/entrypoint.sh; DuckDB home with the official httpfs 1.5.6; S3 via FLIGHT_S3_*
     docker run -d --name flight --network host "${LIMITS[@]}" "${env[@]}" -e HOME=/duckhome \
       -e FLIGHT_S3_ENDPOINT=http://127.0.0.1:9000 -e FLIGHT_S3_PATH_STYLE=true -e FLIGHT_S3_REGION=us-east-1 \
@@ -114,7 +135,7 @@ start_server() {  # start_server <dataDir> <flags...>; server of the current sid
     if [ -z "$port" ] && (echo > /dev/tcp/127.0.0.1/32010) 2>/dev/null; then
       port=1; echo "port_ms=$(( $(date +%s%N) / 1000000 - t0 ))" >> "$O/start-times.txt"
     fi
-    if docker logs flight 2>&1 | grep -q 'Server Arrow Flight SQL started'; then
+    if docker logs flight 2>&1 | grep -qE 'Server Arrow Flight SQL started|GizmoSQL server - started'; then
       docker inspect -f '{{json .Config.Cmd}}' flight > "$O/jvm-cmd.json" 2>/dev/null
       echo "started_s=$(( $(date +%s%N) / 1000000 - t0 ))ms" >> "$O/start-times.txt"; return 0
     fi
@@ -135,7 +156,12 @@ try:
     cur.execute("SELECT version()"); v = cur.fetchall()[0][0]
 except Exception as e:
     v = "error: " + str(e)[:100]
-print(f"first_query_ms={(time.perf_counter() - t0) * 1000:.0f} duckdb={v}")' "$ADBC_URI" >> "$O/start-times.txt" 2>&1
+ms = (time.perf_counter() - t0) * 1000
+try:
+    cur.execute("SELECT current_setting(" + chr(39) + "threads" + chr(39) + ")::VARCHAR || chr(47) || current_setting(" + chr(39) + "memory_limit" + chr(39) + ")"); st = cur.fetchall()[0][0].replace(" ", "")
+except Exception as e:
+    st = "n/a"
+print(f"first_query_ms={ms:.0f} duckdb={v} duckdb_threads/memory_limit={st}")' "$ADBC_URI" >> "$O/start-times.txt" 2>&1
 }
 cpuloop() {  # cpuloop <file> <stopfile>: server process CPU ticks (utime stime, 100/s) every ~0.25 s
   while [ ! -e "$2" ]; do echo "$(date +%s.%N) $(docker exec flight cut -d' ' -f14,15 /proc/1/stat 2>/dev/null)" >> "$1"; sleep 0.25; done
@@ -236,6 +262,9 @@ side() {  # side <A|B|C> <round>
   case $s in A) flags=$FLAGS_A; layout=default; SERVER=$SERVER_A;; C) flags=$FLAGS_C; layout=default; SERVER=$SERVER_C;;
     *) flags=$FLAGS_B; layout=$LAYOUT_B; SERVER=$SERVER_B;; esac
   SECURE=; ADBC_URI=grpc://localhost:32010; JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=false"; CL_TOKEN=; CL_CA=
+  CL_USER=; CL_PASS=
+  if [ "$SERVER" = gizmo ]; then  # GizmoSQL requires a login: JDBC user/password, ADBC username/password, Scan.java Basic
+    CL_USER=$GZ_USER; CL_PASS=$GZ_PASS; JDBC_URI="$JDBC_URI&user=$GZ_USER&password=$GZ_PASS"; fi
   case " $flags " in *" TLS "*)
     flags=$(echo " $flags " | sed 's/ TLS / /'); SECURE=1; ADBC_URI=grpc+tls://localhost:32010; CL_TOKEN=$TOKEN; CL_CA=$OUT/tls/cert.pem
     JDBC_URI="jdbc:arrow-flight-sql://localhost:32010/?useEncryption=true&token=$TOKEN&tlsRootCerts=$OUT/tls/cert.pem";;

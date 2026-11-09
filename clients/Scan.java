@@ -36,7 +36,10 @@ public class Scan {
         String mode = a[4];
         String sql = a[5];
         CallHeaders h = new FlightCallHeaders();
-        h.insert("authorization", "Bearer unused");
+        // FLIGHT_USER / FLIGHT_PASSWORD (servers that require a login, e.g. GizmoSQL): HTTP Basic on every call
+        String user = System.getenv("FLIGHT_USER");
+        h.insert("authorization", user == null || user.isEmpty() ? "Bearer unused" : "Basic " + java.util.Base64.getEncoder()
+                .encodeToString((user + ":" + System.getenv().getOrDefault("FLIGHT_PASSWORD", "")).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
         h.insert("x-flight-result-mode", mode);
         CallOption[] co = {new HeaderCallOption(h)};
         try (BufferAllocator root = new RootAllocator(Long.MAX_VALUE)) {
