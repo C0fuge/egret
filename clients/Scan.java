@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.arrow.flight.CallOption;
 import org.apache.arrow.flight.CallHeaders;
 import org.apache.arrow.flight.FlightCallHeaders;
+import org.apache.arrow.flight.grpc.CredentialCallOption;
 import org.apache.arrow.flight.FlightClient;
 import org.apache.arrow.flight.FlightEndpoint;
 import org.apache.arrow.flight.FlightInfo;
@@ -36,12 +37,16 @@ public class Scan {
         String mode = a[4];
         String sql = a[5];
         CallHeaders h = new FlightCallHeaders();
-        // FLIGHT_USER / FLIGHT_PASSWORD (servers that require a login, e.g. GizmoSQL): HTTP Basic on every call
+        // FLIGHT_USER / FLIGHT_PASSWORD (servers that require a login, e.g. GizmoSQL): Basic handshake per client, then the
+        // bearer token the server returns on every call (as the JDBC and ADBC drivers do); no login: "Bearer unused"
         String user = System.getenv("FLIGHT_USER");
-        h.insert("authorization", user == null || user.isEmpty() ? "Bearer unused" : "Basic " + java.util.Base64.getEncoder()
-                .encodeToString((user + ":" + System.getenv().getOrDefault("FLIGHT_PASSWORD", "")).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        String pass = System.getenv().getOrDefault("FLIGHT_PASSWORD", "");
+        boolean login = user != null && !user.isEmpty();
+        if (!login) {
+            h.insert("authorization", "Bearer unused");
+        }
         h.insert("x-flight-result-mode", mode);
-        CallOption[] co = {new HeaderCallOption(h)};
+        CallOption[] base = {new HeaderCallOption(h)};
         try (BufferAllocator root = new RootAllocator(Long.MAX_VALUE)) {
             for (int r = 0; r < reps; r++) {
                 AtomicLong rows = new AtomicLong();
@@ -56,15 +61,22 @@ public class Scan {
                     Thread th = new Thread(() -> {
                         try (BufferAllocator al = root.newChildAllocator("s" + tid, 0, Long.MAX_VALUE);
                              FlightClient c = FlightClient.builder(al, Location.forGrpcInsecure(host, port)).build()) {
+                            CallOption[] co = base;
+                            if (login) {
+                                CredentialCallOption cred = c.authenticateBasicToken(user, pass)
+                                        .orElseThrow(() -> new IllegalStateException("login: server returned no bearer token"));
+                                co = new CallOption[] {base[0], cred};
+                            }
+                            final CallOption[] fco = co;
                             FlightSqlClient q = new FlightSqlClient(c);
                             go.await();
                             long t0 = System.nanoTime();
-                            FlightInfo info = q.execute(sql, co);
+                            FlightInfo info = q.execute(sql, fco);
                             List<Thread> eps = new ArrayList<>();
                             for (FlightEndpoint ep : info.getEndpoints()) {
                                 Thread et = new Thread(() -> {
                                     try {
-                                        readEndpoint(al, c, host, port, ep, co, rows, bytes);
+                                        readEndpoint(al, c, host, port, ep, fco, rows, bytes);
                                     } catch (Exception e) {
                                         errs.incrementAndGet();
                                         System.err.println("scan " + tid + " endpoint: " + e.toString().replace('\n', ' '));
