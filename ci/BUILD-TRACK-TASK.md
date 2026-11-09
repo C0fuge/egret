@@ -132,3 +132,19 @@ Maintainer, 2026-11-06 18:40: write `results/FRESH-deafc861cce3.md` from run 422
 Maintainer, 2026-11-07 20:55: ACCEPT 06c5adc7d7c9 run 42390647941: 3 speed cells failed the layout check (random placement put a whole spread file on one DataNode: 'a DataNode holds it whole (17 blocks ...)') - harness flake; rerun with only= dispatched by the maintainer. Make the spread layout deterministic (re-place or re-write until no DataNode holds a file whole, or pin with a block placement policy) so it cannot flake.
 - EGRET ACCEPT 06c5adc7d7c9 RECHECK DONE 2026-11-07: run 42390647941 lost 3 speed cells to the layout flake (setup only); harness fix fcf1eb3 re-writes a spread file that a DataNode holds whole and checks again (at most 6 rounds); `only` rerun 42396888303 (base-run 42390647941, room wait) green, `results/ACCEPT-06c5adc7d7c9.md` verdict SHIP (all 6 checks in every cell); the maintainer's rerun 42398263063 of the same cells also green.
 - EGRET ACCEPT b69660b9260a DONE 2026-11-07: run 42406253240 (session, `smalldisk-opts=-DhdfsLocalCopyRoomWaitMillis=30000`), `results/ACCEPT-b69660b9260a.md`, verdict SHIP with the room wait (all 6 checks pass in every cell); item 38 (1)-(4). Not covered: the item 38 log/hint wording itself; no FRESH wave.
+
+## GIZMOSQL AS A FOURTH SERVER (maintainer, 2026-11-09 16:30) - first, before anything else
+Add GizmoSQL (open-source Arrow Flight SQL server on DuckDB, github.com/gizmodata/gizmosql, Apache-2.0) as a server
+`gizmo` in the compare harness, next to `up-native`: same runner, same data, same clients, same correctness gate.
+- Use its released Linux amd64 build (pin the version and its sha256 in the repo; record the DuckDB version it embeds).
+  Run it like the other servers (same CPU/memory limits, container or taskset as the harness does), DuckDB backend.
+- Data: expose the harness's TPC-H Parquet (local and S3) as schema `tpch` with views over the Parquet files at start
+  (init SQL / `--init-sql-commands` or an init file; S3 via DuckDB httpfs + a secret for the MinIO endpoint), so the
+  schema-qualified queries run unchanged. Auth: username/password or none, whatever the clients can pass; TLS off like
+  the others.
+- Wave `fresh-gizmo-deafc861cce3.json`: three-way per job like `fresh-up-deafc861cce3` but C = `gizmo` (A = fork
+  default, B = fork `-DresourceProfile=speed`), all workloads (TPC-H SF1/SF10 ADBC+JDBC local+S3, small, scan/export,
+  load, slow link). Report `results/FRESH-gizmo-deafc861cce3.md` like `FRESH-deafc861cce3.md`: correctness per
+  workload, speed/gizmo and balanced/gizmo, memory; note any Flight SQL feature gizmo lacks that the harness needs
+  (metadata calls, prepared statements, cancel) instead of working around it silently.
+Write "EGRET GIZMO DONE" in this file's Log with the run id when the report exists.
