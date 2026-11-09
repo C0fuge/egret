@@ -1,0 +1,21 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+fu-scan-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,scan1,MB/s,456.6,465.4,1.0192728865527814,1.019 1.037 0.984
+fu-scan-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,scan4,MB/s,489.9,615.7,1.2567870994080426,1.235 1.295 1.249
+fu-scan-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,scan8,MB/s,423.7,624.5,1.4739202265754072,1.496 1.468 1.476
+fu-scan-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,adbcscan,MB/s,544.8,561.4,1.0304698972099853,1.025 1.030 1.029
+fu-scan-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,1127,1142,1.013309671694765,1.022 0.996 1.039
+fu-scan-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,scan1,MB/s,460.1,465.4,1.0115192349489242,1.012 1.019 1.005
+fu-scan-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,scan4,MB/s,622.2,615.7,0.9895531983285117,0.986 0.995 0.983
+fu-scan-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,scan8,MB/s,632.1,624.5,0.9879765859832305,0.988 0.998 0.986
+fu-scan-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,adbcscan,MB/s,504.7,561.4,1.1123439667128987,1.113 1.112 1.118
+fu-scan-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU AMD EPYC 7763 64-Core Processor,rss,MB,474,1142,2.409282700421941,2.361 2.388 2.499
+fu-scan-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,scan1,MB/s,318.7,451.3,1.41606526513963,1.127 1.454 1.513
+fu-scan-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,scan4,MB/s,453.5,736.4,1.6238147739801543,1.560 1.639 1.847
+fu-scan-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,scan8,MB/s,463.2,736.1,1.589162348877375,1.505 1.589 1.641
+fu-scan-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,adbcscan,MB/s,377.6,569.9,1.50926906779661,2.265 1.432 1.362
+fu-scan-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,1675,3013,1.7988059701492538,1.795 1.835 1.754
+fu-scan-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,scan1,MB/s,391.7,451.3,1.1521572632116417,1.311 1.130 1.116
+fu-scan-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,scan4,MB/s,791.7,736.4,0.9301503094606542,1.047 0.932 0.930
+fu-scan-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,scan8,MB/s,801.9,736.1,0.9179448809078439,0.884 0.918 1.060
+fu-scan-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,adbcscan,MB/s,614.9,569.9,0.9268173686778338,1.059 1.169 0.920
+fu-scan-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,2546,3013,1.1834249803613512,1.158 1.210 1.154
