@@ -202,6 +202,8 @@ EGRET ACCEPT b69660b9260a DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET GIZMO DONE 2026-11-09 (`ci/BUILD-TRACK-TASK.md` "GIZMOSQL AS A FOURTH SERVER"; run 42632367579, 10 jobs green, + rereport 42683525682 (load) + scan-only rerun 42684180966 after harness fix 76e7dfb: [results/FRESH-gizmo-deafc861cce3.md](results/FRESH-gizmo-deafc861cce3.md)). GizmoSQL v1.42.2 (DuckDB v1.5.6, schema `tpch` as init-SQL views, login required): **TPC-H 22/22 everywhere (reference md5), 0 errors in every workload; small-set gate fail on `meta_schemas` only** (other schema count at GetObjects schema depth; prepared statements, table metadata equal); no Flight result compression (slow-link export 106 vs 420 MB/s speed+ZSTD); cancel not tested. Speed / gizmo: local TPC-H 1.01-1.07, raw scans 0.99-1.01, load 0.85-0.91 at 1 client and 0.94-1.00 from 8 (gizmo lowest latency, 79-491 MiB vs speed 382-837); **S3 TPC-H SF10 1.48-1.51 (gizmo ~34 s vs ~51 s, at 1.25x speed's RSS)**, S3 scans x4/x8 0.92-0.93 (noisy), S3 small-mix steps at 8/32 clients 0.76-0.93 (speed ahead). Speed vs balanced repeats FRESH-deafc861cce3; **local small c1 p50 regression confirmed: 1.16 JDBC / 1.18 ADBC in all 3 rounds.** Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `b69660b9260a` (rules unchanged).
 
+idle 2026-11-09 21:35 UTC, newest tracked b69660b9260a (ACCEPT; FRESH newest deafc861cce3, gizmo wave done); no kestrel pre-release newer than b69660b9260a.
+
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
