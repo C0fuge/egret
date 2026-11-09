@@ -1,0 +1,17 @@
+job,server_a,flags_a,server_b,flags_b,storage,runner,metric,unit,a_median,b_median,ratio_b_a,per_round_ratios
+fu-sf1-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc1,s,23.771,3.23,0.13587985360312985,0.136
+fu-sf1-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc1,s,25.57,3.27,0.12788423934298004,0.128
+fu-sf1-s3,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,717,1013,1.412831241283124,1.413
+fu-sf1-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,adbc1,s,3.003,3.23,1.0755910755910756,1.076
+fu-sf1-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,jdbc1,s,3.09,3.27,1.058252427184466,1.058
+fu-sf1-s3-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,s3,Linux ubuntu26 4 vCPU AMD EPYC 9V74 80-Core Processor,rss,MB,597,1013,1.6968174204355109,1.697
+fu-tpch-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,adbc1,s,4.348,4.448,1.0229990800367987,1.023
+fu-tpch-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,adbc10,s,45.878,43.79,0.95448798988622,0.954
+fu-tpch-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,jdbc1,s,4.49,4.42,0.9844097995545656,0.984
+fu-tpch-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,jdbc10,s,45.47,43.74,0.9619529360017595,0.962
+fu-tpch-local,deafc861cce3,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,rss,MB,1560,1885,1.2083333333333333,1.208
+fu-tpch-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,adbc1,s,4.029,4.448,1.1039960287912636,1.104
+fu-tpch-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,adbc10,s,43.754,43.79,1.0008227819170818,1.001
+fu-tpch-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,jdbc1,s,4.17,4.42,1.0599520383693046,1.060
+fu-tpch-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,jdbc10,s,44.1,43.74,0.9918367346938776,0.992
+fu-tpch-local-vs-gizmo,gizmo,,deafc861cce3,-DresourceProfile=speed,local,Linux ubuntu26 4 vCPU Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz,rss,MB,1580,1885,1.1930379746835442,1.193

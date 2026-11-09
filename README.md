@@ -200,7 +200,7 @@ EGRET ACCEPT 06c5adc7d7c9 RECHECK DONE 2026-11-07: run 42390647941 (dispatched 1
 
 EGRET ACCEPT b69660b9260a DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 38: ticket-cache hint for non-FILE krb5 caches, drain waits for late DoGet calls, one-line DC fallback reason; run 42406253240 (session-dispatched), 8 cells + report green, harness unchanged, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-b69660b9260a.md](results/ACCEPT-b69660b9260a.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: item 38 log/hint wording (KEYRING/KCM start hint, drain line, fallback reason); check 4 without the room wait not run. No FRESH wave (no change on the local/S3 path). Nothing running. Next: ACCEPT on the next kestrel pre-release newer than `b69660b9260a` whose Log names an HDFS item (FRESH rules unchanged).
 
-idle 2026-11-09 13:31 UTC, newest tracked b69660b9260a (no kestrel pre-release newer than it; nothing running).
+idle 2026-11-09 07:35 UTC, newest tracked b69660b9260a (no kestrel pre-release newer than it; nothing running).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
@@ -335,6 +335,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fresh-gizmo-deafc861cce3-42629228261](results/fresh-gizmo-deafc861cce3-42629228261/summary.md) (latest of its wave)
 - [fresh-up-deafc861cce3-42223833724](results/fresh-up-deafc861cce3-42223833724/summary.md) (latest of its wave)
 - [fresh-up-413485ba80fd-41604206524](results/fresh-up-413485ba80fd-41604206524/summary.md) (latest of its wave)
 - [fresh-up-25aa7eec0f0f-41584018828](results/fresh-up-25aa7eec0f0f-41584018828/summary.md) (latest of its wave)
@@ -379,13 +380,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md) (latest of its wave)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
-- [track-06833e736572](results/track-06833e736572/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md) (latest of its wave)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
 - [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
 - [track-9044653333cd](results/track-9044653333cd/summary.md)
+- [track-06833e736572](results/track-06833e736572/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
