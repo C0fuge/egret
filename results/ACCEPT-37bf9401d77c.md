@@ -1,6 +1,6 @@
 # HDFS acceptance (SASL): `server-1.0.0-37bf9401d77c`
 
-Run [42800586401](https://github.com/C0fuge/egret/actions/runs/42800586401), workflow `accept-hdfs.yml`, checks from `ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE" (this repo's queries, layout and checks, `ci/accept/`).
+Run [42790907501](https://github.com/C0fuge/egret/actions/runs/42790907501) (7 cells) + `only` rerun [42800586401](https://github.com/C0fuge/egret/actions/runs/42800586401) of the reference cell open-speed-1 (base-run 42790907501; the first attempt failed at setup, `KDC did not come up`, infra), workflow `accept-hdfs.yml`, checks from `ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE" (this repo's queries, layout and checks, `ci/accept/`).
 
 **Verdict: DO NOT SHIP**
 
@@ -31,5 +31,25 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 - reference `default` x 3: setup pass, 135 answers, 0 errors
 - reference `speed` x 1: setup pass, 61 answers, 0 errors
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
+
+## Check 6: cause (session note, 2026-11-10)
+
+Answers are all right in every cell (checks 1-5 pass; the reference speed x 1 cell now passes too). Check 6 fails only
+on its first part, the per-query `hdfs=reads` line: 0 such lines in every SASL cell. Short-circuit fd requests on the
+DataNodes grow (0 -> 783) and there is no `HdfsNetworkException`.
+
+Cause, from the server source at the tag: `hdfs=reads` is logged only on the whole-file / local-copy path
+(`ExecutionService.copies`). Item 41 (hadoopfs afc6 + default `hdfsSaslDataTransfer=auto`) turns on direct SASL reads
+of non-local blocks, so that path is no longer taken and no line is written. kestrel's own CI made the same choice:
+commit 8766455b makes its `sasl-direct` cell skip the per-query `hdfs=reads` check of item 32. This is a design change
+in the server that conflicts with check 6 as written ("every query has an `hdfs=reads` line"; "no DuckDB read of a
+non-local file through hadoopfs" is what direct mode does on purpose).
+
+The server start line (`hdfs=saslDataTransfer ... direct=true`) is in the cell artifacts only; this session could not
+download them, so it is not confirmed here.
+
+**Maintainer decision needed:** (a) keep check 6 as is (the server should log `hdfs=reads` in direct mode too), or
+(b) change check 6 for direct mode (e.g. require a direct-read counter line instead) or run the acceptance with
+`-DhdfsSaslDataTransfer=off`. Until then the verdict stays DO NOT SHIP on check 6 only.
 
 Raw logs: run artifacts `cell-*`.
