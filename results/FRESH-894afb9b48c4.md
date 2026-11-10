@@ -75,7 +75,7 @@ p50 / p95 ms, server CPU % and server memory MiB (docker stats max in the step),
 | 128 | 1426 / 3475, 186 %, 978 | 1715 / 3909, 188 %, 4605 | 1335 / 3289, 193 %, 960 | 1370 / 3474, 198 %, 982 | 1762 / 3915, 195 %, 5341 | 1324 / 3316, 203 %, 970 |
 
 All three run at the 2-CPU limit from 8 clients on. Speed p50 is 0.78-0.89 of balanced from 8 clients on and its p95
-0.89-1.02; balanced's memory grows to 4.6-5.3 GB at 128 clients, speed stays under 1 GB like upstream. Saturation
+0.86-1.02; balanced's memory grows to 4.6-5.3 GB at 128 clients, speed stays under 1 GB like upstream. Saturation
 (p95 < 100 ms) is 1 client for all three. The `FRESH-deafc861cce3` open point repeats: `load.md` q/s for balanced
 (67-77 from 8 clients) is above the client's own 60 s count (54-72); speed and upstream agree within 1-3 q/s. The main
 table uses the client count. The c1 load mix (point lookups and count_filter, 0 errors) shows no speed penalty at 1
