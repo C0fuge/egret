@@ -202,9 +202,7 @@ EGRET ACCEPT b69660b9260a DONE 2026-11-07 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET GIZMO DONE 2026-11-09 (`ci/BUILD-TRACK-TASK.md` "GIZMOSQL AS A FOURTH SERVER"; run 42632367579, 10 jobs green, + rereport 42683525682 (load) + scan-only rerun 42684180966 after harness fix 76e7dfb: [results/FRESH-gizmo-deafc861cce3.md](results/FRESH-gizmo-deafc861cce3.md)). GizmoSQL v1.42.2 (DuckDB v1.5.6, schema `tpch` as init-SQL views, login required): **TPC-H 22/22 everywhere (reference md5), 0 errors in every workload; small-set gate fail on `meta_schemas` only** (other schema count at GetObjects schema depth; prepared statements, table metadata equal); no Flight result compression (slow-link export 106 vs 420 MB/s speed+ZSTD); cancel not tested. Speed / gizmo: local TPC-H 1.01-1.07, raw scans 0.99-1.01, load 0.85-0.91 at 1 client and 0.94-1.00 from 8 (gizmo lowest latency, 79-491 MiB vs speed 382-837); **S3 TPC-H SF10 1.48-1.51 (gizmo ~34 s vs ~51 s, at 1.25x speed's RSS)**, S3 scans x4/x8 0.92-0.93 (noisy), S3 small-mix steps at 8/32 clients 0.76-0.93 (speed ahead). Speed vs balanced repeats FRESH-deafc861cce3; **local small c1 p50 regression confirmed: 1.16 JDBC / 1.18 ADBC in all 3 rounds.** Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `b69660b9260a` (rules unchanged).
 
-EGRET ACCEPT 894afb9b48c4 DONE 2026-11-10 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 39 last step: hadoopfs afc4, `hdfsMetadataCacheTtlMs`, external file cache on HDFS; session rerun 42778646542, 8 cells + report green, harness 6d7671d, check 4 with `-DhdfsLocalCopyRoomWaitMillis=30000`: [results/ACCEPT-894afb9b48c4.md](results/ACCEPT-894afb9b48c4.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. The watcher run 42772192151 (06:59) had failed every cell at server start: the harness loaded the ci-assets set's hadoopfs afc3, this build pins afc4; harness fix 6d7671d loads the build's pinned hadoopfs (`tools/ci/hadoopfs-pinned.sh` at its tag, sha-checked). Server point: with afc3 the server fails to start (`DuckDB cannot be set up for the data store: Statement was closed`) after the `hdfs=metadataCacheUnsupported` warning, while its docs say an older extension only warns. Not covered: metadata-cache effect (NameNode RPCs), rewritten-file freshness.
-
-RUNNING 2026-11-10 09:30 UTC: (1) FRESH run 42775953599 (wave `fresh-up-894afb9b48c4`, upstream `cec626bbb54a`, dispatched 07:32 by a session; 8/10 jobs done, fu-load / fu-small local running). Next: `results/FRESH-894afb9b48c4.md` from it like FRESH-deafc861cce3 (load via `ci/load_report.py` / `rereport` `load` input, slow-link ZSTD export, upstream `cec626bbb54a` vs `9e4787906b07`), BUILDS.md row. (2) New pre-release `server-1.0.0-37bf9401d77c` (kestrel item 41: hadoopfs afc6, `hdfsSaslDataTransfer=auto` direct SASL reads; item 40(a): speed sizes DuckDB with the JVM memory it really uses): ACCEPT run 42790907501 (session, room wait) and FRESH run 42791002963 (wave `fresh-up-37bf9401d77c`), both dispatched 09:28. Next: `results/ACCEPT-37bf9401d77c.md` verdict and `results/FRESH-37bf9401d77c.md` (S3 speed memory/TPC-H is the area item 40(a) changes).
+idle 2026-11-09 21:35 UTC, newest tracked b69660b9260a (ACCEPT; FRESH newest deafc861cce3, gizmo wave done); no kestrel pre-release newer than b69660b9260a.
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
@@ -339,6 +337,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fresh-up-894afb9b48c4-42775953599](results/fresh-up-894afb9b48c4-42775953599/summary.md) (latest of its wave)
 - [fresh-gizmo-deafc861cce3-42684180966](results/fresh-gizmo-deafc861cce3-42684180966/summary.md) (latest of its wave)
 - [fresh-gizmo-deafc861cce3-42632367579](results/fresh-gizmo-deafc861cce3-42632367579/summary.md)
 - [fresh-gizmo-deafc861cce3-42629228261](results/fresh-gizmo-deafc861cce3-42629228261/summary.md)
@@ -386,13 +385,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md) (latest of its wave)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
-- [track-06833e736572](results/track-06833e736572/summary.md)
-- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
-- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md) (latest of its wave)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
 - [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
 - [track-9044653333cd](results/track-9044653333cd/summary.md)
+- [track-06833e736572](results/track-06833e736572/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
+- [track-94ad61021d93](results/track-94ad61021d93/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
