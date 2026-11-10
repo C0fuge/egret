@@ -29,7 +29,7 @@ Checks: 1 TPC-H 22/22 plain names and schema-qualified; 2 spread set (plain name
 
 - reference `default` x 1: setup pass, 61 answers, 0 errors
 - reference `default` x 3: setup pass, 135 answers, 0 errors
-- reference `speed` x 1: setup fail, 0 answers, 0 errors
+- reference `speed` x 1: setup pass, 61 answers, 0 errors
 - reference `speed` x 3: setup pass, 135 answers, 0 errors
 
 Raw logs: run artifacts `cell-*`.
