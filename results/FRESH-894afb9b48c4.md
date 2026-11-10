@@ -62,6 +62,25 @@ Load per round, speed / balanced at 128 clients: JDBC 1.56 1.50 1.40, ADBC 1.51 
 are the comparison. Upstream ratios on scans x1/x4, export, load and memory only; TPC-H and small queries fail its
 gate, and its x8 scans now have stream errors on local and S3.
 
+## Load per step (`ci/load_report.py`, rereport 42793745922: [load.md](fresh-up-894afb9b48c4-42775953599/load.md))
+
+p50 / p95 ms, server CPU % and server memory MiB (docker stats max in the step), medians over rounds.
+
+| clients | JDBC speed | JDBC balanced | JDBC upstream | ADBC speed | ADBC balanced | ADBC upstream |
+|---|---|---|---|---|---|---|
+| 1 | 12.9 / 26.3, 167 %, 476 | 13.0 / 26.3, 167 %, 482 | 13.0 / 27.2, 161 %, 420 | 12.2 / 22.6, 165 %, 452 | 12.3 / 23.1, 165 %, 478 | 11.1 / 21.6, 167 %, 399 |
+| 8 | 91.5 / 190, 188 %, 561 | 103 / 186, 183 %, 858 | 84.2 / 183, 187 %, 520 | 89.2 / 186, 198 %, 547 | 103 / 185, 200 %, 971 | 81.2 / 179, 202 %, 509 |
+| 32 | 336 / 745, 202 %, 670 | 403 / 813, 197 %, 1862 | 312 / 706, 203 %, 639 | 342 / 728, 201 %, 655 | 411 / 847, 199 %, 1933 | 307 / 706, 201 %, 663 |
+| 64 | 691 / 1538, 200 %, 758 | 840 / 1739, 199 %, 2917 | 625 / 1454, 198 %, 824 | 707 / 1538, 195 %, 797 | 860 / 1802, 200 %, 3239 | 630 / 1466, 204 %, 881 |
+| 128 | 1426 / 3475, 186 %, 978 | 1715 / 3909, 188 %, 4605 | 1335 / 3289, 193 %, 960 | 1370 / 3474, 198 %, 982 | 1762 / 3915, 195 %, 5341 | 1324 / 3316, 203 %, 970 |
+
+All three run at the 2-CPU limit from 8 clients on. Speed p50 is 0.78-0.89 of balanced from 8 clients on and its p95
+0.89-1.02; balanced's memory grows to 4.6-5.3 GB at 128 clients, speed stays under 1 GB like upstream. Saturation
+(p95 < 100 ms) is 1 client for all three. The `FRESH-deafc861cce3` open point repeats: `load.md` q/s for balanced
+(67-77 from 8 clients) is above the client's own 60 s count (54-72); speed and upstream agree within 1-3 q/s. The main
+table uses the client count. The c1 load mix (point lookups and count_filter, 0 errors) shows no speed penalty at 1
+client (p50 0.99-1.00), unlike the small-query set: the c1 regression is in classes outside the load mix.
+
 ## Memory (server RSS peak, MB, median over rounds)
 
 | job | B speed | A balanced | C upstream | speed / balanced | speed / upstream | balanced / upstream |
