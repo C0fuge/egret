@@ -210,7 +210,7 @@ EGRET ACCEPT 37bf9401d77c PARTIAL 2026-11-10 (`ci/BUILD-TRACK-TASK.md` "SASL HDF
 
 EGRET FRESH 37bf9401d77c DONE 2026-11-10 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 40(a)/41; run 42791002963, 10/10 jobs green, + rereport 42810212730 (`load.md`): [results/FRESH-37bf9401d77c.md](results/FRESH-37bf9401d77c.md); BUILDS.md row and regression line added). **Regression by the rule carried over: local small c1 p50 speed/balanced 1.14 JDBC (1.15 1.14 1.13; 16.6 -> 18.9 ms) / 1.32 ADBC (1.08 1.33 1.26; 10.9 -> 14.3 ms), same CPU type (894a 1.19 / 1.28); item 40(a) does not fix it.** Item 40(a) raises speed's S3 RSS 6-14 % (S3 SF10 / scans 3.3-3.5 GB, 2.1x balanced). Otherwise as before: S3 TPC-H 0.14-0.20, S3 small p95 0.04-0.06, load +38-40 % at 128 clients (0.93-0.94 of upstream, 8573C runner), scans x4/x8 1.29-1.52, slow-link ZSTD export 0.99 (1.01 of upstream), 22/22, 0 errors. Upstream native `b7d32cf3b3f0`: same gate failures; local x8 scans clean again at half the RSS (1800 MB), S3 x8 errors in 2 of 3 rounds.
 
-Nothing running. idle 2026-11-10 11:50 UTC, newest tracked 37bf9401d77c. Next: (1) maintainer decision on ACCEPT 37bf9401d77c check 6 in direct SASL mode (keep / direct-mode variant / `-DhdfsSaslDataTransfer=off`); (2) FRESH / ACCEPT on the next kestrel pre-release newer than `37bf9401d77c` (none at 11:50 UTC).
+Nothing running. idle 2026-11-10 13:30 UTC, newest tracked 37bf9401d77c. Next: (1) maintainer decision on ACCEPT 37bf9401d77c check 6 in direct SASL mode (keep / direct-mode variant / `-DhdfsSaslDataTransfer=off`); (2) FRESH / ACCEPT on the next kestrel pre-release newer than `37bf9401d77c` (none at 13:30 UTC).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
