@@ -210,9 +210,7 @@ EGRET ACCEPT 37bf9401d77c PARTIAL 2026-11-10 (`ci/BUILD-TRACK-TASK.md` "SASL HDF
 
 EGRET FRESH 37bf9401d77c DONE 2026-11-10 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 40(a)/41; run 42791002963, 10/10 jobs green, + rereport 42810212730 (`load.md`): [results/FRESH-37bf9401d77c.md](results/FRESH-37bf9401d77c.md); BUILDS.md row and regression line added). **Regression by the rule carried over: local small c1 p50 speed/balanced 1.14 JDBC (1.15 1.14 1.13; 16.6 -> 18.9 ms) / 1.32 ADBC (1.08 1.33 1.26; 10.9 -> 14.3 ms), same CPU type (894a 1.19 / 1.28); item 40(a) does not fix it.** Item 40(a) raises speed's S3 RSS 6-14 % (S3 SF10 / scans 3.3-3.5 GB, 2.1x balanced). Otherwise as before: S3 TPC-H 0.14-0.20, S3 small p95 0.04-0.06, load +38-40 % at 128 clients (0.93-0.94 of upstream, 8573C runner), scans x4/x8 1.29-1.52, slow-link ZSTD export 0.99 (1.01 of upstream), 22/22, 0 errors. Upstream native `b7d32cf3b3f0`: same gate failures; local x8 scans clean again at half the RSS (1800 MB), S3 x8 errors in 2 of 3 rounds.
 
-EGRET ACCEPT 2ff221447b5d DONE 2026-11-10 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 40(b) + item 41 follow-up (2); run 42865242528 (session, room wait, harness unchanged), 8 cells + report green: [results/ACCEPT-2ff221447b5d.md](results/ACCEPT-2ff221447b5d.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells, **check 6 included: the server now logs `hdfs=reads` per query on the direct SASL path**, so the `37bf9401d77c` check 6 question no longer needs a harness change (check 6 kept as written). This is the maintainer's "build for the real cluster".
-
-Running (2026-11-10 18:35 UTC): FRESH run 42865250390 (wave `fresh-up-2ff221447b5d`, upstream native `0ecca4f9b01e`; 6/10 jobs green at 18:30, fu-small local/S3, fu-scan S3, fu-load still running). Next: when it is green, write `results/FRESH-2ff221447b5d.md` like FRESH-37bf9401d77c (rereport with `load` input for `load.md`; key question: is the local small c1 p50 speed/balanced regression (37bf 1.14 JDBC / 1.32 ADBC) cut by item 40(b)?), BUILDS.md row, task Log.
+Nothing running. idle 2026-11-10 11:50 UTC, newest tracked 37bf9401d77c. Next: (1) maintainer decision on ACCEPT 37bf9401d77c check 6 in direct SASL mode (keep / direct-mode variant / `-DhdfsSaslDataTransfer=off`); (2) FRESH / ACCEPT on the next kestrel pre-release newer than `37bf9401d77c` (none at 11:50 UTC).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
@@ -347,6 +345,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fresh-up-2ff221447b5d-42865250390](results/fresh-up-2ff221447b5d-42865250390/summary.md) (latest of its wave)
 - [fresh-up-37bf9401d77c-42791002963](results/fresh-up-37bf9401d77c-42791002963/summary.md) (latest of its wave)
 - [fresh-up-894afb9b48c4-42775953599](results/fresh-up-894afb9b48c4-42775953599/summary.md) (latest of its wave)
 - [fresh-gizmo-deafc861cce3-42684180966](results/fresh-gizmo-deafc861cce3-42684180966/summary.md) (latest of its wave)
