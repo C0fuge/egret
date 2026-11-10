@@ -1,6 +1,6 @@
 # HDFS acceptance (SASL): `server-1.0.0-2ff221447b5d`
 
-Run [42865242528](https://github.com/C0fuge/egret/actions/runs/42865242528), workflow `accept-hdfs.yml`, checks from `ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE" (this repo's queries, layout and checks, `ci/accept/`).
+Run [42885490049](https://github.com/C0fuge/egret/actions/runs/42885490049), workflow `accept-hdfs.yml`, checks from `ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE" (this repo's queries, layout and checks, `ci/accept/`).
 
 **Verdict: SHIP**
 
