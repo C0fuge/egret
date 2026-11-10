@@ -70,6 +70,19 @@ jobs:
           mkdir -p dl/ext "$I/extdir/v1.5.6/linux_amd64" && tar --zstd -xf dl/ext.tar.zst -C dl/ext
           f=$(find dl/ext -path '*v1.5.6/linux_amd64/hadoopfs.duckdb_extension' | head -n 1); test -n "$f"
           cp "$f" "$I/extdir/v1.5.6/linux_amd64/"
+          # the hadoopfs build the pre-release pins for CI / release (tools/ci/hadoopfs-pinned.sh at its tag, item 39
+          # and later; the set above holds an older one); builds without the script keep the set's hadoopfs
+          if curl -fsSL --retry 3 -o dl/pinned.sh "https://raw.githubusercontent.com/C0fuge/kestrel/server-1.0.0-$ID/tools/ci/hadoopfs-pinned.sh"; then
+            pn=$(sed -n 's/^name=\([A-Za-z0-9._-]*\)$/\1/p' dl/pinned.sh | head -n 1)
+            ps=$(sed -n 's/^sha=\([0-9a-f]\{64\}\)$/\1/p' dl/pinned.sh | head -n 1)
+            test -n "$pn" && test -n "$ps"
+            curl -fsSL --retry 3 -o "dl/$pn" "$K/ci-assets/$pn"
+            echo "$ps  dl/$pn" | sha256sum -c
+            cp "dl/$pn" "$I/extdir/v1.5.6/linux_amd64/hadoopfs.duckdb_extension"
+            echo "hadoopfs: pinned $pn" | tee "$I/HADOOPFS.txt"
+          else
+            echo "hadoopfs: ci-assets set (no pinned build at this tag)" | tee "$I/HADOOPFS.txt"
+          fi
           # native Hadoop library for the server's own Java HDFS client (short-circuit), matching its client jars
           v=$(ls "$I/app/libs" | sed -n 's/^hadoop-common-\([0-9.]*\)\.jar$/\1/p' | head -n 1)
           img=apache/hadoop:3.4.1   # 3.5.0's libhadoop does not load on the focal server base (needs a newer glibc); 3.4.1's does
