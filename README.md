@@ -220,7 +220,7 @@ EGRET ACCEPT 29f1267b995f DONE 2026-11-11 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET FRESH 29f1267b995f DONE 2026-11-11 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 44 / 45; run 42965886044, 10/10 jobs green, + rereport 42981472897 (`load.md`): [results/FRESH-29f1267b995f.md](results/FRESH-29f1267b995f.md); BUILDS.md row and flag line added). **The `2ff221447b5d` balanced TPC-H OOM is fixed: balanced 22/22 on every TPC-H job (local, S3, slow link), balanced TPC-H RSS 0.76-1.64 GB.** **Regression by the rule, larger again: local small c1 p50 speed/balanced 1.19 JDBC / 1.16 ADBC in all 3 rounds** (2ff on the same CPU type: 1.07 / 1.11; speed c1 unchanged, balanced faster). Speed otherwise as before: S3 TPC-H 0.12-0.16 of balanced, S3 small p95 0.05-0.07, load +41-48 % at 128 clients (0.94-0.96 of upstream native), scans x4/x8 1.29-1.46. Upstream native `46d565e93c19`: same gate failures. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `29f1267b995f` (FRESH not for items 29/30 only).
 
-idle 2026-11-11 13:28 UTC, newest tracked 29f1267b995f (no kestrel server pre-release newer than `server-1.0.0-29f1267b995f`; nothing running).
+idle 2026-11-11 15:26 UTC, newest tracked 29f1267b995f (no kestrel server pre-release newer than `server-1.0.0-29f1267b995f`; nothing running).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
