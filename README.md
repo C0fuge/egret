@@ -216,7 +216,7 @@ EGRET FRESH 2ff221447b5d DONE 2026-11-10 (`ci/BUILD-TRACK-TASK.md` maintainer no
 
 EGRET FRESH-GIZMO 2ff221447b5d DONE 2026-11-10 (`ci/BUILD-TRACK-TASK.md` maintainer note 2026-11-10 22:35 part (2); run 42888240521, 10 jobs green, + rereport 42911042138 (`load.md`): [results/FRESH-gizmo-2ff221447b5d.md](results/FRESH-gizmo-2ff221447b5d.md)). **Balanced TPC-H OOM at 128 MiB confirmed on four other runners** (local SF10 q09/q10/q13 every round, S3 SF1 1-5 / SF10 5-8 per round, slow link 19/22); speed and GizmoSQL v1.42.2 22/22 with the reference md5; gizmo's only gate fail is still `meta_schemas`. **40(a): S3 TPC-H SF10 speed / gizmo 1.22 ADBC / 0.99 JDBC (deafc861cce3: 1.51 / 1.48)** at 0.88-0.93 of gizmo's RSS. **40(b): local small c1 p50 speed/balanced 1.17 JDBC / 1.32 ADBC, > 5 % in all 3 rounds (regression by the rule; run 42865250390 1.07 / 1.11, same CPU type)**; small-query mix vs gizmo unchanged (local 1.16-1.40x gizmo's time, S3 8/32 clients speed ahead 0.79-0.96). Otherwise as before: local TPC-H SF10 level with gizmo (1.01), raw scans x4/x8 0.97-0.99, load level from 32 clients (gizmo ahead at 1 client, 0.87 / 0.93), gizmo 2.9x slower on the uncompressed slow-link export. The maintainer's ACCEPT rerun 42885490049 is green, report verdict SHIP. No kestrel pre-release newer than `2ff221447b5d` (tags checked 21:35 UTC). Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `2ff221447b5d` (rules unchanged).
 
-EGRET 29f1267b995f RUNNING 2026-11-11 07:35 UTC (`server-1.0.0-29f1267b995f`, 03:47Z: item 44 (1)(3) balanced cap from the 40(a) reservation, floor 512 MiB - aimed at the 2ff221447b5d balanced TPC-H OOM; item 44 (2) `hdfsAccessRecheckMs`; item 45 DC typed literals; hadoopfs afc8 default). **ACCEPT done: verdict SHIP** (run 42965889054 + `only` rerun 42972471705 of the 4 cells that failed in the image build, all 6 checks pass in every cell: [results/ACCEPT-29f1267b995f.md](results/ACCEPT-29f1267b995f.md)). Running: FRESH 42965886044 (wave fresh-up-29f1267b995f, upstream head `46d565e93c19`, dispatched 05:27, ~2h20m; local small and load jobs still running at 07:35). Next: when FRESH is done, rereport with `load`, write `results/FRESH-29f1267b995f.md` (call out balanced 22/22 vs the 2ff OOM and local small c1 speed/balanced), BUILDS.md row, task Log line.
+idle 2026-11-11 03:26 UTC, newest tracked 2ff221447b5d (no kestrel server-1.0.0 pre-release newer than 2ff221447b5d; nothing running).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
@@ -351,6 +351,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fresh-up-29f1267b995f-42965886044](results/fresh-up-29f1267b995f-42965886044/summary.md) (latest of its wave)
 - [fresh-gizmo-2ff221447b5d-42888240521](results/fresh-gizmo-2ff221447b5d-42888240521/summary.md) (latest of its wave)
 - [fresh-up-2ff221447b5d-42865250390](results/fresh-up-2ff221447b5d-42865250390/summary.md) (latest of its wave)
 - [fresh-up-37bf9401d77c-42791002963](results/fresh-up-37bf9401d77c-42791002963/summary.md) (latest of its wave)
