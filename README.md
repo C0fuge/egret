@@ -224,10 +224,6 @@ EGRET ACCEPT 74464701e372 DONE 2026-11-12 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET FRESH 74464701e372 DONE 2026-11-12 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", item 46; run 43148390757, 10/10 jobs green, + rereport 43163185468 (`load.md`): [results/FRESH-74464701e372.md](results/FRESH-74464701e372.md); BUILDS.md row and regression line added). No wrong answers: speed and balanced 22/22 on every TPC-H job, 0 errors on small/scan/load; item 46 leaves balanced unchanged at the 2-CPU harness size (as its CHANGELOG says). **Regression by the rule, carried over: local small c1 p50 speed/balanced 1.12 JDBC (1.08 1.12 1.15) / 1.23 ADBC (1.23 1.33 1.20) in all 3 rounds** (new CPU type Xeon 8573C; c1 p95 level, 8/32 clients faster). Speed otherwise as before: S3 TPC-H 0.09-0.19 of balanced, S3 small p95 0.04-0.07, load +44-47 % at 128 clients (0.95-0.96 of upstream native), scans x4/x8 1.28-1.46, slow-link ZSTD 0.98 of upstream. Upstream native `cfaa929746cb`: same gate failures, x8 scan stream errors in every round. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `74464701e372` (FRESH not for items 29/30 only).
 
-EGRET ACCEPT 2c169a53db3b DONE 2026-11-12 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel items 47 / 48 / Q3 / Q-40b-1 (no HDFS item named; run because item 48 and the Q3 allocator default touch the distributed-complete and low-direct-memory paths of checks 3 and 5); run 43175547634 (session, room wait, harness unchanged), 8 cells + report green: [results/ACCEPT-2c169a53db3b.md](results/ACCEPT-2c169a53db3b.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells.
-
-EGRET FRESH 2c169a53db3b RUNNING 2026-11-12 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 47, 48, Q3, Q-40b-1 (file pruning off for a local dataDir); compare run 43175544843, wave `fresh-up-2c169a53db3b`, upstream `cfaa929746cb` (head at dispatch)). Next: when it is green, rereport with `load=true` for `load.md`, then `results/FRESH-2c169a53db3b.md` like FRESH-74464701e372 (watch local TPC-H / scans for Q-40b-1), BUILDS.md row, task Log.
-
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
@@ -361,6 +357,7 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 
 ## Results
 
+- [fresh-up-2c169a53db3b-43175544843](results/fresh-up-2c169a53db3b-43175544843/summary.md) (latest of its wave)
 - [fresh-up-74464701e372-43148390757](results/fresh-up-74464701e372-43148390757/summary.md) (latest of its wave)
 - [fresh-up-29f1267b995f-42965886044](results/fresh-up-29f1267b995f-42965886044/summary.md) (latest of its wave)
 - [fresh-gizmo-2ff221447b5d-42888240521](results/fresh-gizmo-2ff221447b5d-42888240521/summary.md) (latest of its wave)
