@@ -232,6 +232,8 @@ EGRET ACCEPT 7ab48cd6675c / d2e27119fda4 DONE 2026-11-16 (`ci/BUILD-TRACK-TASK.m
 
 EGRET FRESH d2e27119fda4 DONE 2026-11-16 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 49 / 50; newest pre-release, contains `7ab48cd6675c` (skipped as contained); run 43798340706, 10/10 jobs green, + rereport 43811945061 (`load.md`): [results/FRESH-d2e27119fda4.md](results/FRESH-d2e27119fda4.md); BUILDS.md row and regression line added). No wrong answers: speed and balanced 22/22 on every TPC-H job, 0 errors on small/scan/load. **Regression by the rule, carried over: local small c1 p50 speed/balanced 1.12 JDBC (1.15 1.07 1.14) / 1.15 ADBC (1.13 1.15 1.27) in all 3 rounds (9V45), same size as `2c169a53db3b`.** Item 49 (c)/(d): local TPC-H unchanged (speed SF10 24.4 / 23.9 s = `2ff221447b5d` on 9V45), RSS unchanged; S3 SF10 ADBC speed 39.8 s vs 37.8 s on `2c169a53db3b` (same 7763 CPU, +5 % across runs, one run - re-check next FRESH). Load +42-43 % at 128 clients (0.96 of upstream native), scans x8 1.42 / S3 1.51, slow-link ZSTD 1.05. Upstream native moved to `28d6ea713b8e`: same gate failures, fewer x8 scan stream errors. Note: the aggregate job rebuilt README from `ci/README-status.md` and dropped the README-only ACCEPT 7ab48cd6675c / d2e27119fda4 and FRESH RUNNING lines; restored here. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `d2e27119fda4` (none at 05:55 UTC).
 
+idle 2026-11-16 07:28 UTC, newest tracked d2e27119fda4
+
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
