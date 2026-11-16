@@ -74,7 +74,10 @@ p50 (below). Across runs:
 | slow link (10 ms, 1 Gbit), ZSTD | TPC-H SF10 ADBC (s, median sum) | 39.6 | 41.9 | n/a (0/22) | 0.95 (0.95 0.95 0.96) | n/a | n/a |
 
 Load ran on a 7763 (`d2e27119fda4`: 9V74), so absolute q/s are ~25 % lower for all three servers, as on
-`2c169a53db3b` (7763: +39 % JDBC / +42 % ADBC at 128 clients; now +34 % / +41 %). Balanced memory under load grows to
+`2c169a53db3b` (7763: +39 % JDBC / +42 % ADBC at 128 clients; now +34 % / +41 %). Saturation (p95 < 100 ms) is 1
+client for all three. **`load.md` (rereport 43861228344) again shows balanced q/s above the client's own count (43-48
+vs 36-45 q/s); speed and upstream agree within 1-2 q/s - ratios use the client count** (same open point as
+`FRESH-deafc861cce3`). Balanced memory under load grows to
 ~4.6 GB at 128 clients, speed stays under 0.9 GB like upstream. Slow link ran on a 7763 (`d2e27119fda4`: 6973P-C,
 329-345 MB/s), so all three export slower (254-261 MB/s, the level of `2ff221447b5d` on a 7763); speed 0.98 of
 upstream ZSTD. S3 scan x1 is noisy across rounds (speed/balanced 1.67 1.03 0.78); x4/x8 and the export are stable.
