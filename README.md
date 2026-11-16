@@ -228,7 +228,9 @@ EGRET ACCEPT 2c169a53db3b DONE 2026-11-12 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET FRESH 2c169a53db3b DONE 2026-11-12 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 47, 48, Q3, Q-40b-1; run 43175544843, 10/10 jobs green, + rereport 43194955428 (`load.md`): [results/FRESH-2c169a53db3b.md](results/FRESH-2c169a53db3b.md); BUILDS.md row and regression line added). No wrong answers: speed and balanced 22/22 on every TPC-H job, 0 errors on small/scan/load. **Regression by the rule, carried over: local small c1 p50 speed/balanced 1.09 JDBC (1.19 1.09 1.13) / 1.14 ADBC (1.26 1.14 1.13) in all 3 rounds (9V45).** Speed local TPC-H SF10 34.2 / 34.3 s vs 32.7 / 32.8 s on `74464701e372` (same CPU type, +5 % across runs; Q-40b-1 pruning off for a local dataDir; speed/balanced 0.99). Otherwise as before: S3 TPC-H 0.13-0.16, S3 small p95 0.03-0.06, load +39-42 % at 128 clients (0.97 of upstream), scans x4/x8 1.27-1.57, RSS unchanged. Upstream native `cfaa929746cb` unchanged (same gate failures). Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `2c169a53db3b` (none at 10:10 UTC).
 
-idle 2026-11-15 13:26 UTC, newest tracked 2c169a53db3b
+EGRET ACCEPT 7ab48cd6675c / d2e27119fda4 DONE 2026-11-16 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 49 (upstream server changes since `cec626bbb54a`: read-only SqlInfo DDL, opt-in `streamTimingLog`, metadata cache caps, parallel cold footers, `fileInventoryRefreshSeconds`) and item 50 (dc computes small scans and unfiltered count(*) on the planning node); runs 43786698707 and 43790722012 (not session-dispatched), 8 cells + report green each: [results/ACCEPT-7ab48cd6675c.md](results/ACCEPT-7ab48cd6675c.md), [results/ACCEPT-d2e27119fda4.md](results/ACCEPT-d2e27119fda4.md)). **Verdict: SHIP** for both - all 6 checks pass in all 4 profile x servers cells.
+
+EGRET FRESH d2e27119fda4 DONE 2026-11-16 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", items 49 / 50; newest pre-release, contains `7ab48cd6675c` (skipped as contained); run 43798340706, 10/10 jobs green, + rereport 43811945061 (`load.md`): [results/FRESH-d2e27119fda4.md](results/FRESH-d2e27119fda4.md); BUILDS.md row and regression line added). No wrong answers: speed and balanced 22/22 on every TPC-H job, 0 errors on small/scan/load. **Regression by the rule, carried over: local small c1 p50 speed/balanced 1.12 JDBC (1.15 1.07 1.14) / 1.15 ADBC (1.13 1.15 1.27) in all 3 rounds (9V45), same size as `2c169a53db3b`.** Item 49 (c)/(d): local TPC-H unchanged (speed SF10 24.4 / 23.9 s = `2ff221447b5d` on 9V45), RSS unchanged; S3 SF10 ADBC speed 39.8 s vs 37.8 s on `2c169a53db3b` (same 7763 CPU, +5 % across runs, one run - re-check next FRESH). Load +42-43 % at 128 clients (0.96 of upstream native), scans x8 1.42 / S3 1.51, slow-link ZSTD 1.05. Upstream native moved to `28d6ea713b8e`: same gate failures, fewer x8 scan stream errors. Note: the aggregate job rebuilt README from `ci/README-status.md` and dropped the README-only ACCEPT 7ab48cd6675c / d2e27119fda4 and FRESH RUNNING lines; restored here. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `d2e27119fda4` (none at 05:55 UTC).
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
@@ -418,13 +420,13 @@ Runner: Linux ubuntu24 4 vCPU AMD EPYC 7763 64-Core Processor. Workloads: `adbc1
 - [w2-s3-and-layout-40211085777](results/w2-s3-and-layout-40211085777/summary.md) (latest of its wave)
 - [w1-knobs-local-40211079235](results/w1-knobs-local-40211079235/summary.md) (latest of its wave)
 - [w0-smoke-40210310231](results/w0-smoke-40210310231/summary.md) (latest of its wave)
-- [track-9044653333cd](results/track-9044653333cd/summary.md) (latest of its wave)
+- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md) (latest of its wave)
+- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
+- [track-06833e736572](results/track-06833e736572/summary.md)
 - [track-94ad61021d93](results/track-94ad61021d93/summary.md)
-- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
+- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
 - [track-d22cdaccb4e1](results/track-d22cdaccb4e1/summary.md)
 - [track-2cfa23eb62f9](results/track-2cfa23eb62f9/summary.md)
-- [track-06833e736572](results/track-06833e736572/summary.md)
-- [track-881bbf73e946](results/track-881bbf73e946/summary.md)
-- [track-b3bbcce19996](results/track-b3bbcce19996/summary.md)
-- [track-4bb6441569be](results/track-4bb6441569be/summary.md)
-- [track-f06b5834e76e](results/track-f06b5834e76e/summary.md)
+- [track-e70d80bb7995](results/track-e70d80bb7995/summary.md)
+- [track-9044653333cd](results/track-9044653333cd/summary.md)
