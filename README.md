@@ -234,7 +234,7 @@ EGRET FRESH d2e27119fda4 DONE 2026-11-16 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTRE
 
 EGRET FRESH 6f0aa5a026fa DONE 2026-11-16 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", kestrel item 51: `ARF1` join runtime filters from the ticket, which the harness does not send; run 43840086547, 10/10 jobs green, + rereport 43861228344 (`load.md`): [results/FRESH-6f0aa5a026fa.md](results/FRESH-6f0aa5a026fa.md); BUILDS.md row and regression line added). No wrong answers: speed and balanced 22/22 on every TPC-H job, 0 errors on small/scan/load; no visible item 51 cost in any within-job ratio or in memory. **Regression by the rule, carried over and larger: local small ADBC c1 p50 speed/balanced 1.26 (1.22 1.16 1.26) in all 3 rounds (9V45; `d2e27119fda4` 1.15); JDBC c1 1.11 not in all rounds (1.12 1.01 1.05).** S3 SF10 JDBC speed 46.0 s vs 38.5 s on `d2e27119fda4` (same 7763 CPU, +19 %) with the unchanged upstream binary +22 % on the same job: runner variance, re-check next FRESH; the S3 SF10 ADBC +5 % point could not be re-checked (6973P-C this time). Otherwise as before: S3 TPC-H 0.11-0.16 of balanced, S3 small p95 0.05-0.08, load +34-41 % at 128 clients (0.95-0.96 of upstream native, 7763), scans x8 1.40 / S3 1.61, slow-link ZSTD 1.01. Upstream native `28d6ea713b8e` unchanged (same gate failures). Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `6f0aa5a026fa` (none at 12:10 UTC).
 
-idle 2026-11-17 09:30 UTC, newest tracked 6f0aa5a026fa
+idle 2026-11-17 11:26 UTC, newest tracked 6f0aa5a026fa
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
