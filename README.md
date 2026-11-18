@@ -242,7 +242,7 @@ EGRET FRESH 5f02e5b35611 DONE 2026-11-18 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTRE
 
 EGRET ACCEPT 36f3302321ba DONE 2026-11-18 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 56 (distributedComplete merged plain scans open two endpoint streams per node at a time); run 44258093085 (dispatched 07:20, not by a session; harness unchanged), 8 cells + report green: [results/ACCEPT-36f3302321ba.md](results/ACCEPT-36f3302321ba.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: the item 56 stand case (4-8 concurrent dc full scans under a small `duckDbMemoryLimit`); check 5 runs its 4 scans one after another. **No FRESH wave** (item 56 is on the distributedComplete path only, not exercised by the local/S3 waves; precedent 19efa29b1b57); `FRESH-5f02e5b35611` stays the current local/S3 measurement. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `36f3302321ba` (none at 08:22 UTC).
 
-idle 2026-11-18 13:28 UTC, newest tracked 36f3302321ba
+EGRET 06d6468b17c5 RUNNING 2026-11-18 (`ci/BUILD-TRACK-TASK.md`, kestrel item 57: balanced keeps the file order on remote data dirs again (reverts the Q54-1 default)): ACCEPT 44321703096 (dispatched 14:12, not by a session) and FRESH 44335959845 (wave fresh-up-06d6468b17c5, session-dispatched 15:28, upstream head `47c6c7d95db0`, new) running. Next: when FRESH is green, rereport with `load` for `load.md`, write `results/FRESH-06d6468b17c5.md` like FRESH-5f02e5b35611 (call out balanced S3 scans / TPC-H vs 5f02e5b35611, item 57 claims q14-type selective filters faster again), BUILDS.md row; write the ACCEPT verdict from its report.
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
