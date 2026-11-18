@@ -242,6 +242,8 @@ EGRET FRESH 5f02e5b35611 DONE 2026-11-18 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTRE
 
 EGRET ACCEPT 36f3302321ba DONE 2026-11-18 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS ACCEPTANCE", kestrel item 56 (distributedComplete merged plain scans open two endpoint streams per node at a time); run 44258093085 (dispatched 07:20, not by a session; harness unchanged), 8 cells + report green: [results/ACCEPT-36f3302321ba.md](results/ACCEPT-36f3302321ba.md)). **Verdict: SHIP** - all 6 checks pass in all 4 profile x servers cells. Not covered: the item 56 stand case (4-8 concurrent dc full scans under a small `duckDbMemoryLimit`); check 5 runs its 4 scans one after another. **No FRESH wave** (item 56 is on the distributedComplete path only, not exercised by the local/S3 waves; precedent 19efa29b1b57); `FRESH-5f02e5b35611` stays the current local/S3 measurement. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `36f3302321ba` (none at 08:22 UTC).
 
+idle 2026-11-18 09:27 UTC, newest tracked 36f3302321ba
+
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
 Each job: server A and server B on the same GitHub runner, alternating rounds (A B, B A, A B); same TPC-H Parquet
