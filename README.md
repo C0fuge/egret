@@ -246,7 +246,7 @@ EGRET ACCEPT 06d6468b17c5 DONE 2026-11-18 (`ci/BUILD-TRACK-TASK.md` "SASL HDFS A
 
 EGRET FRESH 06d6468b17c5 DONE 2026-11-18 (`ci/BUILD-TRACK-TASK.md` "FRESH UPSTREAM TRACKING", kestrel item 57 (balanced keeps the file order on remote data dirs, reverts the Q54-1 default); run 44335959845 (session-dispatched 15:28, upstream `47c6c7d95db0`, new), 10/10 jobs green, + rereport 44362838876 (`load.md`): [results/FRESH-06d6468b17c5.md](results/FRESH-06d6468b17c5.md); BUILDS.md row and regression line added). No wrong answers: speed and balanced 22/22 on every TPC-H job, 0 errors on small/scan/load. Item 57: balanced S3 full scans lose the Q54-1 gain (speed/balanced x4 / x8 1.25 / 1.22, was 1.13 / 1.14), balanced scan RSS -20-22 %, balanced S3 export 0.83 of upstream (was 0.66); no visible gain for selective filters (balanced S3 small tails unchanged, S3 TPC-H mixed). **Regression by the rule carried over: local small c1 p50 speed/balanced 1.34 ADBC (highest so far) / 1.19 JDBC in all 3 rounds (7763), c8/c32 p50 1.40-1.64.** Open: speed S3 SF10 ADBC +18 % across runs on the same CPU type (re-check). Upstream `47c6c7d95db0`: same gate failures, no x8 scan errors. Note: the compare aggregate rebuilds README from `ci/README-status.md`, which was stale since 083fd83 and dropped 4 entries; synced again. Nothing running. Next: FRESH / ACCEPT on the next kestrel pre-release newer than `06d6468b17c5` (none at 18:10 UTC).
 
-idle 2026-11-19 09:26 UTC, newest tracked 06d6468b17c5
+idle 2026-11-19 11:26 UTC, newest tracked 06d6468b17c5
 
 ## Latest server comparison: [c10-cache-40569584228](results/c10-cache-40569584228/summary.md)
 
